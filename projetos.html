@@ -11,7 +11,7 @@
 <body class="pg-projetos">
 
 <header>
-  <img id="headerLogo" data-logo="igui" style="height:44px;width:auto;display:block" alt="iGUI">
+  <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
   <div>
     <h1>PRANCHAS <span>GERADAS</span></h1>
     <div class="hdr-sub">Histórico iGUi &nbsp;·&nbsp; By: Victor L.</div>
@@ -80,8 +80,8 @@
       const cachedName = localStorage.getItem('igui_user_name');
       const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
       const logoImg = document.getElementById('headerLogo');
-      if (logoImg && typeof LOGO_B64 !== 'undefined') {
-        logoImg.src = 'data:image/png;base64,' + LOGO_B64;
+      if (logoImg) {
+        logoImg.src = 'logo_site.png';
       }
       if (cachedName) {
         const el = document.getElementById('hdrUser');

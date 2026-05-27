@@ -39,7 +39,7 @@
   /* Invite form */
   .invite-form{background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
   .invite-form .field{flex:1;min-width:160px;}
-  .invite-form label{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+  .invite-form label{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:5px;}
   .invite-form input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:#fff;}
   .invite-form input:focus{border-color:var(--blue);}
 
@@ -56,7 +56,7 @@
   .modal-box{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.15);}
   .modal-title{font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:20px;}
   .modal-field{margin-bottom:14px;}
-  .modal-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+  .modal-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:5px;}
   .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
   .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);}
   .modal-field textarea{resize:vertical;min-height:70px;}
@@ -70,9 +70,9 @@
 <body class="pg-projetos">
 
 <header>
-  <img id="headerLogo" data-logo="igui" style="height:44px;width:auto;display:block" alt="iGUI">
+  <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
   <div>
-    <h1>ADMIN <span>PANEL</span></h1>
+    <h1>ADMIN <span>PAINEL</span></h1>
     <div class="hdr-sub">iGUi Pranchas &nbsp;·&nbsp; By: Victor L.</div>
   </div>
 </header>
@@ -134,8 +134,8 @@
       const cachedName = localStorage.getItem('igui_user_name');
       const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
       const logoImg = document.getElementById('headerLogo');
-      if (logoImg && typeof LOGO_B64 !== 'undefined') {
-        logoImg.src = 'data:image/png;base64,' + LOGO_B64;
+      if (logoImg) {
+        logoImg.src = 'logo_site.png';
       }
       if (cachedName) {
         const el = document.getElementById('hdrUser');

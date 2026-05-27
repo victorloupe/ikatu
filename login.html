@@ -21,7 +21,7 @@
   .card-sub{font-size:13px;color:#7f8c9a;margin-bottom:28px;}
 
   .field{margin-bottom:16px;}
-  .field label{display:block;font-size:11px;font-weight:700;color:#7f8c9a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .field label{display:block;font-size:11px;font-weight:700;color:#7f8c9a;letter-spacing:.3px;margin-bottom:6px;}
   .field input{width:100%;padding:11px 14px;border:1.5px solid #d0dce8;border-radius:8px;font-family:'Inter',sans-serif;font-size:14px;color:#1a2a3a;outline:none;transition:border-color .15s;}
   .field input:focus{border-color:#00AEEF;}
 
@@ -46,15 +46,16 @@
   .success-msg.show{display:block;}
 
   footer{margin-top:24px;font-size:11px;color:#a0b0c0;}
+
+  .remember-row{display:flex;align-items:center;gap:8px;margin-top:4px;margin-bottom:4px;}
+  .remember-row input[type=checkbox]{width:15px;height:15px;accent-color:#00AEEF;cursor:pointer;flex-shrink:0;}
+  .remember-row label{font-size:12px;color:#7f8c9a;cursor:pointer;user-select:none;font-weight:500;}
 </style>
 </head>
 <body>
 
 <div class="logo-wrap">
-  <div>
-    <div class="logo-text">iGUi <span>Pranchas</span></div>
-    <div class="logo-badge">Sistema Técnico</div>
-  </div>
+  <img src="logo_site.png" alt="iGUi Pranchas" style="height:150px;width:auto;">
 </div>
 
 <!-- LOGIN -->
@@ -74,6 +75,10 @@
       <div class="field">
         <label>Senha</label>
         <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <div class="remember-row">
+        <input type="checkbox" id="rememberMe">
+        <label for="rememberMe">Lembrar-me</label>
       </div>
       <button class="btn-login" id="btnLogin" type="submit">Entrar</button>
     </form>
@@ -102,7 +107,7 @@
 
 </div>
 
-<footer>iGUi © 2025 · By: Victor L.</footer>
+<footer>iGUi © 2026 · By: Victor L.</footer>
 
 <script>
   // Se já estiver logado, redireciona
@@ -111,12 +116,29 @@
     if (s) window.location.href = 'index.html';
   })();
 
+  // Lembrar-me: preenche o campo se salvo
+  (function() {
+    const saved = localStorage.getItem('igui_remember_email');
+    if (saved) {
+      document.getElementById('loginEmail').value = saved;
+      document.getElementById('rememberMe').checked = true;
+    }
+  })();
+
   async function handleLogin(e) {
     e.preventDefault();
     let email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const btn      = document.getElementById('btnLogin');
-    const errEl    = document.getElementById('loginError');
+    const password  = document.getElementById('loginPassword').value;
+    const remember  = document.getElementById('rememberMe').checked;
+    const btn       = document.getElementById('btnLogin');
+    const errEl     = document.getElementById('loginError');
+
+    // Lembrar-me: salva ou limpa o e-mail
+    if (remember) {
+      localStorage.setItem('igui_remember_email', email);
+    } else {
+      localStorage.removeItem('igui_remember_email');
+    }
 
     // Se o usuário digitou apenas o nome de usuário (sem @), adiciona o domínio padrão @igui.com
     if (email && !email.includes('@')) {
@@ -169,10 +191,13 @@
     if (error) {
       errEl.textContent = traduzirErro(error.message);
       errEl.classList.add('show');
-    } else {
-      sucEl.textContent = 'Link enviado! Verifique seu e-mail.';
-      sucEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Enviar link';
+      return;
     }
+
+    sucEl.textContent = 'Link enviado! Verifique seu e-mail.';
+    sucEl.classList.add('show');
     btn.disabled = false;
     btn.textContent = 'Enviar link';
   }
@@ -181,16 +206,20 @@
     document.getElementById('loginWrap').classList.add('hide');
     document.getElementById('resetWrap').classList.add('show');
   }
+
   function mostrarLogin() {
     document.getElementById('resetWrap').classList.remove('show');
     document.getElementById('loginWrap').classList.remove('hide');
   }
 
   function traduzirErro(msg) {
-    if (msg.includes('Invalid login'))     return 'E-mail ou senha incorretos.';
-    if (msg.includes('Email not confirmed')) return 'E-mail não confirmado. Verifique sua caixa de entrada.';
-    if (msg.includes('too many requests')) return 'Muitas tentativas. Aguarde alguns minutos.';
-    return 'Erro: ' + msg;
+    if (!msg) return 'Erro desconhecido.';
+    if (msg.includes('Invalid login credentials')) return 'E-mail ou senha incorretos.';
+    if (msg.includes('Email not confirmed'))       return 'Confirme seu e-mail antes de entrar.';
+    if (msg.includes('Too many requests'))         return 'Muitas tentativas. Aguarde e tente novamente.';
+    if (msg.includes('User not found'))            return 'Usuário não encontrado.';
+    if (msg.includes('network'))                   return 'Erro de conexão. Verifique sua internet.';
+    return msg;
   }
 </script>
 </body>

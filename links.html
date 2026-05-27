@@ -78,7 +78,7 @@
   .modal-box{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:460px;box-shadow:0 8px 40px rgba(0,0,0,.15);}
   .modal-title{font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:20px;}
   .modal-field{margin-bottom:14px;}
-  .modal-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;}
+  .modal-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-bottom:5px;}
   .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
   .modal-field input:focus,.modal-field textarea:focus,.modal-field select:focus{border-color:var(--blue);}
   .modal-field textarea{resize:vertical;min-height:70px;}
@@ -88,12 +88,19 @@
   .btn-modal.cancel:hover{background:#d0dce8;}
   .btn-modal.confirm{background:#1a2a3a;color:#fff;}
   .btn-modal.confirm:hover{background:var(--blue);}
+
+  /* ── Icon picker ── */
+  .icon-opt{width:36px;height:36px;border-radius:8px;border:1.5px solid transparent;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:7px;color:#5a7a9a;}
+  .icon-opt:hover{border-color:#b0c4d4;background:#edf7fd;color:var(--blue);}
+  .icon-opt.selected{border-color:var(--blue);background:#e0f4fd;color:var(--blue);}
+  .icon-opt svg{width:100%;height:100%;}
+  .folder-icon svg{width:18px;height:18px;vertical-align:middle;stroke:#5a7a9a;}
 </style>
 </head>
 <body class="pg-projetos">
 
 <header>
-  <img id="headerLogo" data-logo="igui" style="height:44px;width:auto;display:block" alt="iGUI">
+  <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
   <div>
     <h1>LINKS <span>DE REFERÊNCIA</span></h1>
     <div class="hdr-sub">Biblioteca iGUi &nbsp;·&nbsp; By: Victor L.</div>
@@ -159,8 +166,8 @@
       const cachedName = localStorage.getItem('igui_user_name');
       const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
       const logoImg = document.getElementById('headerLogo');
-      if (logoImg && typeof LOGO_B64 !== 'undefined') {
-        logoImg.src = 'data:image/png;base64,' + LOGO_B64;
+      if (logoImg) {
+        logoImg.src = 'logo_site.png';
       }
       if (cachedName) {
         const el = document.getElementById('hdrUser');
@@ -236,11 +243,16 @@
 
 <!-- ── Modal: nova/editar pasta ── -->
 <div class="modal-overlay" id="pastaModal">
-  <div class="modal-box" style="max-width:380px;">
+  <div class="modal-box" style="max-width:420px;">
     <div class="modal-title" id="modalPastaTitle">Nova Pasta</div>
     <div class="modal-field">
       <label>Nome da pasta</label>
       <input type="text" id="pastaName" placeholder="Ex: Referências 3D">
+    </div>
+    <div class="modal-field">
+      <label>Ícone</label>
+      <div id="iconPickerWrap" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;padding:10px;border:1.5px solid var(--border);border-radius:8px;background:#f8fafc;max-height:160px;overflow-y:auto;"></div>
+      <input type="hidden" id="pastaIcon" value="📁">
     </div>
     <div class="modal-footer">
       <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
@@ -430,7 +442,7 @@ function renderPastas() {
       <div class="folder-section" id="folder-${escHtml(catName).replace(/\s/g,'_')}">
         <div class="folder-header" onclick="toggleFolder('${escHtml(catName)}')">
           <svg class="folder-chevron ${isOpen ? 'open' : ''}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>
-          <span class="folder-icon">📁</span>
+          <span class="folder-icon">${FOLDER_ICONS[cat?.icon] || FOLDER_ICONS.folder}</span>
           <span class="folder-name">${escHtml(catName)}</span>
           <span class="folder-count">${links.length} link${links.length !== 1 ? 's' : ''}</span>
           ${adminBtns}
@@ -567,79 +579,122 @@ async function salvarLink() {
   }
 }
 
+// ── Icon picker ───────────────────────────────────────
+const FOLDER_ICONS = {
+  folder:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4a1 1 0 011-1h3l2 2h5a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/></svg>',
+  link:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9a3 3 0 004.24.1l2-2a3 3 0 00-4.24-4.24l-1.1 1.1"/><path d="M9 7a3 3 0 00-4.24-.1l-2 2a3 3 0 004.24 4.24l1.1-1.1"/></svg>',
+  image:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="12" height="12" rx="1.5"/><circle cx="5.5" cy="5.5" r="1"/><path d="M2 11l3.5-3.5L8 10l2.5-2.5L14 11"/></svg>',
+  grid:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>',
+  table:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 7h12M6 3v10"/></svg>',
+  document: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6z"/><path d="M9 2v4h4"/><path d="M5 9h6M5 12h4"/></svg>',
+  tools:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 2.5L11 5l1 1-2.5 2.5-1-1-1.5 1.5 4 4 1.5-1.5-1-1L14 9l1 1 .5-.5-2-7z"/><path d="M2 13l4-4"/></svg>',
+  settings: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v1.5M8 13.5v1.5M1 8h1.5M13.5 8h1.5M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06"/></svg>',
+  star:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polygon points="8,1.5 10,6 14.5,6.5 11.2,9.5 12.2,14 8,11.5 3.8,14 4.8,9.5 1.5,6.5 6,6"/></svg>',search:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l2.5 2.5"/></svg>',
+  home:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l6-5 6 5"/><path d="M4 7v6h3v-3h2v3h3V7"/></svg>',
+  pool:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 11c1 0 1.5-1 2.5-1s1.5 1 2.5 1 1.5-1 2.5-1 1.5 1 2.5 1 1.5-1 2.5-1"/><path d="M1 14c1 0 1.5-1 2.5-1s1.5 1 2.5 1 1.5-1 2.5-1 1.5 1 2.5 1 1.5-1 2.5-1"/><rect x="5" y="2" width="2" height="6" rx="1"/><rect x="9" y="2" width="2" height="6" rx="1"/><path d="M7 5h2"/></svg>',
+  droplet:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2C8 2 3 7.5 3 10.5a5 5 0 0010 0C13 7.5 8 2 8 2z"/></svg>',
+  leaf:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3C13 3 7 2 4 6c-2 3-1 7-1 7s4 1 7-1c4-3 3-9 3-9z"/><path d="M3 13l4-4"/></svg>',
+  bulb:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13h4M7 11h2v2H7z"/><path d="M8 2a4 4 0 00-2 7.5V11h4V9.5A4 4 0 008 2z"/></svg>',
+  cube:     '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l5 2.5v5L8 14 3 9.5v-5L8 2z"/><path d="M8 2v12M3 4.5l5 5 5-5"/></svg>',
+  chart:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13h12M4 13V9M7 13V6M10 13V8M13 13V4"/></svg>',
+  pen:      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8 8H3v-3L11 2z"/></svg>',
+  box:      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="12" height="9" rx="1"/><path d="M2 5l2-3h8l2 3"/><path d="M6 8h4"/></svg>',
+  globe:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c-2 2-3 4-3 6s1 4 3 6M8 2c2 2 3 4 3 6s-1 4-3 6"/></svg>',
+  camera:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="5" width="14" height="9" rx="1.5"/><path d="M5 5L6.5 2h3L11 5"/><circle cx="8" cy="9.5" r="2"/></svg>',
+  ruler:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="12" height="4" rx="1" transform="rotate(-45 8 8)"/><path d="M5.5 10.5v2M8 8v2M10.5 5.5v2"/></svg>',
+  layers:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6 3-6 3-6-3 6-3z"/><path d="M2 8l6 3 6-3"/><path d="M2 11l6 3 6-3"/></svg>',
+};
+
+function renderIconPicker(selected) {
+  const wrap = document.getElementById('iconPickerWrap');
+  wrap.innerHTML = '';
+  Object.keys(FOLDER_ICONS).forEach(key => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'icon-opt' + (key === selected ? ' selected' : '');
+    btn.title = key;
+    btn.innerHTML = FOLDER_ICONS[key];
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#iconPickerWrap .icon-opt').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('pastaIcon').value = key;
+    });
+    wrap.appendChild(btn);
+  });
+}
+
 // ── Pasta modal ───────────────────────────────────────
-function abrirModalPasta(id = null, nomeAtual = '') {
+function abrirModalPasta(id = null, name = '') {
   editandoPastaId = id || null;
-  document.getElementById('modalPastaTitle').textContent = id ? 'Renomear Pasta' : 'Nova Pasta';
-  document.getElementById('pastaName').value = nomeAtual || '';
+  document.getElementById('modalPastaTitle').textContent = id ? 'Editar Pasta' : 'Nova Pasta';
+  document.getElementById('pastaName').value = name;
+
+  const cat = todasCategorias.find(c => c.id == id);
+  const iconAtual = cat?.icon || 'folder';
+  document.getElementById('pastaIcon').value = iconAtual;
+  renderIconPicker(iconAtual);
+
   document.getElementById('pastaModal').classList.add('show');
-  setTimeout(() => document.getElementById('pastaName').focus(), 80);
 }
 
 async function salvarPasta() {
   const name = document.getElementById('pastaName').value.trim();
-  if (!name) { showToast('Informe um nome para a pasta', 'err'); return; }
+  const icon = document.getElementById('pastaIcon').value || 'folder';
+  if (!name) { showToast('Informe o nome da pasta', 'err'); return; }
   try {
-    // If renaming: update name in links too
-    if (editandoPastaId) {
-      const cat = todasCategorias.find(c => c.id === editandoPastaId);
-      const oldName = cat?.name;
-      await sbSalvarCategoria({ name, position: cat?.position ?? 0 }, editandoPastaId);
-      // Update links that had the old category name
-      if (oldName && oldName !== name) {
-        const linksToUpdate = todosLinks.filter(l => l.category === oldName);
-        for (const link of linksToUpdate) {
-          await sbSalvarLink({ title: link.title, url: link.url, description: link.description, category: name }, link.id);
-        }
-      }
-    } else {
-      const maxPos = todasCategorias.reduce((m, c) => Math.max(m, c.position || 0), -1);
-      await sbSalvarCategoria({ name, position: maxPos + 1 });
-    }
+    await sbSalvarCategoria({ name, position: 0, icon }, editandoPastaId);
     fecharModais();
     await carregarTudo();
-    showToast(editandoPastaId ? '✅ Pasta renomeada!' : '✅ Pasta criada!', 'ok');
+    showToast(editandoPastaId ? '✅ Pasta atualizada!' : '✅ Pasta criada!', 'ok');
   } catch (e) {
     showToast('Erro: ' + e.message, 'err');
   }
 }
 
 // ── Delete confirmations ──────────────────────────────
-function confirmarDelLink(id) {
-  document.getElementById('delModalTitle').textContent = 'Excluir Link';
-  document.getElementById('delModalMsg').textContent   = 'Tem certeza que quer excluir este link?';
-  document.getElementById('btnConfirmDel').onclick = async () => {
-    try {
-      await sbDeletarLink(id);
-      fecharModais();
-      await carregarTudo();
-      showToast('🗑 Link excluído', 'ok');
-    } catch (e) { showToast('Erro: ' + e.message, 'err'); }
-  };
-  document.getElementById('delModal').classList.add('show');
-}
-
-function confirmarDelPasta(id, nome) {
-  if (!id) { showToast('Esta pasta não pode ser excluída (sem ID)', 'err'); return; }
-  const qtd = todosLinks.filter(l => l.category === nome).length;
+function confirmarDelPasta(id, name) {
   document.getElementById('delModalTitle').textContent = 'Excluir Pasta';
-  document.getElementById('delModalMsg').innerHTML = qtd
-    ? `Excluir a pasta "<strong>${escHtml(nome)}</strong>"? Os <strong>${qtd} link${qtd!==1?'s':''}</strong> dentro dela <strong>não serão excluídos</strong>, mas ficarão sem pasta.`
-    : `Excluir a pasta "<strong>${escHtml(nome)}</strong>"? Ela está vazia.`;
+  document.getElementById('delModalMsg').textContent = `Tem certeza que deseja excluir a pasta "${name}"? Os links desta pasta serão mantidos sem categoria.`;
   document.getElementById('btnConfirmDel').onclick = async () => {
     try {
       await sbDeletarCategoria(id);
       fecharModais();
       await carregarTudo();
       showToast('🗑 Pasta excluída', 'ok');
-    } catch (e) { showToast('Erro: ' + e.message, 'err'); }
+    } catch (e) {
+      showToast('Erro: ' + e.message, 'err');
+    }
   };
   document.getElementById('delModal').classList.add('show');
 }
 
+function confirmarDelLink(id) {
+  const link = todosLinks.find(l => l.id === id);
+  document.getElementById('delModalTitle').textContent = 'Excluir Link';
+  document.getElementById('delModalMsg').textContent = `Tem certeza que deseja excluir "${link?.title || 'este link'}"?`;
+  document.getElementById('btnConfirmDel').onclick = async () => {
+    try {
+      await sbDeletarLink(id);
+      fecharModais();
+      await carregarTudo();
+      showToast('🗑 Link excluído', 'ok');
+    } catch (e) {
+      showToast('Erro: ' + e.message, 'err');
+    }
+  };
+  document.getElementById('delModal').classList.add('show');
+}
+
+// ── Close modals ──────────────────────────────────────
 function fecharModais() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+  editandoLinkId = null;
+  editandoPastaId = null;
 }
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) fecharModais(); });
+});
 </script>
 </body>
 </html>

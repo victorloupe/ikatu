@@ -12,7 +12,7 @@
 <body>
 
 <header>
-  <img id="headerLogo" data-logo="igui" style="height:44px;width:auto;display:block" alt="iGUI">
+  <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
   <div>
     <h1>PRANCHA <span>TÉCNICA</span></h1>
     <div class="hdr-sub">Gerador iGUi &nbsp;·&nbsp; By: Victor L.</div>
@@ -122,8 +122,8 @@
       const cachedName = localStorage.getItem('igui_user_name');
       const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
       const logoImg = document.getElementById('headerLogo');
-      if (logoImg && typeof LOGO_B64 !== 'undefined') {
-        logoImg.src = 'data:image/png;base64,' + LOGO_B64;
+      if (logoImg) {
+        logoImg.src = 'logo_site.png';
       }
       if (cachedName) {
         const el = document.getElementById('hdrUser');
@@ -260,12 +260,12 @@
         <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Escolha quais imagens do Projeto 3D aparecem nesta página da prancha.</p>
         <div class="img-selector-grid" id="imgsel-rev">
           <div class="img-sel-col">
-            <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Painel Esquerdo</label>
+            <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Esquerdo</label>
             <div class="img-sel-options" id="imgsel-rev-0"></div>
             <div class="img-sel-preview" id="imgsel-preview-rev-0"></div>
           </div>
           <div class="img-sel-col">
-            <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Painel Direito</label>
+            <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Direito</label>
             <div class="img-sel-options" id="imgsel-rev-1"></div>
             <div class="img-sel-preview" id="imgsel-preview-rev-1"></div>
           </div>
@@ -292,12 +292,12 @@
         <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Escolha quais imagens do Projeto 3D aparecem nesta página da prancha.</p>
         <div class="img-selector-grid" id="imgsel-mob">
           <div class="img-sel-col">
-            <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Painel Esquerdo</label>
+            <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Esquerdo</label>
             <div class="img-sel-options" id="imgsel-mob-0"></div>
             <div class="img-sel-preview" id="imgsel-preview-mob-0"></div>
           </div>
           <div class="img-sel-col">
-            <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Painel Direito</label>
+            <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Direito</label>
             <div class="img-sel-options" id="imgsel-mob-1"></div>
             <div class="img-sel-preview" id="imgsel-preview-mob-1"></div>
           </div>
@@ -324,12 +324,12 @@
         <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Escolha quais imagens do Projeto 3D aparecem nesta página da prancha.</p>
         <div class="img-selector-grid" id="imgsel-pai">
           <div class="img-sel-col">
-            <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Painel Esquerdo</label>
+            <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Esquerdo</label>
             <div class="img-sel-options" id="imgsel-pai-0"></div>
             <div class="img-sel-preview" id="imgsel-preview-pai-0"></div>
           </div>
           <div class="img-sel-col">
-            <label style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:6px">Painel Direito</label>
+            <label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Direito</label>
             <div class="img-sel-options" id="imgsel-pai-1"></div>
             <div class="img-sel-preview" id="imgsel-preview-pai-1"></div>
           </div>

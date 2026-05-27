@@ -145,7 +145,7 @@ function clearNode(el) {
 
 function setLogoImages() {
   document.querySelectorAll('[data-logo="igui"]').forEach(img => {
-    img.src = 'data:image/png;base64,' + LOGO_B64;
+    img.src = 'logo_site.png';
   });
 }
 
@@ -791,10 +791,10 @@ function buildAccOpcoes(key, modeloAtual) {
   const valorInput   = (isPersonalizado) ? '' : (isCustom ? modeloAtual : '');
 
   const SEL_STYLE = 'border:1.5px solid var(--border);border-radius:6px;padding:9px 13px;font-family:\'Inter\',sans-serif;font-size:14px;width:100%;margin-top:5px';
-  const LBL_STYLE = 'font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;display:block;margin-top:10px';
+  const LBL_STYLE = 'font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;display:block;margin-top:10px';
 
   let html = `<label style="${LBL_STYLE.replace('margin-top:10px','')}">Modelo</label>`;
-  html += `<select onchange="onAccSelect('${key}',this)" style="text-transform:uppercase;${SEL_STYLE}">`;
+  html += `<select onchange="onAccSelect('${key}',this)" style="${SEL_STYLE}">`;
   html += '<option value="">-- Selecione --</option>';
   opcoes.forEach(o => {
     const sel = o.toUpperCase() === modeloUp || o === modeloAtual ? 'selected' : '';
@@ -803,7 +803,7 @@ function buildAccOpcoes(key, modeloAtual) {
   html += '</select>';
 
   if (mostrarInput) {
-    html += `<input type="text" value="${escapeHtml(valorInput)}" oninput="S.acc['${key}'].modelo=this.value;autoSave()" placeholder="Descreva o modelo..." style="margin-top:8px;${SEL_STYLE}text-transform:uppercase">`;
+    html += `<input type="text" value="${escapeHtml(valorInput)}" oninput="S.acc['${key}'].modelo=this.value;autoSave()" placeholder="Descreva o modelo..." style="margin-top:8px;${SEL_STYLE}">`;
   }
 
   // Sub-seletor de COR DA PEDRA para Cascata Iguaçu / Véu de Noiva
@@ -824,7 +824,7 @@ function buildAccOpcoes(key, modeloAtual) {
   if (key === 'filtragem' && !mostrarInput && (modeloLow.startsWith('g6') || modeloLow.startsWith('g7'))) {
     const corCorrimao = (S.acc.corrimao.modelo || '').toLowerCase();
     if (corCorrimao && corCorrimao !== 'personalizado') {
-      html += `<div style="margin-top:8px;font-size:11px;color:var(--muted);padding:6px 8px;background:var(--bg2,#f5f5f5);border-radius:6px">🎨 Cor: <strong style="text-transform:uppercase">${corCorrimao}</strong> (igual ao corrimão)</div>`;
+      html += `<div style="margin-top:8px;font-size:11px;color:var(--muted);padding:6px 8px;background:var(--bg2,#f5f5f5);border-radius:6px">🎨 Cor: <strong>${corCorrimao}</strong> (igual ao corrimão)</div>`;
     } else {
       html += `<div style="margin-top:8px;font-size:11px;color:var(--muted);padding:6px 8px;background:var(--bg2,#f5f5f5);border-radius:6px">🎨 Cor herdada do corrimão — selecione o corrimão primeiro</div>`;
     }
@@ -895,7 +895,7 @@ function onAccSelect(key, sel) {
     S.acc[key].modelo = '';
     S.acc[key].img = '';
   } else {
-    S.acc[key].modelo = val.toUpperCase();
+    S.acc[key].modelo = val;
 
     const modelos_com_sub = ['iguaçu', 'véu de noiva']; // cascata precisa de cor_pedra
     const needsPedra = (key === 'cascata' && modelos_com_sub.includes(valLow));
@@ -1649,12 +1649,12 @@ async function _executarGerarPDF() {
 
       tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(8);
       // SEM aspas na loja
-      const lojaStr = (includeLoja && form.loja) ? ' ' + U(form.loja) : '';
+      const lojaStr = (includeLoja && form.loja) ? ' ' + (form.loja||'') : '';
       doc.text('PROJETO 3D - IGUI CONCEITO'+lojaStr, 10, fy+6.5);
 
       doc.setFont('helvetica','normal'); doc.setFontSize(7); tc(C.muted);
-      doc.text('CLIENTE:  '+U(form.cliente),   10, fy+11.5);
-      doc.text('ID:  '+U(form.id_projeto),      10, fy+15.5);
+      doc.text('CLIENTE:  '+(form.cliente||''),   10, fy+11.5);
+      doc.text('ID:  '+(form.id_projeto||''),      10, fy+15.5);
       const LW=20, LH=+(20/1.4638).toFixed(1);
 
       // Obs: sempre maiúsculo + vermelho se for obs padrão de borda
@@ -1662,13 +1662,13 @@ async function _executarGerarPDF() {
         const isObsPadrao = form.obs.includes('NAO E RECOMENDACAO DA IGUI');
         tc(isObsPadrao ? '#C0392B' : C.muted);
         doc.setFontSize(6.5);
-        doc.text('OBS:  '+U(form.obs), 10, fy+19.5, {maxWidth: PW - LW - 20});
+        doc.text('OBS:  '+(form.obs||''), 10, fy+19.5, {maxWidth: PW - LW - 20});
       } else {
         tc(C.muted); doc.setFontSize(7);
         doc.text('OBS:', 10, fy+19.5);
       }
 
-      doc.addImage('data:image/png;base64,'+LOGO_B64,'PNG',PW-LW-5,fy+(FOOTER_H-LH)/2,LW,LH,undefined,'FAST');
+      doc.addImage('data:image/png;base64,'+LOGO_PRANCHA_B64,'PNG',PW-LW-5,fy+(FOOTER_H-LH)/2,LW,LH,undefined,'FAST');
     }
 
     // ════════════════════════════
@@ -1739,7 +1739,7 @@ async function _executarGerarPDF() {
     doc.text('MODELO:', M, DY+20);
     const mW=doc.getTextWidth('MODELO:')+3;
     doc.setFont('helvetica','bold'); tc(C.text);
-    doc.text(U(form.modelo||''), M+mW, DY+20);
+    doc.text((form.modelo||''), M+mW, DY+20);
     // [D] Linha vertical separador (só até a área de descritivo)
     const SEP_X=66;
     lineV(SEP_X, DY+3, DY+36, C.line, 0.5);
@@ -1751,22 +1751,22 @@ async function _executarGerarPDF() {
     const cLW=doc.getTextWidth('CERAMICA:')+3;
     // Nome em cinza escuro (era azul)
     tc(C.accent); doc.setFontSize(9);
-    if(form.ceramica_nome) doc.text(U(form.ceramica_nome), C2X+cLW, DY+11);
+    if(form.ceramica_nome) doc.text((form.ceramica_nome||''), C2X+cLW, DY+11);
 
     if(form.ceramica_marca){
       tc(C.muted); doc.setFont('helvetica','normal'); doc.setFontSize(7);
-      doc.text(U(form.ceramica_marca), C2X+cLW, DY+17);
+      doc.text((form.ceramica_marca||''), C2X+cLW, DY+17);
     }
 
     tc(C.muted); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
     doc.text('TAMANHO REAL:', C2X+3, DY+24);
     tc(C.text); doc.setFont('helvetica','bold');
-    doc.text(U(form.ceramica_tamanho||''), C2X+41, DY+24);
+    doc.text((form.ceramica_tamanho||''), C2X+41, DY+24);
 
     tc(C.muted); doc.setFont('helvetica','normal');
     doc.text('REJUNTE:', C2X+3, DY+31);
     tc(C.text); doc.setFont('helvetica','bold');
-    doc.text(U(form.ceramica_rejunte||''), C2X+41, DY+31);
+    doc.text((form.ceramica_rejunte||''), C2X+41, DY+31);
 
     // Imagem cerâmica
     const cerB64=S.imgs['cer'][0];
@@ -1796,10 +1796,10 @@ async function _executarGerarPDF() {
       doc.circle(ax+2.5, ay+1.5, 2, 'F');
 
       tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      doc.text(U(label), ax+7, ay+3);
+      doc.text(label, ax+7, ay+3);
       if(a.modelo){
         doc.setFont('helvetica','normal'); tc(C.muted); doc.setFontSize(7);
-        doc.text(U(a.modelo), ax+7, ay+9);
+        doc.text(a.modelo, ax+7, ay+9);
       }
       if(a.on && a.img){
         const IS=18;
