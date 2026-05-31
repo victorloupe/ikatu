@@ -89,20 +89,11 @@
   <!-- RESET DE SENHA -->
   <div class="reset-wrap" id="resetWrap">
     <div class="card-title">Redefinir senha</div>
-    <div class="card-sub">Enviaremos um link para seu e-mail</div>
+    <div class="card-sub" style="font-size: 13px; color: #7f8c9a; margin-top: 10px; margin-bottom: 20px; line-height: 1.6;">
+      Por favor, entre em contato com o administrador para redefinir a sua senha.
+    </div>
 
-    <div class="error-msg"   id="resetError"></div>
-    <div class="success-msg" id="resetSuccess"></div>
-
-    <form onsubmit="handleReset(event)">
-      <div class="field">
-        <label>E-mail</label>
-        <input type="email" id="resetEmail" placeholder="seu@email.com" required>
-      </div>
-      <button class="btn-login" id="btnReset" type="submit">Enviar link</button>
-    </form>
-
-    <span class="back-link" onclick="mostrarLogin()">← Voltar ao login</span>
+    <span class="back-link" onclick="mostrarLogin()" style="margin-top: 24px; font-weight: 600;">← Voltar ao login</span>
   </div>
 
 </div>
@@ -113,7 +104,9 @@
   // Se já estiver logado, redireciona
   (async () => {
     const s = await sbGetSession();
-    if (s) window.location.href = 'index.html';
+    if (s) {
+      window.location.href = window.innerWidth <= 768 ? 'pagamentos.html' : 'index.html';
+    }
   })();
 
   // Lembrar-me: preenche o campo se salvo
@@ -169,7 +162,7 @@
       return;
     }
 
-    window.location.href = 'index.html';
+    window.location.href = window.innerWidth <= 768 ? 'pagamentos.html' : 'index.html';
   }
 
   async function handleReset(e) {

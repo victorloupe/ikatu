@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle de Pagamentos – iGUi</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<link rel="stylesheet" href="styles.css?v=20260527">
+<style>
+  /* Custom styles for Payments Page */
+  .pag-container {
+    max-width: 100%;
+    margin: 0;
+    padding: 24px 30px 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .pag-grid {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 1024px) {
+    .pag-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .pag-card {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .table-responsive {
+    overflow-x: auto;
+    margin-top: 14px;
+  }
+  .pag-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .pag-table th, .pag-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .pag-table th {
+    background: var(--gray);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .pag-table td {
+    vertical-align: middle;
+  }
+  .pag-table input[type="text"], .pag-table select {
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1.5px solid var(--border);
+  }
+  .pag-table input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+  .raw-string-input {
+    width: 100%;
+    font-family: monospace;
+    font-size: 11px !important;
+    background: #fdfdfd !important;
+    border-color: #cbd5e0 !important;
+    box-sizing: border-box;
+  }
+  .extracted-info {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    line-height: 1.4;
+    background: #f7fafc;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #edf2f7;
+  }
+  .extracted-info span {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .badge-piscina { color: #2b6cb0; }
+  .badge-loja { color: #2f855a; }
+  .badge-data { color: #b7791f; }
+  
+  /* Summary Table styles */
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 14px;
+  }
+  .summary-table th, .summary-table td {
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+  }
+  .summary-table th {
+    background: #edf7fd;
+    color: var(--dark);
+    font-weight: 700;
+  }
+  .summary-table tr.total-row {
+    background: #e1f5fe;
+    color: var(--dark);
+    font-weight: 800;
+    font-size: 14px;
+  }
+  .summary-title-bar {
+    background: linear-gradient(135deg, var(--dark) 0%, #243547 100%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+    padding: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--blue);
+  }
+  .designer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--gray);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .designer-input {
+    border: none;
+    background: transparent;
+    font-weight: 700;
+    color: var(--dark);
+    font-size: 13px;
+    width: 60%;
+    padding: 4px;
+    border-bottom: 1.5px dashed var(--border);
+  }
+  .designer-input:focus {
+    outline: none;
+    border-bottom-color: var(--blue);
+  }
+  .month-select {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--dark);
+    font-weight: 700;
+  }
+  .budget-list-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-top: 14px;
+    overflow: hidden;
+  }
+  .budget-list-item {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .budget-list-item:last-child {
+    border-bottom: none;
+  }
+  .budget-list-label {
+    background: #edf7fd;
+    color: var(--dark);
+    padding: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+  }
+  .budget-list-value {
+    padding: 12px;
+    background: #fff;
+    word-break: break-all;
+    display: flex;
+    align-items: center;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .bulk-import-area {
+    margin-top: 14px;
+    background: #fafcff;
+    border: 1.5px dashed var(--blue);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .bulk-textarea {
+    width: 100%;
+    height: 100px;
+    font-size: 12px;
+    font-family: monospace;
+    margin-bottom: 10px;
+    resize: vertical;
+  }
+  .btn-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-action:hover {
+    background: #009fd4;
+  }
+  .btn-action.danger {
+    background: #e74c3c;
+  }
+  .btn-action.danger:hover {
+    background: #c0392b;
+  }
+  .btn-action.success {
+    background: var(--green);
+  }
+  .btn-action.success:hover {
+    background: #219653;
+  }
+  .btn-mini {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    background: #fff;
+  }
+  .btn-mini:hover {
+    background: var(--gray);
+  }
+  .btn-mini.danger {
+    color: #e74c3c;
+    border-color: #f5c6c2;
+  }
+  .btn-mini.danger:hover {
+    background: #fdf2f1;
+  }
+  
+  .btn-minimal {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    outline: none;
+  }
+  .btn-minimal:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  /* Conferred Row Highlight */
+  .pag-table tr.row-conferido {
+    background-color: #e6f4ea !important;
+    transition: background-color 0.25s ease;
+  }
+  .pag-table tr.row-conferido td {
+    background-color: #e6f4ea !important;
+    transition: background-color 0.25s ease;
+  }
+
+  /* A4 Print Layout */
+  @media print {
+    body {
+      background: #fff !important;
+      color: #000 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      font-family: Arial, sans-serif !important;
+    }
+    header, .sidebar, .main-content > .pag-container > .pag-grid > :first-child, .su-signout, .btn-print-hide {
+      display: none !important;
+    }
+    .layout {
+      display: block !important;
+    }
+    .main-content {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+    }
+    .pag-grid {
+      display: block !important;
+    }
+    .pag-card {
+      border: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+    }
+    .pag-grid > :last-child {
+      width: 100% !important;
+      max-width: 100% !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    .summary-table {
+      border: 1px solid #ccc !important;
+      width: 100% !important;
+      margin-top: 15px !important;
+    }
+    .summary-table th, .summary-table td {
+      border: 1px solid #ccc !important;
+      color: #000 !important;
+      padding: 10px 12px !important;
+    }
+    .summary-table th {
+      background: #f5f5f5 !important;
+      font-weight: bold !important;
+    }
+    .summary-title-bar {
+      background: transparent !important;
+      color: #1a2a3a !important;
+      border-bottom: 2px solid #1a2a3a !important;
+      font-size: 18px !important;
+      font-weight: bold !important;
+      padding: 10px 0 !important;
+      text-align: center !important;
+    }
+    .designer-bar {
+      background: #fafafa !important;
+      border: 1px solid #ccc !important;
+      border-top: none !important;
+      padding: 12px 14px !important;
+      margin-top: 5px !important;
+      border-radius: 4px !important;
+    }
+    .designer-input {
+      border: none !important;
+      background: transparent !important;
+      color: #000 !important;
+      font-size: 13px !important;
+      font-weight: bold !important;
+      width: 100% !important;
+      padding: 0 !important;
+    }
+    .month-select {
+      border: none !important;
+      background: transparent !important;
+      color: #721c24 !important;
+      font-weight: bold !important;
+      font-size: 13px !important;
+      padding: 0 !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+    }
+    .budget-list-card {
+      border: 1px solid #ccc !important;
+      margin-top: 20px !important;
+      page-break-inside: avoid;
+    }
+    .budget-list-label {
+      background: #f5f5f5 !important;
+      color: #000 !important;
+      border-right: 1px solid #ccc !important;
+    }
+    .budget-list-value {
+      background: #fff !important;
+      color: #000 !important;
+    }
+    /* Alinha o R$ com o input lado a lado sem quebra de linha */
+    .summary-table td[align="right"] {
+      white-space: nowrap !important;
+    }
+    .summary-table input[type="number"] {
+      border: none !important;
+      background: transparent !important;
+      width: 50px !important;
+      text-align: right !important;
+      font-size: 13px !important;
+      font-family: inherit !important;
+      font-weight: bold !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: inline-block !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: textfield !important;
+    }
+    .summary-table input[type="number"]::-webkit-outer-spin-button,
+    .summary-table input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none !important;
+      margin: 0 !important;
+    }
+    @page {
+      size: A4 portrait;
+      margin: 1.5cm;
+    }
+  }
+
+  /* Filtros e pesquisa */
+  .btn-filter {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .btn-filter:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+  .btn-filter.active {
+    background: #e1f5fe;
+    color: var(--blue);
+    border-color: var(--blue);
+  }
+</style>
+</head>
+<body class="pg-pagamentos">
+
+<header>
+  <button id="btnMenuToggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" class="btn-menu-toggle" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; display:none; align-items:center; justify-content:center; padding: 0 12px 0 0; outline:none;">
+    ☰
+  </button>
+  <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
+  <div>
+    <h1>CONTROLE DE <span>PAGAMENTOS</span></h1>
+    <div class="hdr-sub">Relatórios Financeiros &nbsp;·&nbsp; By: Victor L.</div>
+  </div>
+  <div class="hdr-right" style="margin-left:auto;display:flex;align-items:center;gap:10px;">
+    <span id="adminBadge" style="display:none;background:rgba(0,174,239,.15);border:1px solid rgba(0,174,239,.4);color:var(--blue);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;">Admin</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-actions" style="margin-top:auto;">
+      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço iGUi</div>
+      <nav class="steps" style="margin-bottom:6px;">
+        <a class="stp" href="index.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+            <path d="M6 3v10M2 7h12"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Gerador</span>
+        </a>
+        <a class="stp" href="projetos.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="2" y="2" width="5" height="5" rx="1"/>
+            <rect x="9" y="2" width="5" height="5" rx="1"/>
+            <rect x="2" y="9" width="5" height="5" rx="1"/>
+            <rect x="9" y="9" width="5" height="5" rx="1"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Pranchas</span>
+        </a>
+        <a class="stp" href="links.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M7 9a3 3 0 004.24.1l2-2a3 3 0 00-4.24-4.24l-1.1 1.1"/>
+            <path d="M9 7a3 3 0 00-4.24-.1l-2 2a3 3 0 004.24 4.24l1.1-1.1"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Links</span>
+        </a>
+        <a class="stp" href="chat.html" id="navChat">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H8l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
+          <span class="chat-nav-badge" id="chatNavBadge"></span>
+        </a>
+        <a class="stp active" href="pagamentos.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="1" y="3" width="14" height="10" rx="2"/>
+            <line x1="1" y1="7" x2="15" y2="7"/>
+            <line x1="4" y1="10" x2="6" y2="10"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Pagamentos</span>
+        </a>
+        <a class="stp" href="admin.html" id="navAdmin" style="display:none">
+          <svg class="sdb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Admin</span>
+          <span class="admin-nav-badge" id="adminNavBadge"></span>
+        </a>
+      </nav>
+
+      <div class="sdb-divider"></div>
+
+      <div class="sidebar-user-card">
+        <div class="su-avatar" id="userAvatar">?</div>
+        <div class="su-info">
+          <span class="su-name" id="hdrUser" title="Usuário logado">—</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <button class="su-signout" onclick="sbSignOut()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3"/><path d="M10 5l3 3-3 3M13 8H6"/></svg>
+              Sair
+            </button>
+            <button class="su-settings" onclick="abrirModalSenha()" title="Alterar Senha" style="background:none; border:none; padding:0; cursor:pointer; color:#7f8c8d; opacity:0.75; transition:opacity 0.15s; display:inline-flex; align-items:center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px; height:13px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <script>
+    (function() {
+      const cachedName = localStorage.getItem('igui_user_name');
+      const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
+      const logoImg = document.getElementById('headerLogo');
+      if (logoImg) {
+        logoImg.src = 'logo_site.png';
+      }
+      if (cachedName) {
+        const el = document.getElementById('hdrUser');
+        if (el) el.textContent = cachedName;
+        const av = document.getElementById('userAvatar');
+        if (av) {
+          const pts = cachedName.trim().split(/\s+/);
+          av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
+        }
+      }
+      if (cachedIsAdmin) {
+        const navAdmin = document.getElementById('navAdmin');
+        if (navAdmin) navAdmin.style.display = 'flex';
+      }
+    })();
+  </script>
+
+  <!-- CONTEÚDO -->
+  <div class="main-content">
+    <div class="pag-container">
+      
+      <div class="pag-grid">
+        
+        <!-- PAINEL ESQUERDO: Lista de Projetos -->
+        <div class="pag-card" style="padding: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="font-family: 'Inter Tight', sans-serif; font-size: 18px; font-weight: 700;">Lista de Projetos Enviados</h2>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-action success" onclick="adicionarLinha()">+ Add Linha</button>
+              <button class="btn-action danger" onclick="limparTabela()">Limpar Tudo</button>
+            </div>
+          </div>
+          <!-- Filtros e Pesquisa -->
+          <div class="search-filter-container btn-print-hide" style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px;">
+            <div style="flex: 1; position: relative;">
+              <input type="text" id="pesquisaProjetos" placeholder="Buscar por ID, Loja ou Piscina..." style="width: 100%; padding: 8px 12px 8px 32px; font-size: 13px; border-radius: 6px; border: 1.5px solid var(--border); outline: none; transition: border-color 0.15s;" oninput="definirPesquisa(this.value)">
+              <svg style="position: absolute; left: 10px; top: 10px; width: 14px; height: 14px; color: var(--muted); pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <button class="btn-filter" onclick="selecionarMesAtual()" style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--border); padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--blue); cursor: pointer; transition: all 0.15s; white-space: nowrap;" onmouseover="this.style.borderColor='var(--blue)'; this.style.background='#edf7fd';" onmouseout="this.style.borderColor='var(--border)'; this.style.background='#fff';">
+              📅 Mês Atual
+            </button>
+          </div>
+          
+          <!-- Bulk Import -->
+          <div class="bulk-import-area">
+            <h4 style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Importação em Lote</h4>
+            <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Cole vários nomes de arquivos/linhas contendo "_" (um por linha):</p>
+            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;809763_Atica M01_Novo Hamburg_04-05-2026 (1)&#10;809629_Marajoara_Foz do Iguaçu_06-05-2026 (2)"></textarea>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-action" onclick="processarLote()">Processar Lote</button>
+              <button class="btn-action success" onclick="abrirModalManual()">+ Projeto Manual</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="pag-table">
+              <thead>
+                <tr>
+                  <th style="width: 45px; text-align: center;">nº</th>
+                  <th style="width: 85px;">Datas</th>
+                  <th style="width: 155px;">Tipo Projeto</th>
+                  <th>Identificador (Nome do Arquivo)</th>
+                  <th style="width: 150px;">Obs.</th>
+                  <th style="width: 45px; text-align: center;">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaProjetosCorpo">
+                <!-- Linhas inseridas dinamicamente -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- PAINEL DIREITO: Tabela de Resumo Financeiro -->
+        <div id="painelDireitoResumo">
+          <div class="pag-card" style="overflow: hidden;">
+            <div class="summary-title-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
+              <span>Relação de Projetos para Pagamento</span>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn-minimal btn-print-hide" onclick="copiarTabelaExcel()">
+                  📊 Copiar p/ Excel
+                </button>
+                <button class="btn-minimal btn-print-hide" onclick="exportarPDF()">
+                  🖨️ Exportar A4
+                </button>
+              </div>
+            </div>
+            
+            <div class="designer-bar">
+              <div>
+                <span>Projetista: </span>
+                <input type="text" id="projetistaNome" class="designer-input" value="VICTOR LOURENÇO PEREIRA" oninput="salvarCabecalho()">
+              </div>
+              <div>
+                <select id="pagamentoMes" class="month-select" onchange="salvarCabecalho()">
+                  <option value="Janeiro">Janeiro</option>
+                  <option value="Fevereiro">Fevereiro</option>
+                  <option value="Março">Março</option>
+                  <option value="Abril">Abril</option>
+                  <option value="Maio" selected>Maio</option>
+                  <option value="Junho">Junho</option>
+                  <option value="Julho">Julho</option>
+                  <option value="Agosto">Agosto</option>
+                  <option value="Setembro">Setembro</option>
+                  <option value="Outubro">Outubro</option>
+                  <option value="Novembro">Novembro</option>
+                  <option value="Dezembro">Dezembro</option>
+                </select>
+                <select id="pagamentoAno" class="month-select" onchange="salvarCabecalho()">
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                </select>
+              </div>
+            </div>
+            
+            <table class="summary-table">
+              <thead>
+                <tr>
+                  <th>Tipo de Projeto</th>
+                  <th style="width: 100px; text-align: right;">Valor Unit.</th>
+                  <th style="width: 80px; text-align: center;">Quant.</th>
+                  <th style="width: 120px; text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Atte 02 Projetos (Até 02 Renders)</td>
+                  <td align="right">R$ <input type="number" id="val_ate2" step="5" value="70" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="center" id="qty_ate2">0</td>
+                  <td align="right" id="tot_ate2" style="font-weight: 600;">R$ 0,00</td>
+                </tr>
+                <tr>
+                  <td>03 a 4 Projetos (03 a 4 Renders)</td>
+                  <td align="right">R$ <input type="number" id="val_3a4" step="5" value="80" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="center" id="qty_3a4">0</td>
+                  <td align="right" id="tot_3a4" style="font-weight: 600;">R$ 0,00</td>
+                </tr>
+                <tr>
+                  <td>Mais que 05 Projetos</td>
+                  <td align="right">R$ <input type="number" id="val_mais5" step="5" value="95" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="center" id="qty_mais5">0</td>
+                  <td align="right" id="tot_mais5" style="font-weight: 600;">R$ 0,00</td>
+                </tr>
+                <tr>
+                  <td>Projeto 360º</td>
+                  <td align="right">R$ <input type="number" id="val_360" step="5" value="90" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="center" id="qty_360">0</td>
+                  <td align="right" id="tot_360" style="font-weight: 600;">R$ 0,00</td>
+                </tr>
+                <tr>
+                  <td>Projeto 360º (3 Modificações)</td>
+                  <td align="right">R$ <input type="number" id="val_360_3mod" step="5" value="105" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="center" id="qty_360_3mod">0</td>
+                  <td align="right" id="tot_360_3mod" style="font-weight: 600;">R$ 0,00</td>
+                </tr>
+                <tr>
+                  <td>Conceito</td>
+                  <td align="right">R$ <input type="number" id="val_conceito" step="5" value="150" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="center" id="qty_conceito">0</td>
+                  <td align="right" id="tot_conceito" style="font-weight: 600;">R$ 0,00</td>
+                </tr>
+                <tr>
+                  <td>Alterações GRANDES</td>
+                  <td align="right">R$ <input type="number" id="val_alt_grandes" step="5" value="60" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="center" id="qty_alt_grandes">0</td>
+                  <td align="right" id="tot_alt_grandes" style="font-weight: 600;">R$ 0,00</td>
+                </tr>
+                <tr class="total-row">
+                  <td colspan="2">TOTAL A PAGAR</td>
+                  <td align="center" id="qty_total">0</td>
+                  <td align="right" id="tot_total">R$ 0,00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Orcamento list summary card -->
+          <div class="budget-list-card">
+            <div class="budget-list-item">
+              <div class="budget-list-label">Nº de Orçamento das alterações GRANDES</div>
+              <div class="budget-list-value" id="orc_alt_grandes">#N/A</div>
+            </div>
+            <div class="budget-list-item">
+              <div class="budget-list-label">Nº de Orçamento dos projetos 360º</div>
+              <div class="budget-list-value" id="orc_360">#N/A</div>
+            </div>
+            <div class="budget-list-item">
+              <div class="budget-list-label">Nº de Orçamento dos projetos Conceito</div>
+              <div class="budget-list-value" id="orc_conceito">#N/A</div>
+            </div>
+            <div class="budget-list-item">
+              <div class="budget-list-label">Nº de Orçamento dos projetos 3 Piscinas</div>
+              <div class="budget-list-value" id="orc_3_piscinas">#N/A</div>
+            </div>
+          </div>
+          
+        </div>
+        
+      </div>
+      
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal Projeto Manual -->
+<div class="modal-overlay" id="manualModal" style="display:none; position:fixed; inset:0; background:rgba(18,30,42,.7); z-index:500; align-items:center; justify-content:center;">
+  <div class="modal-box" style="background:#fff; border-radius:14px; padding:28px; width:100%; max-width:440px; box-shadow:0 8px 40px rgba(0,0,0,.15); box-sizing: border-box;">
+    <div class="modal-title" style="font-size:16px; font-weight:700; color:#1a2a3a; margin-bottom:20px; font-family:'Inter Tight',sans-serif;">Inserir Projeto Manual</div>
+    
+    <div style="margin-bottom: 14px;">
+      <div class="modal-field">
+        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Nº Orçamento (ID)</label>
+        <input type="text" id="manualId" placeholder="Ex: 809763" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+      <div class="modal-field">
+        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Data de Recebimento</label>
+        <input type="text" id="manualDataRecebimento" placeholder="Ex: 30-04-2026" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
+      </div>
+      <div class="modal-field">
+        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Data de Envio</label>
+        <input type="text" id="manualDataEnvio" placeholder="Ex: 04-05-2026" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+      <div class="modal-field">
+        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Nome da Piscina</label>
+        <input type="text" id="manualPiscina" placeholder="Ex: Atica M01" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
+      </div>
+      <div class="modal-field">
+        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Loja / Franquia</label>
+        <input type="text" id="manualLoja" placeholder="Ex: Novo Hamburg" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; align-items: center;">
+      <div class="modal-field">
+        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Tipo de Projeto</label>
+        <select id="manualTipo" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
+          <option value="" selected>-- Selecione --</option>
+          <option value="Até 02 Projetos">Até 02 Projetos</option>
+          <option value="03 a 4 Projetos">03 a 4 Projetos</option>
+          <option value="Mais que 05 Projetos">Mais que 05 Projetos</option>
+          <option value="Projeto 360º">Projeto 360º</option>
+          <option value="Projeto 360º (3 Modificações)">Projeto 360º (3 Modificações)</option>
+          <option value="Conceito">Conceito</option>
+          <option value="Alterações GRANDES">Alterações GRANDES</option>
+        </select>
+      </div>
+      <div class="modal-field" style="margin-top: 18px;">
+        <label style="font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; background: #fff8e1; color: #b7791f; padding: 6px 12px; border-radius: 6px; border: 1px solid #f5d87a; user-select: none;">
+          <input type="checkbox" id="manualAlt" style="width: 14px; height: 14px; margin: 0; cursor: pointer;">
+          Grande Alteração
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-field" style="margin-bottom: 20px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Observação</label>
+      <textarea id="manualObs" placeholder="Observações..." style="width:100%; height:60px; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none; resize:none; box-sizing:border-box;"></textarea>
+    </div>
+
+    <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
+      <button class="btn-mini" onclick="fecharModalManual()" style="padding: 9px 20px; font-size: 13px; font-weight: 700; border-radius: 7px;">Cancelar</button>
+      <button class="btn-action" onclick="salvarProjetoManual()" style="padding: 9px 20px; font-size: 13px; font-weight: 700; border-radius: 7px;">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="pagamentos.js"></script>
+</body>
+</html>

@@ -28,8 +28,103 @@ document.addEventListener('DOMContentLoaded', () => {
     if (navAdmin) navAdmin.style.display = 'flex';
     const adminBadge = document.getElementById('adminBadge');
     if (adminBadge) adminBadge.style.display = 'inline-block';
+
+    // Verifica backup pendente e atualiza os badges
+    sbVerificarBackupPendente().then(temPendente => {
+      const badge = document.getElementById('adminNavBadge');
+      if (badge) badge.style.display = temPendente ? 'block' : 'none';
+      const tabBadge = document.getElementById('tabBackupBadge');
+      if (tabBadge) tabBadge.style.display = temPendente ? 'block' : 'none';
+    }).catch(() => {});
   }
+
+  // Prepara modal global de senha
+  sbInjetarModalSenha();
 });
+
+function sbInjetarModalSenha() {
+  if (document.getElementById('modalSenhaGlobal')) return;
+  const div = document.createElement('div');
+  div.innerHTML = `
+<div class="modal-overlay" id="modalSenhaGlobal" style="display:none; position:fixed; inset:0; background:rgba(18,30,42,.7); z-index:9999; align-items:center; justify-content:center;">
+  <div class="modal-box" style="background:#fff; border-radius:14px; padding:28px; width:100%; max-width:380px; box-shadow:0 8px 40px rgba(0,0,0,.15); display: flex; flex-direction: column; gap: 14px;">
+    <div class="modal-title" style="font-size:16px; font-weight:700; color:#1a2a3a; margin-bottom:6px; display: flex; align-items: center; gap: 8px;">
+      <span>⚙️</span> Alterar Minha Senha
+    </div>
+    <p style="font-size:12px; color:#6a8090; margin:0 0 10px;">Digite e confirme sua nova senha de acesso.</p>
+    
+    <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
+      <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Nova Senha</label>
+      <input type="password" id="inputNovaSenha" placeholder="Mínimo 6 caracteres" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+    </div>
+    
+    <div class="modal-field" style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">
+      <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Confirmar Nova Senha</label>
+      <input type="password" id="inputConfirmarNovaSenha" placeholder="Repita a nova senha" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+    </div>
+    
+    <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+      <button class="btn-modal cancel" onclick="fecharModalSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#f0f4f8; color:#6a8090;">Cancelar</button>
+      <button class="btn-modal confirm" onclick="confirmarAlterarSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#1a2a3a; color:#fff;">Alterar Senha</button>
+    </div>
+  </div>
+</div>`;
+  
+  const modal = div.firstElementChild;
+  document.body.appendChild(modal);
+
+  // Fecha clicando fora
+  modal.addEventListener('click', e => {
+    if (e.target === modal) fecharModalSenha();
+  });
+}
+
+function abrirModalSenha() {
+  sbInjetarModalSenha();
+  document.getElementById('inputNovaSenha').value = '';
+  document.getElementById('inputConfirmarNovaSenha').value = '';
+  document.getElementById('modalSenhaGlobal').style.display = 'flex';
+}
+
+function fecharModalSenha() {
+  const m = document.getElementById('modalSenhaGlobal');
+  if (m) m.style.display = 'none';
+}
+
+async function confirmarAlterarSenha() {
+  const p1 = document.getElementById('inputNovaSenha').value.trim();
+  const p2 = document.getElementById('inputConfirmarNovaSenha').value.trim();
+  
+  if (!p1) {
+    alert('Por favor, informe a nova senha.');
+    return;
+  }
+  if (p1.length < 6) {
+    alert('A senha deve ter no mínimo 6 caracteres.');
+    return;
+  }
+  if (p1 !== p2) {
+    alert('As senhas digitadas não coincidem.');
+    return;
+  }
+  
+  try {
+    const { error } = await sb.auth.updateUser({ password: p1 });
+    if (error) throw error;
+    fecharModalSenha();
+    if (typeof showToast === 'function') {
+      showToast('✅ Senha alterada com sucesso!', 'ok');
+    } else {
+      alert('Senha alterada com sucesso!');
+    }
+  } catch(e) {
+    alert('Erro ao alterar senha: ' + e.message);
+  }
+}
+
+window.abrirModalSenha = abrirModalSenha;
+window.fecharModalSenha = fecharModalSenha;
+window.confirmarAlterarSenha = confirmarAlterarSenha;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -131,16 +226,43 @@ async function sbSignOut() {
 
 const BUCKET = 'igui-files';
 
+function compressBase64(base64, maxWidth = 1024, quality = 0.6) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
+    img.src = 'data:image/jpeg;base64,' + cleanBase64;
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => {
+      const byteStr = atob(cleanBase64);
+      const buf = new Uint8Array(byteStr.length);
+      for (let i = 0; i < byteStr.length; i++) buf[i] = byteStr.charCodeAt(i);
+      resolve(new Blob([buf], { type: 'image/jpeg' }));
+    };
+  });
+}
+
 /**
  * Faz upload de uma imagem (base64 string sem prefixo) para o Storage.
  * Retorna a URL pública assinada (válida por 10 anos).
  * path ex: "{userId}/{projectId}/3d_0.jpg"
  */
 async function sbUploadImage(base64, path) {
-  const byteStr = atob(base64);
-  const buf = new Uint8Array(byteStr.length);
-  for (let i = 0; i < byteStr.length; i++) buf[i] = byteStr.charCodeAt(i);
-  const blob = new Blob([buf], { type: 'image/jpeg' });
+  const blob = await compressBase64(base64);
 
   const { error } = await sb.storage.from(BUCKET).upload(path, blob, {
     upsert: true,
@@ -359,6 +481,33 @@ async function sbDeletarProjeto(id) {
       await sb.storage.from(BUCKET).remove(paths);
     }
   } catch (e) { console.warn('Storage cleanup error:', e); }
+
+  const { error } = await sb.from('projects').delete().eq('id', id);
+  if (error) throw error;
+}
+
+/** Lista todos os projetos criados há mais de X meses, incluindo o session_data completo. */
+async function sbListarProjetosAntigosComDados(meses) {
+  const dataLimite = new Date();
+  dataLimite.setMonth(dataLimite.getMonth() - meses);
+  
+  const { data, error } = await sb.from('projects')
+    .select('*')
+    .lt('created_at', dataLimite.toISOString());
+  
+  if (error) throw error;
+  return data || [];
+}
+
+/** Exclui um projeto e seus arquivos do storage, especificando o ID do criador. */
+async function sbDeletarProjetoAdmin(id, userId) {
+  try {
+    const { data: files } = await sb.storage.from(BUCKET).list(`${userId}/${id}`);
+    if (files?.length) {
+      const paths = files.map(f => `${userId}/${id}/${f.name}`);
+      await sb.storage.from(BUCKET).remove(paths);
+    }
+  } catch (e) { console.warn('Admin storage cleanup error:', e); }
 
   const { error } = await sb.from('projects').delete().eq('id', id);
   if (error) throw error;
@@ -722,4 +871,27 @@ async function sbVerificarMsgNaoLidas() {
     .neq('sender_id', user.id)
     .gt('created_at', lastSeen);
   return (count || 0) > 0;
+}
+
+/** Retorna true se há pranchas (projetos) com mais de 4 meses de criação no banco. */
+async function sbVerificarBackupPendente() {
+  try {
+    const user = await sbGetUser();
+    if (!user) return false;
+    const profile = await sbGetProfile().catch(() => null);
+    if (profile?.role !== 'admin') return false;
+
+    const dataLimite = new Date();
+    dataLimite.setMonth(dataLimite.getMonth() - 4);
+
+    const { count, error } = await sb.from('projects')
+      .select('id', { count: 'exact', head: true })
+      .lt('created_at', dataLimite.toISOString());
+
+    if (error) throw error;
+    return (count || 0) > 0;
+  } catch (e) {
+    console.warn('Erro ao verificar backup pendente:', e);
+    return false;
+  }
 }
