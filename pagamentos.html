@@ -575,10 +575,14 @@
             </div>
           </div>
           <!-- Filtros e Pesquisa -->
-          <div class="search-filter-container btn-print-hide" style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px;">
-            <div style="flex: 1; position: relative;">
+          <div class="search-filter-container btn-print-hide" style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 200px; position: relative;">
               <input type="text" id="pesquisaProjetos" placeholder="Buscar por ID, Loja ou Piscina..." style="width: 100%; padding: 8px 12px 8px 32px; font-size: 13px; border-radius: 6px; border: 1.5px solid var(--border); outline: none; transition: border-color 0.15s;" oninput="definirPesquisa(this.value)">
               <svg style="position: absolute; left: 10px; top: 10px; width: 14px; height: 14px; color: var(--muted); pointer-events: none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <input type="text" id="filtroDataInicio" placeholder="De (dd/mm)" style="width: 85px; padding: 8px 10px; font-size: 12px; border-radius: 6px; border: 1.5px solid var(--border); outline: none;" oninput="renderTabela()">
+              <input type="text" id="filtroDataFim" placeholder="Até (dd/mm)" style="width: 85px; padding: 8px 10px; font-size: 12px; border-radius: 6px; border: 1.5px solid var(--border); outline: none;" oninput="renderTabela()">
             </div>
             <button class="btn-filter" onclick="selecionarMesAtual()" style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--border); padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--blue); cursor: pointer; transition: all 0.15s; white-space: nowrap;" onmouseover="this.style.borderColor='var(--blue)'; this.style.background='#edf7fd';" onmouseout="this.style.borderColor='var(--border)'; this.style.background='#fff';">
               📅 Mês Atual
@@ -589,7 +593,7 @@
           <div class="bulk-import-area">
             <h4 style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Importação em Lote</h4>
             <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Cole vários nomes de arquivos/linhas contendo "_" (um por linha):</p>
-            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;809763_Atica M01_Novo Hamburg_04-05-2026 (1)&#10;809629_Marajoara_Foz do Iguaçu_06-05-2026 (2)"></textarea>
+            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;809763_Atica M01_Novo Hamburg_04-05-2026 (1)&#10;Splash_Tradicional 7m_Abreu e Lima_25-05-2026 (1)&#10;_Marajoara_Foz do Iguaçu_06-05-2026 (2)"></textarea>
             <div style="display: flex; gap: 8px;">
               <button class="btn-action" onclick="processarLote()">Processar Lote</button>
               <button class="btn-action success" onclick="abrirModalManual()">+ Projeto Manual</button>

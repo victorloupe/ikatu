@@ -16,7 +16,7 @@ function nProjeto(texto) {
   if (/^\d+$/.test(projeto)) {
     return projeto.trim();
   }
-  return "Internacional";
+  return "Inter.";
 }
 
 function piscina(texto) {
@@ -208,6 +208,11 @@ function renderTabela() {
   if (statConferidos) statConferidos.textContent = totalConferidos;
   if (statPendentes) statPendentes.textContent = totalPendentes;
 
+  // Filtro de período por inputs De e Até
+  const dataInicioStr = document.getElementById('filtroDataInicio')?.value.trim() || "";
+  const dataFimStr = document.getElementById('filtroDataFim')?.value.trim() || "";
+  const anoSelecionado = parseInt(document.getElementById('pagamentoAno')?.value) || 2026;
+
   rowsData.forEach((row, index) => {
     const tr = document.createElement('tr');
     
@@ -240,8 +245,22 @@ function renderTabela() {
     } else if (filtroAtivo === 'alterados') {
       matchesFilter = !!row.alt;
     }
+
+    let matchesPeriodo = true;
+    const dtInicioObj = obterObjetoData(dataInicioStr, anoSelecionado);
+    const dtFimObj = obterObjetoData(dataFimStr, anoSelecionado);
+    if (dtInicioObj || dtFimObj) {
+      const rowDtStr = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+      const rowDtObj = obterObjetoData(rowDtStr, anoSelecionado);
+      if (rowDtObj) {
+        if (dtInicioObj && rowDtObj < dtInicioObj) matchesPeriodo = false;
+        if (dtFimObj && rowDtObj > dtFimObj) matchesPeriodo = false;
+      } else {
+        matchesPeriodo = false;
+      }
+    }
     
-    if (!matchesQuery || !matchesFilter) {
+    if (!matchesQuery || !matchesFilter || !matchesPeriodo) {
       tr.style.display = 'none';
     }
     
@@ -429,10 +448,26 @@ function recalcularFinanceiro() {
   const mesNome = document.getElementById('pagamentoMes').value;
   const anoStr = document.getElementById('pagamentoAno').value;
 
+  const dataInicioStr = document.getElementById('filtroDataInicio')?.value.trim() || "";
+  const dataFimStr = document.getElementById('filtroDataFim')?.value.trim() || "";
+  const anoSelecionado = parseInt(document.getElementById('pagamentoAno')?.value) || 2026;
+
   rowsData.forEach(row => {
-    // Only count project in totals if the send date belongs to the sheet's selected month/year
-    if (!rowPertenceAoMesAno(row, mesNome, anoStr)) {
-      return;
+    // Se filtramos por período, a linha deve pertencer ao período
+    const dtInicioObj = obterObjetoData(dataInicioStr, anoSelecionado);
+    const dtFimObj = obterObjetoData(dataFimStr, anoSelecionado);
+    
+    if (dtInicioObj || dtFimObj) {
+      const rowDtStr = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+      const rowDtObj = obterObjetoData(rowDtStr, anoSelecionado);
+      if (!rowDtObj) return;
+      if (dtInicioObj && rowDtObj < dtInicioObj) return;
+      if (dtFimObj && rowDtObj > dtFimObj) return;
+    } else {
+      // Only count project in totals if the send date belongs to the sheet's selected month/year
+      if (!rowPertenceAoMesAno(row, mesNome, anoStr)) {
+        return;
+      }
     }
 
     const num = nProjeto(row.raw);
@@ -774,4 +809,20 @@ function salvarProjetoManual() {
   renderTabela();
   recalcularFinanceiro();
   showToast("✅ Projeto manual adicionado com sucesso!", "ok");
+}
+
+// --- Função auxiliar para processar datas em comparações ---
+function obterObjetoData(strData, defaultYear = 2026) {
+  if (!strData) return null;
+  // matches dd/mm/yyyy or dd-mm-yyyy
+  let match = strData.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (match) {
+    return new Date(parseInt(match[3]), parseInt(match[2]) - 1, parseInt(match[1]));
+  }
+  // matches dd/mm or dd-mm
+  match = strData.match(/^(\d{1,2})[-/](\d{1,2})$/);
+  if (match) {
+    return new Date(defaultYear, parseInt(match[2]) - 1, parseInt(match[1]));
+  }
+  return null;
 }
