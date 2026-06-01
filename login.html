@@ -74,7 +74,15 @@
       </div>
       <div class="field">
         <label>Senha</label>
-        <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+        <div style="position: relative;">
+          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 42px;">
+          <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #7f8c9a; padding: 4px; display: flex; align-items: center; justify-content: center; outline: none; transition: color 0.2s;" onmouseover="this.style.color='#00AEEF'" onmouseout="this.style.color='#7f8c9a'">
+            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div class="remember-row">
         <input type="checkbox" id="rememberMe">
@@ -213,6 +221,24 @@
     if (msg.includes('User not found'))            return 'Usuário não encontrado.';
     if (msg.includes('network'))                   return 'Erro de conexão. Verifique sua internet.';
     return msg;
+  }
+
+  function togglePasswordVisibility() {
+    const input = document.getElementById('loginPassword');
+    const eyeIcon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      eyeIcon.innerHTML = `
+        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+        <line x1="1" y1="1" x2="23" y2="23"/>
+      `;
+    } else {
+      input.type = 'password';
+      eyeIcon.innerHTML = `
+        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+        <circle cx="12" cy="12" r="3"/>
+      `;
+    }
   }
 </script>
 </body>
