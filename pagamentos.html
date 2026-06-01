@@ -443,6 +443,31 @@
     color: var(--blue);
     border-color: var(--blue);
   }
+
+  /* Badge identificador estilizado */
+  .badge-identificador {
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    letter-spacing: 0.2px;
+  }
+
+  /* Efeitos de Hover na Tabela */
+  .pag-table tr:hover td {
+    background-color: #f8fafc !important;
+    transition: background-color 0.15s ease;
+  }
+  .pag-table tr.row-conferido:hover td {
+    background-color: #d7eedd !important;
+    transition: background-color 0.15s ease;
+  }
 </style>
 </head>
 <body class="pg-pagamentos">
@@ -587,6 +612,32 @@
             <button class="btn-filter" onclick="selecionarMesAtual()" style="display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1.5px solid var(--border); padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--blue); cursor: pointer; transition: all 0.15s; white-space: nowrap;" onmouseover="this.style.borderColor='var(--blue)'; this.style.background='#edf7fd';" onmouseout="this.style.borderColor='var(--border)'; this.style.background='#fff';">
               📅 Mês Atual
             </button>
+          </div>
+          
+          <!-- Filtros Rápidos de Status e Tipo + Ações em Lote -->
+          <div class="btn-print-hide" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 12px; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              <span style="font-weight: 700; color: var(--muted); margin-right: 4px;">Status:</span>
+              <button id="btnFiltroTodos" class="btn-filter active" onclick="definirFiltro('todos')">Todos</button>
+              <button id="btnFiltroConferidos" class="btn-filter" onclick="definirFiltro('conferidos')">Conferidos</button>
+              <button id="btnFiltroPendentes" class="btn-filter" onclick="definirFiltro('pendentes')">Pendentes</button>
+              <button id="btnFiltroAlterados" class="btn-filter" onclick="definirFiltro('alterados')">Alterações</button>
+            </div>
+            
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+              <span style="font-weight: 700; color: var(--muted); margin-right: 4px;">Tipo:</span>
+              <button id="btnFiltroTipoTodos" class="btn-filter active" onclick="definirFiltroTipo('todos')">Todos</button>
+              <button id="btnFiltroTipoSplash" class="btn-filter" onclick="definirFiltroTipo('Splash')">Splash</button>
+              <button id="btnFiltroTipoInter" class="btn-filter" onclick="definirFiltroTipo('Inter.')">Inter.</button>
+              <button id="btnFiltroTipoConceito" class="btn-filter" onclick="definirFiltroTipo('Conceito')">Conceito</button>
+              <button id="btnFiltroTipoNumerico" class="btn-filter" onclick="definirFiltroTipo('Numerico')">Orçamentos (nº)</button>
+            </div>
+
+            <div>
+              <button class="btn-action success" onclick="marcarVisiveisComoConferidos()" style="padding: 6px 12px; font-size: 11px;">
+                ✓ Marcar Filtrados
+              </button>
+            </div>
           </div>
           
           <!-- Bulk Import -->

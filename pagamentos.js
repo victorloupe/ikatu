@@ -67,6 +67,7 @@ const VALUES_KEY = 'igui_pagamentos_values';
 let pagId = null;
 let queryPesquisa = "";
 let filtroAtivo = "todos";
+let filtroTipoAtivo = "todos";
 
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -87,12 +88,30 @@ async function carregarDados() {
       nomeCompleto = user.email.split('@')[0].toUpperCase();
     }
     
-    const { data, error } = await sb.from('payments').select('*').eq('user_id', user.id).maybeSingle();
+    const { data: list, error } = await sb.from('payments').select('*').eq('user_id', user.id).order('updated_at', { ascending: false });
     if (error) throw error;
     
-    if (data) {
+    if (list && list.length > 0) {
+      const data = list[0];
       pagId = data.id;
-      rowsData = data.rows_data || [];
+      
+      // Mescla os rows_data de todos os registros de pagamentos deste usuário
+      let mergedRows = [];
+      list.forEach(item => {
+        if (item.rows_data && Array.isArray(item.rows_data)) {
+          mergedRows = mergedRows.concat(item.rows_data);
+        }
+      });
+      
+      // Remove duplicados pelo identificador 'raw'
+      const seen = new Set();
+      rowsData = mergedRows.filter(r => {
+        if (!r.raw) return true;
+        const key = r.raw.toString().trim();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       
       const h = data.header_data || {};
       let projetistaVal = h.projetista;
@@ -195,18 +214,9 @@ function renderTabela() {
   
   const query = queryPesquisa.trim().toLowerCase();
   
-  // Contadores para os status
-  let totalGeral = rowsData.length;
-  let totalConferidos = rowsData.filter(r => r.conf).length;
-  let totalPendentes = totalGeral - totalConferidos;
-  
-  // Atualiza os painéis de resumo rápido
-  const statTotalGeral = document.getElementById('statTotalGeral');
-  const statConferidos = document.getElementById('statConferidos');
-  const statPendentes = document.getElementById('statPendentes');
-  if (statTotalGeral) statTotalGeral.textContent = totalGeral;
-  if (statConferidos) statConferidos.textContent = totalConferidos;
-  if (statPendentes) statPendentes.textContent = totalPendentes;
+  // Contadores para os status dinâmicos
+  let visibleTotal = 0;
+  let visibleConferidos = 0;
 
   // Filtro de período por inputs De e Até
   const dataInicioStr = document.getElementById('filtroDataInicio')?.value.trim() || "";
@@ -260,7 +270,24 @@ function renderTabela() {
       }
     }
     
-    if (!matchesQuery || !matchesFilter || !matchesPeriodo) {
+    let matchesTipo = true;
+    if (filtroTipoAtivo !== 'todos') {
+      if (filtroTipoAtivo === 'Splash') {
+        matchesTipo = numProj === 'Splash';
+      } else if (filtroTipoAtivo === 'Inter.') {
+        matchesTipo = numProj === 'Inter.';
+      } else if (filtroTipoAtivo === 'Conceito') {
+        matchesTipo = row.tipo === 'Conceito';
+      } else if (filtroTipoAtivo === 'Numerico') {
+        matchesTipo = /^\d+$/.test(numProj);
+      }
+    }
+    
+    if (matchesQuery && matchesFilter && matchesPeriodo && matchesTipo) {
+      visibleTotal++;
+      if (row.conf) visibleConferidos++;
+      tr.style.display = '';
+    } else {
       tr.style.display = 'none';
     }
     
@@ -269,6 +296,20 @@ function renderTabela() {
         Piscina: <span class="badge-piscina">${piscinaModel}</span> | Loja: <span class="badge-loja">${lojaFranquia}</span>
       </div>
     ` : '';
+
+    // Configuração de cores pastel dinâmicas para o identificador do projeto
+    let badgeBg = '#e2eaf3';
+    let badgeColor = '#7f8c9a';
+    if (numProj === 'Splash') {
+      badgeBg = '#fce7f3';
+      badgeColor = '#be185d';
+    } else if (numProj === 'Inter.') {
+      badgeBg = '#dcfce7';
+      badgeColor = '#15803d';
+    } else if (/^\d+$/.test(numProj)) {
+      badgeBg = '#e0f2fe';
+      badgeColor = '#0369a1';
+    }
 
     tr.innerHTML = `
       <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
@@ -311,8 +352,8 @@ function renderTabela() {
       </td>
       <td>
         <div style="position: relative; width: 100%;">
-          <span style="position: absolute; left: 6px; top: 6px; font-size: 10px; font-weight: 700; color: #7f8c9a; background: #e2eaf3; padding: 2px 4px; border-radius: 4px; pointer-events: none;">${numProj || '—'}</span>
-          <input type="text" class="raw-string-input" value="${row.raw || ''}" placeholder="Cole o nome do arquivo aqui..." oninput="atualizarCampo(${index}, 'raw', this.value); reprocessarLinha(${index})" style="padding-left: ${numProj ? Math.max(25, 14 + numProj.toString().length * 6.0) : 25}px; font-size: 12px !important; height: 28px;">
+          <span class="badge-identificador" style="color: ${badgeColor}; background: ${badgeBg};">${numProj || '—'}</span>
+          <input type="text" class="raw-string-input" value="${row.raw || ''}" placeholder="Cole o nome do arquivo aqui..." oninput="atualizarCampo(${index}, 'raw', this.value); reprocessarLinha(${index})" style="padding-left: ${numProj ? Math.max(35, 22 + numProj.toString().length * 7.2) : 30}px; font-size: 12px !important; height: 28px;">
         </div>
         ${detailsHtml}
       </td>
@@ -325,6 +366,26 @@ function renderTabela() {
     `;
     tbody.appendChild(tr);
   });
+
+  // Mostra aviso de tabela vazia caso nenhum projeto esteja visível
+  if (visibleTotal === 0) {
+    const trEmpty = document.createElement('tr');
+    trEmpty.innerHTML = `
+      <td colspan="6" style="text-align: center; padding: 32px; color: var(--muted); font-size: 13px; background: #fff;">
+        <span style="font-size: 22px; display: block; margin-bottom: 8px;">📂</span>
+        Nenhum projeto adicionado ou correspondente aos filtros/período selecionados.
+      </td>
+    `;
+    tbody.appendChild(trEmpty);
+  }
+
+  // Atualiza os painéis de resumo rápido com base nos registros visíveis após os filtros
+  const statTotalGeral = document.getElementById('statTotalGeral');
+  const statConferidos = document.getElementById('statConferidos');
+  const statPendentes = document.getElementById('statPendentes');
+  if (statTotalGeral) statTotalGeral.textContent = visibleTotal;
+  if (statConferidos) statConferidos.textContent = visibleConferidos;
+  if (statPendentes) statPendentes.textContent = visibleTotal - visibleConferidos;
 }
 
 function toggleRowHighlight(checkbox, index) {
@@ -566,17 +627,117 @@ function definirPesquisa(val) {
 function definirFiltro(tipo) {
   filtroAtivo = tipo;
   
-  // Atualiza classes ativas dos botões de filtro
-  document.querySelectorAll('.btn-filter').forEach(btn => {
-    btn.classList.remove('active');
+  // Atualiza classes ativas dos botões de filtro de status
+  document.querySelectorAll('#btnFiltroTodos, #btnFiltroConferidos, #btnFiltroPendentes, #btnFiltroAlterados').forEach(btn => {
+    if (btn) btn.classList.remove('active');
   });
   
-  if (tipo === 'todos') document.getElementById('btnFiltroTodos').classList.add('active');
-  else if (tipo === 'conferidos') document.getElementById('btnFiltroConferidos').classList.add('active');
-  else if (tipo === 'pendentes') document.getElementById('btnFiltroPendentes').classList.add('active');
-  else if (tipo === 'alterados') document.getElementById('btnFiltroAlterados').classList.add('active');
+  const activeBtn = document.getElementById(
+    tipo === 'todos' ? 'btnFiltroTodos' :
+    tipo === 'conferidos' ? 'btnFiltroConferidos' :
+    tipo === 'pendentes' ? 'btnFiltroPendentes' : 'btnFiltroAlterados'
+  );
+  if (activeBtn) activeBtn.classList.add('active');
   
   renderTabela();
+}
+
+function definirFiltroTipo(tipo) {
+  filtroTipoAtivo = tipo;
+  
+  // Atualiza classes ativas dos botões de filtro de tipo
+  document.querySelectorAll('#btnFiltroTipoTodos, #btnFiltroTipoSplash, #btnFiltroTipoInter, #btnFiltroTipoConceito, #btnFiltroTipoNumerico').forEach(btn => {
+    if (btn) btn.classList.remove('active');
+  });
+  
+  const activeBtn = document.getElementById(
+    tipo === 'todos' ? 'btnFiltroTipoTodos' :
+    tipo === 'Splash' ? 'btnFiltroTipoSplash' :
+    tipo === 'Inter.' ? 'btnFiltroTipoInter' :
+    tipo === 'Conceito' ? 'btnFiltroTipoConceito' : 'btnFiltroTipoNumerico'
+  );
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  renderTabela();
+}
+
+function marcarVisiveisComoConferidos() {
+  const query = queryPesquisa.trim().toLowerCase();
+  const dataInicioStr = document.getElementById('filtroDataInicio')?.value.trim() || "";
+  const dataFimStr = document.getElementById('filtroDataFim')?.value.trim() || "";
+  const anoSelecionado = parseInt(document.getElementById('pagamentoAno')?.value) || 2026;
+
+  let count = 0;
+  rowsData.forEach(row => {
+    const numProj = nProjeto(row.raw);
+    const piscinaModel = piscina(row.raw);
+    const lojaFranquia = loja(row.raw);
+    
+    // Filtros por pesquisa
+    let matchesQuery = true;
+    if (query) {
+      matchesQuery = numProj.toLowerCase().includes(query) || 
+                     piscinaModel.toLowerCase().includes(query) || 
+                     lojaFranquia.toLowerCase().includes(query) || 
+                     (row.raw || '').toLowerCase().includes(query) ||
+                     (row.obs || '').toLowerCase().includes(query);
+    }
+    
+    // Filtros por status
+    let matchesFilter = true;
+    if (filtroAtivo === 'conferidos') {
+      matchesFilter = !!row.conf;
+    } else if (filtroAtivo === 'pendentes') {
+      matchesFilter = !row.conf;
+    } else if (filtroAtivo === 'alterados') {
+      matchesFilter = !!row.alt;
+    }
+
+    // Filtros por período
+    let matchesPeriodo = true;
+    const dtInicioObj = obterObjetoData(dataInicioStr, anoSelecionado);
+    const dtFimObj = obterObjetoData(dataFimStr, anoSelecionado);
+    if (dtInicioObj || dtFimObj) {
+      const rowDtStr = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+      const rowDtObj = obterObjetoData(rowDtStr, anoSelecionado);
+      if (rowDtObj) {
+        if (dtInicioObj && rowDtObj < dtInicioObj) matchesPeriodo = false;
+        if (dtFimObj && rowDtObj > dtFimObj) matchesPeriodo = false;
+      } else {
+        matchesPeriodo = false;
+      }
+    }
+
+    // Filtros por tipo
+    let matchesTipo = true;
+    if (filtroTipoAtivo !== 'todos') {
+      if (filtroTipoAtivo === 'Splash') {
+        matchesTipo = numProj === 'Splash';
+      } else if (filtroTipoAtivo === 'Inter.') {
+        matchesTipo = numProj === 'Inter.';
+      } else if (filtroTipoAtivo === 'Conceito') {
+        matchesTipo = row.tipo === 'Conceito';
+      } else if (filtroTipoAtivo === 'Numerico') {
+        matchesTipo = /^\d+$/.test(numProj);
+      }
+    }
+
+    if (matchesQuery && matchesFilter && matchesPeriodo && matchesTipo) {
+      if (!row.conf) {
+        row.conf = true;
+        count++;
+      }
+    }
+  });
+
+  if (count > 0) {
+    salvarDados();
+    renderTabela();
+    recalcularFinanceiro();
+    showToast(`✅ ${count} projetos marcados como conferidos!`, "ok");
+  } else {
+    showToast("Nenhum projeto pendente para marcar neste filtro.", "err");
+  }
 }
 
 function copiarTabelaExcel() {
