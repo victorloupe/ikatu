@@ -110,6 +110,33 @@
   .summary-table th, .summary-table td {
     padding: 10px 12px;
     border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .summary-table input[type="number"] {
+    width: 45px;
+    text-align: right;
+    border: none;
+    border-bottom: 1.5px dashed var(--border);
+    background: transparent;
+    padding: 2px 4px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    outline: none;
+    transition: all 0.15s ease-in-out;
+    border-radius: 4px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .summary-table input[type="number"]:hover {
+    border-bottom-color: var(--blue);
+    background: rgba(0, 174, 239, 0.05);
+    cursor: pointer;
+  }
+  .summary-table input[type="number"]:focus {
+    border-bottom-color: var(--blue);
+    background: rgba(0, 174, 239, 0.1);
+    box-shadow: 0 1px 0 var(--blue);
   }
   .summary-table th {
     background: #edf7fd;
@@ -443,6 +470,46 @@
     color: var(--blue);
     border-color: var(--blue);
   }
+  #btnFiltroLojaSplash.active {
+    background: #fce7f3 !important;
+    color: #be185d !important;
+    border-color: #f472b6 !important;
+  }
+  #btnFiltroLojaInter.active {
+    background: #dcfce7 !important;
+    color: #15803d !important;
+    border-color: #4ade80 !important;
+  }
+  #btnFiltroLojaIgui.active {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border-color: #38bdf8 !important;
+  }
+  #btnFiltroTipoAte2.active {
+    background: #e0f2fe !important;
+    color: #0369a1 !important;
+    border-color: #38bdf8 !important;
+  }
+  #btnFiltroTipo3a4.active {
+    background: #e0e7ff !important;
+    color: #3730a3 !important;
+    border-color: #a5b4fc !important;
+  }
+  #btnFiltroTipoMais5.active {
+    background: #cffafe !important;
+    color: #0891b2 !important;
+    border-color: #22d3ee !important;
+  }
+  #btnFiltroTipo360.active {
+    background: #f3e8ff !important;
+    color: #6b21a8 !important;
+    border-color: #d8b4fe !important;
+  }
+  #btnFiltroTipoAltGrandes.active {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    border-color: #cbd5e1 !important;
+  }
 
   /* Badge identificador estilizado */
   .badge-identificador {
@@ -614,26 +681,43 @@
             </button>
           </div>
           
-          <!-- Filtros Rápidos de Status e Tipo + Ações em Lote -->
-          <div class="btn-print-hide" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 12px; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px;">
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-              <span style="font-weight: 700; color: var(--muted); margin-right: 4px;">Status:</span>
-              <button id="btnFiltroTodos" class="btn-filter active" onclick="definirFiltro('todos')">Todos</button>
-              <button id="btnFiltroConferidos" class="btn-filter" onclick="definirFiltro('conferidos')">Conferidos</button>
-              <button id="btnFiltroPendentes" class="btn-filter" onclick="definirFiltro('pendentes')">Pendentes</button>
-              <button id="btnFiltroAlterados" class="btn-filter" onclick="definirFiltro('alterados')">Alterações</button>
-            </div>
-            
-            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-              <span style="font-weight: 700; color: var(--muted); margin-right: 4px;">Tipo:</span>
-              <button id="btnFiltroTipoTodos" class="btn-filter active" onclick="definirFiltroTipo('todos')">Todos</button>
-              <button id="btnFiltroTipoSplash" class="btn-filter" onclick="definirFiltroTipo('Splash')">Splash</button>
-              <button id="btnFiltroTipoInter" class="btn-filter" onclick="definirFiltroTipo('Inter.')">Inter.</button>
-              <button id="btnFiltroTipoConceito" class="btn-filter" onclick="definirFiltroTipo('Conceito')">Conceito</button>
-              <button id="btnFiltroTipoNumerico" class="btn-filter" onclick="definirFiltroTipo('Numerico')">Orçamentos (nº)</button>
+          <!-- Filtros Rápidos de Status, Loja e Tipo + Ações em Lote -->
+          <div class="btn-print-hide" style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; font-size: 12px; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+              
+              <!-- Status Filter -->
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <span style="font-weight: 700; color: var(--muted); margin-right: 4px; width: 50px;">Status:</span>
+                <button id="btnFiltroTodos" class="btn-filter active" onclick="definirFiltro('todos')">Todos</button>
+                <button id="btnFiltroConferidos" class="btn-filter" onclick="definirFiltro('conferidos')">Conferidos</button>
+                <button id="btnFiltroPendentes" class="btn-filter" onclick="definirFiltro('pendentes')">Pendentes</button>
+                <button id="btnFiltroAlterados" class="btn-filter" onclick="definirFiltro('alterados')">Alterações</button>
+              </div>
+              
+              <!-- Loja Filter -->
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <span style="font-weight: 700; color: var(--muted); margin-right: 4px; width: 50px;">Loja:</span>
+                <button id="btnFiltroLojaTodos" class="btn-filter active" onclick="definirFiltroLoja('todos')">Todos</button>
+                <button id="btnFiltroLojaSplash" class="btn-filter" onclick="definirFiltroLoja('Splash')">Splash</button>
+                <button id="btnFiltroLojaInter" class="btn-filter" onclick="definirFiltroLoja('Inter.')">Inter.</button>
+                <button id="btnFiltroLojaIgui" class="btn-filter" onclick="definirFiltroLoja('iGUi')">iGUi</button>
+              </div>
+
+              <!-- Tipo Filter -->
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                <span style="font-weight: 700; color: var(--muted); margin-right: 4px; width: 50px;">Tipo:</span>
+                <button id="btnFiltroTipoTodos" class="btn-filter active" onclick="definirFiltroTipo('todos')">Todos</button>
+                <button id="btnFiltroTipoAte2" class="btn-filter" onclick="definirFiltroTipo('Até 02 Projetos')">Até 2 Proj.</button>
+                <button id="btnFiltroTipo3a4" class="btn-filter" onclick="definirFiltroTipo('03 a 4 Projetos')">3 a 4 Proj.</button>
+                <button id="btnFiltroTipoMais5" class="btn-filter" onclick="definirFiltroTipo('Mais que 05 Projetos')">Mais que 5 Proj.</button>
+                <button id="btnFiltroTipo360" class="btn-filter" onclick="definirFiltroTipo('Projeto 360º')">360º</button>
+                <button id="btnFiltroTipoConceito" class="btn-filter" onclick="definirFiltroTipo('Conceito')">Conceito</button>
+                <button id="btnFiltroTipoAltGrandes" class="btn-filter" onclick="definirFiltroTipo('Alterações GRANDES')">Alt. Grandes</button>
+              </div>
+
             </div>
 
-            <div>
+            <div style="margin-left: auto;">
               <button class="btn-action success" onclick="marcarVisiveisComoConferidos()" style="padding: 6px 12px; font-size: 11px;">
                 ✓ Marcar Filtrados
               </button>
@@ -644,8 +728,8 @@
           <div class="bulk-import-area">
             <h4 style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Importação em Lote</h4>
             <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Cole vários nomes de arquivos/linhas contendo "_" (um por linha):</p>
-            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;809763_Atica M01_Novo Hamburg_04-05-2026 (1)&#10;Splash_Tradicional 7m_Abreu e Lima_25-05-2026 (1)&#10;_Marajoara_Foz do Iguaçu_06-05-2026 (2)"></textarea>
-            <div style="display: flex; gap: 8px;">
+            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;809763_Atica M01_Novo Hamburg_04-05-2026 (1)&#10;Splash_Tradicional 7m_Abreu e Lima_25-05-2026 (1)&#10;_Marajoara_Foz do Iguaçu_06-05-2026 (2)" onkeydown="if(event.ctrlKey && event.key === 'Enter') { event.preventDefault(); processarLote(); }"></textarea>
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
               <button class="btn-action" onclick="processarLote()">Processar Lote</button>
               <button class="btn-action success" onclick="abrirModalManual()">+ Projeto Manual</button>
             </div>
@@ -725,44 +809,44 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>Atte 02 Projetos (Até 02 Renders)</td>
-                  <td align="right">R$ <input type="number" id="val_ate2" step="5" value="70" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td>Até 02 Projetos</td>
+                  <td align="right">R$ <input type="number" id="val_ate2" step="5" value="70" onchange="recalcularFinanceiro()"></td>
                   <td align="center" id="qty_ate2">0</td>
                   <td align="right" id="tot_ate2" style="font-weight: 600;">R$ 0,00</td>
                 </tr>
                 <tr>
-                  <td>03 a 4 Projetos (03 a 4 Renders)</td>
-                  <td align="right">R$ <input type="number" id="val_3a4" step="5" value="80" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td>03 a 4 Projetos</td>
+                  <td align="right">R$ <input type="number" id="val_3a4" step="5" value="80" onchange="recalcularFinanceiro()"></td>
                   <td align="center" id="qty_3a4">0</td>
                   <td align="right" id="tot_3a4" style="font-weight: 600;">R$ 0,00</td>
                 </tr>
                 <tr>
                   <td>Mais que 05 Projetos</td>
-                  <td align="right">R$ <input type="number" id="val_mais5" step="5" value="95" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="right">R$ <input type="number" id="val_mais5" step="5" value="95" onchange="recalcularFinanceiro()"></td>
                   <td align="center" id="qty_mais5">0</td>
                   <td align="right" id="tot_mais5" style="font-weight: 600;">R$ 0,00</td>
                 </tr>
                 <tr>
                   <td>Projeto 360º</td>
-                  <td align="right">R$ <input type="number" id="val_360" step="5" value="90" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="right">R$ <input type="number" id="val_360" step="5" value="90" onchange="recalcularFinanceiro()"></td>
                   <td align="center" id="qty_360">0</td>
                   <td align="right" id="tot_360" style="font-weight: 600;">R$ 0,00</td>
                 </tr>
                 <tr>
                   <td>Projeto 360º (3 Modificações)</td>
-                  <td align="right">R$ <input type="number" id="val_360_3mod" step="5" value="105" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="right">R$ <input type="number" id="val_360_3mod" step="5" value="105" onchange="recalcularFinanceiro()"></td>
                   <td align="center" id="qty_360_3mod">0</td>
                   <td align="right" id="tot_360_3mod" style="font-weight: 600;">R$ 0,00</td>
                 </tr>
                 <tr>
                   <td>Conceito</td>
-                  <td align="right">R$ <input type="number" id="val_conceito" step="5" value="150" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="right">R$ <input type="number" id="val_conceito" step="5" value="150" onchange="recalcularFinanceiro()"></td>
                   <td align="center" id="qty_conceito">0</td>
                   <td align="right" id="tot_conceito" style="font-weight: 600;">R$ 0,00</td>
                 </tr>
                 <tr>
                   <td>Alterações GRANDES</td>
-                  <td align="right">R$ <input type="number" id="val_alt_grandes" step="5" value="60" style="width: 50px; text-align: right; border:none; border-bottom:1px dashed var(--border);" onchange="recalcularFinanceiro()"></td>
+                  <td align="right">R$ <input type="number" id="val_alt_grandes" step="5" value="60" onchange="recalcularFinanceiro()"></td>
                   <td align="center" id="qty_alt_grandes">0</td>
                   <td align="right" id="tot_alt_grandes" style="font-weight: 600;">R$ 0,00</td>
                 </tr>

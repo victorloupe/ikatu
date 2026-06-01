@@ -19,6 +19,26 @@ function nProjeto(texto) {
   return "Inter.";
 }
 
+function obterEstiloTipo(tipo) {
+  switch (tipo) {
+    case 'Até 02 Projetos':
+      return { bg: '#e0f2fe', color: '#0369a1', border: '#7dd3fc' };
+    case '03 a 4 Projetos':
+      return { bg: '#e0e7ff', color: '#3730a3', border: '#a5b4fc' };
+    case 'Mais que 05 Projetos':
+      return { bg: '#cffafe', color: '#0891b2', border: '#22d3ee' };
+    case 'Projeto 360º':
+    case 'Projeto 360º (3 Modificações)':
+      return { bg: '#f3e8ff', color: '#6b21a8', border: '#d8b4fe' };
+    case 'Conceito':
+      return { bg: '#fef3c7', color: '#b7791f', border: '#f5d87a' };
+    case 'Alterações GRANDES':
+      return { bg: '#f8fafc', color: '#475569', border: '#cbd5e1' };
+    default:
+      return { bg: '#f1f5f9', color: '#64748b', border: '#cbd5e1' };
+  }
+}
+
 function piscina(texto) {
   if (!texto) return "";
   let limpo = texto.toString().replace(/\s*\(\d+\)\s*$/, "");
@@ -68,6 +88,7 @@ let pagId = null;
 let queryPesquisa = "";
 let filtroAtivo = "todos";
 let filtroTipoAtivo = "todos";
+let filtroLojaAtivo = "todos";
 
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -236,6 +257,7 @@ function renderTabela() {
     const piscinaModel = piscina(row.raw);
     const lojaFranquia = loja(row.raw);
     const dtEnvio = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+    const estiloTipo = obterEstiloTipo(row.tipo);
     
     // Filtros por pesquisa e status
     let matchesQuery = true;
@@ -270,20 +292,27 @@ function renderTabela() {
       }
     }
     
-    let matchesTipo = true;
-    if (filtroTipoAtivo !== 'todos') {
-      if (filtroTipoAtivo === 'Splash') {
-        matchesTipo = numProj === 'Splash';
-      } else if (filtroTipoAtivo === 'Inter.') {
-        matchesTipo = numProj === 'Inter.';
-      } else if (filtroTipoAtivo === 'Conceito') {
-        matchesTipo = row.tipo === 'Conceito';
-      } else if (filtroTipoAtivo === 'Numerico') {
-        matchesTipo = /^\d+$/.test(numProj);
+    let matchesLoja = true;
+    if (filtroLojaAtivo !== 'todos') {
+      if (filtroLojaAtivo === 'Splash') {
+        matchesLoja = numProj === 'Splash';
+      } else if (filtroLojaAtivo === 'Inter.') {
+        matchesLoja = numProj === 'Inter.';
+      } else if (filtroLojaAtivo === 'iGUi') {
+        matchesLoja = /^\d+$/.test(numProj);
       }
     }
     
-    if (matchesQuery && matchesFilter && matchesPeriodo && matchesTipo) {
+    let matchesTipo = true;
+    if (filtroTipoAtivo !== 'todos') {
+      if (filtroTipoAtivo === 'Projeto 360º') {
+        matchesTipo = row.tipo === 'Projeto 360º' || row.tipo === 'Projeto 360º (3 Modificações)';
+      } else {
+        matchesTipo = row.tipo === filtroTipoAtivo;
+      }
+    }
+    
+    if (matchesQuery && matchesFilter && matchesPeriodo && matchesLoja && matchesTipo) {
       visibleTotal++;
       if (row.conf) visibleConferidos++;
       tr.style.display = '';
@@ -312,9 +341,9 @@ function renderTabela() {
     }
 
     tr.innerHTML = `
-      <td style="text-align: center; vertical-align: middle; white-space: nowrap;">
-        <span style="font-weight: bold; color: var(--muted); margin-right: 6px; font-size: 13px;">${index + 1}</span>
-        <input type="checkbox" ${row.conf ? 'checked' : ''} onchange="atualizarCampo(${index}, 'conf', this.checked); toggleRowHighlight(this, ${index})" style="vertical-align: middle;">
+      <td style="text-align: center; vertical-align: middle; white-space: nowrap; cursor: pointer;" onclick="toggleRowCheckboxFromCell(event, ${index})">
+        <span style="font-weight: bold; color: var(--muted); margin-right: 6px; font-size: 13px; user-select: none;">${index + 1}</span>
+        <input type="checkbox" id="check-${index}" ${row.conf ? 'checked' : ''} onchange="atualizarCampo(${index}, 'conf', this.checked); toggleRowHighlight(this, ${index})" style="vertical-align: middle;" onclick="event.stopPropagation()">
       </td>
       <td>
         <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -333,7 +362,7 @@ function renderTabela() {
         </div>
       </td>
       <td>
-        <select onchange="atualizarCampo(${index}, 'tipo', this.value)" style="width: 100%; padding: 4px 8px; font-size: 12px;">
+        <select onchange="atualizarCampo(${index}, 'tipo', this.value); reprocessarLinha(${index})" style="width: 100%; padding: 4px 8px; font-size: 12px; background-color: ${estiloTipo.bg}; color: ${estiloTipo.color}; border-color: ${estiloTipo.border}; font-weight: 600; border-radius: 6px; outline: none; transition: all 0.15s;">
           <option value="" ${!row.tipo ? 'selected' : ''}>-- Selecione --</option>
           <option value="Até 02 Projetos" ${row.tipo === 'Até 02 Projetos' ? 'selected' : ''}>Até 02 Projetos</option>
           <option value="03 a 4 Projetos" ${row.tipo === '03 a 4 Projetos' ? 'selected' : ''}>03 a 4 Projetos</option>
@@ -399,9 +428,22 @@ function toggleRowHighlight(checkbox, index) {
   }
 }
 
+function toggleRowCheckboxFromCell(event, index) {
+  const checkbox = document.getElementById(`check-${index}`);
+  if (checkbox) {
+    checkbox.checked = !checkbox.checked;
+    atualizarCampo(index, 'conf', checkbox.checked);
+    toggleRowHighlight(checkbox, index);
+  }
+}
+
 // --- Funções Interativas ---
 function adicionarLinha() {
-  rowsData.push({ data: '', tipo: '', alt: false, raw: '', conf: false, obs: '' });
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const hojeFormatado = `${dia}/${mes}`;
+  rowsData.push({ data: hojeFormatado, tipo: '', alt: false, raw: '', conf: false, obs: '' });
   salvarDados();
   renderTabela();
 }
@@ -455,14 +497,20 @@ function processarLote() {
   const text = area.value.trim();
   if (!text) return;
 
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const hojeFormatado = `${dia}/${mes}`;
+
   const linhas = text.split('\n');
   linhas.forEach(linha => {
     const raw = linha.trim();
     if (raw) {
-      // Tenta inferir a data de envio como data inicial
+      // Tenta inferir a data de envio
       const dt = dataEnvio(raw);
       rowsData.push({
-        data: dt || '',
+        data: hojeFormatado,
+        data_envio: dt || '',
         tipo: '',
         alt: false,
         raw: raw,
@@ -642,20 +690,45 @@ function definirFiltro(tipo) {
   renderTabela();
 }
 
-function definirFiltroTipo(tipo) {
-  filtroTipoAtivo = tipo;
+function definirFiltroLoja(lojaVal) {
+  filtroLojaAtivo = lojaVal;
   
-  // Atualiza classes ativas dos botões de filtro de tipo
-  document.querySelectorAll('#btnFiltroTipoTodos, #btnFiltroTipoSplash, #btnFiltroTipoInter, #btnFiltroTipoConceito, #btnFiltroTipoNumerico').forEach(btn => {
+  // Atualiza classes ativas de todos os botões de filtro de loja
+  document.querySelectorAll('[id^="btnFiltroLoja"]').forEach(btn => {
     if (btn) btn.classList.remove('active');
   });
   
-  const activeBtn = document.getElementById(
-    tipo === 'todos' ? 'btnFiltroTipoTodos' :
-    tipo === 'Splash' ? 'btnFiltroTipoSplash' :
-    tipo === 'Inter.' ? 'btnFiltroTipoInter' :
-    tipo === 'Conceito' ? 'btnFiltroTipoConceito' : 'btnFiltroTipoNumerico'
-  );
+  let btnId = 'btnFiltroLojaTodos';
+  if (lojaVal === 'Splash') btnId = 'btnFiltroLojaSplash';
+  else if (lojaVal === 'Inter.') btnId = 'btnFiltroLojaInter';
+  else if (lojaVal === 'iGUi') btnId = 'btnFiltroLojaIgui';
+  
+  const activeBtn = document.getElementById(btnId);
+  if (activeBtn) activeBtn.classList.add('active');
+  
+  renderTabela();
+}
+
+function definirFiltroTipo(tipo) {
+  filtroTipoAtivo = tipo;
+  
+  // Atualiza classes ativas de todos os botões de filtro de tipo
+  document.querySelectorAll('[id^="btnFiltroTipo"]').forEach(btn => {
+    if (btn) btn.classList.remove('active');
+  });
+  
+  let btnId = 'btnFiltroTipoTodos';
+  if (tipo === 'Splash') btnId = 'btnFiltroTipoSplash';
+  else if (tipo === 'Inter.') btnId = 'btnFiltroTipoInter';
+  else if (tipo === 'Conceito') btnId = 'btnFiltroTipoConceito';
+  else if (tipo === 'Numerico') btnId = 'btnFiltroTipoNumerico';
+  else if (tipo === 'Até 02 Projetos') btnId = 'btnFiltroTipoAte2';
+  else if (tipo === '03 a 4 Projetos') btnId = 'btnFiltroTipo3a4';
+  else if (tipo === 'Mais que 05 Projetos') btnId = 'btnFiltroTipoMais5';
+  else if (tipo === 'Projeto 360º') btnId = 'btnFiltroTipo360';
+  else if (tipo === 'Alterações GRANDES') btnId = 'btnFiltroTipoAltGrandes';
+  
+  const activeBtn = document.getElementById(btnId);
   if (activeBtn) activeBtn.classList.add('active');
   
   renderTabela();
@@ -708,21 +781,29 @@ function marcarVisiveisComoConferidos() {
       }
     }
 
-    // Filtros por tipo
-    let matchesTipo = true;
-    if (filtroTipoAtivo !== 'todos') {
-      if (filtroTipoAtivo === 'Splash') {
-        matchesTipo = numProj === 'Splash';
-      } else if (filtroTipoAtivo === 'Inter.') {
-        matchesTipo = numProj === 'Inter.';
-      } else if (filtroTipoAtivo === 'Conceito') {
-        matchesTipo = row.tipo === 'Conceito';
-      } else if (filtroTipoAtivo === 'Numerico') {
-        matchesTipo = /^\d+$/.test(numProj);
+    // Filtros por Loja
+    let matchesLoja = true;
+    if (filtroLojaAtivo !== 'todos') {
+      if (filtroLojaAtivo === 'Splash') {
+        matchesLoja = numProj === 'Splash';
+      } else if (filtroLojaAtivo === 'Inter.') {
+        matchesLoja = numProj === 'Inter.';
+      } else if (filtroLojaAtivo === 'iGUi') {
+        matchesLoja = /^\d+$/.test(numProj);
       }
     }
 
-    if (matchesQuery && matchesFilter && matchesPeriodo && matchesTipo) {
+    // Filtros por tipo
+    let matchesTipo = true;
+    if (filtroTipoAtivo !== 'todos') {
+      if (filtroTipoAtivo === 'Projeto 360º') {
+        matchesTipo = row.tipo === 'Projeto 360º' || row.tipo === 'Projeto 360º (3 Modificações)';
+      } else {
+        matchesTipo = row.tipo === filtroTipoAtivo;
+      }
+    }
+
+    if (matchesQuery && matchesFilter && matchesPeriodo && matchesLoja && matchesTipo) {
       if (!row.conf) {
         row.conf = true;
         count++;
@@ -851,8 +932,8 @@ async function exportarPDF() {
   const originalBoxShadow = element.style.boxShadow;
   const originalMargin = element.style.margin;
 
-  element.style.width = '720px';
-  element.style.maxWidth = '720px';
+  element.style.width = '680px';
+  element.style.maxWidth = '680px';
   element.style.boxShadow = 'none';
   element.style.margin = '0 auto';
 
@@ -951,7 +1032,13 @@ function salvarProjetoManual() {
     return str;
   }
 
-  const dataRecebimentoCurta = obterDataCurta(recebimentoVal);
+  let dataRecebimentoCurta = obterDataCurta(recebimentoVal);
+  if (!dataRecebimentoCurta) {
+    const hoje = new Date();
+    const dia = String(hoje.getDate()).padStart(2, '0');
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    dataRecebimentoCurta = `${dia}/${mes}`;
+  }
   const dataEnvioCurta = obterDataCurta(dtEnvioFinal);
 
   // Adiciona a nova linha no rowsData
