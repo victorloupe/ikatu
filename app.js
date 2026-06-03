@@ -169,6 +169,7 @@ async function exportarSessao() {
       app: 'PranchaIGUI',
       form: getFormData(),
       imgs: S.imgs,
+      origImgs: S.origImgs || {},
       acc:  S.acc,
       itens: S.itens,
       selectedImgs: S.selectedImgs,
@@ -232,17 +233,12 @@ async function importarSessao(input) {
 
     // Restaurar imagens
     if (d.imgs) {
+      if (d.origImgs) S.origImgs = JSON.parse(JSON.stringify(d.origImgs));
       Object.entries(d.imgs).forEach(([grp, arr]) => {
         arr.forEach((b64, idx) => {
           if (b64) {
             S.imgs[grp][idx] = b64;
-            const slot = document.getElementById(`sl-${grp}-${idx}`);
-            if (slot) {
-              slot.classList.add('has-img');
-              let img = slot.querySelector('img');
-              if (!img) { img = document.createElement('img'); slot.appendChild(img); }
-              img.src = imgSrc(b64);
-            }
+            restoreSlot(grp, idx, b64);
           }
         });
       });
@@ -326,6 +322,7 @@ function autoSave() {
       const payload = {
         form: getFormData(),
         imgs: S.imgs,
+        origImgs: S.origImgs || {},
         acc:  S.acc,
         itens: S.itens,
         selectedImgs: S.selectedImgs,
@@ -390,6 +387,7 @@ function restaurar() {
   // Images
   if (d.imgs) {
     Object.assign(S.imgs, d.imgs);
+    if (d.origImgs) S.origImgs = JSON.parse(JSON.stringify(d.origImgs));
     Object.entries(d.imgs).forEach(([grp, arr]) => {
       arr.forEach((b64, idx) => {
         if (b64) restoreSlot(grp, idx, b64);
@@ -437,6 +435,24 @@ function restoreSlot(grp, idx, b64) {
   let img = slot.querySelector('img');
   if (!img) { img = document.createElement('img'); slot.appendChild(img); }
   img.src = imgSrc(b64);
+  
+  // Adiciona botão de editar se não existir
+  let editBtn = slot.querySelector('.btn-edit-crop');
+  if (!editBtn) {
+    editBtn = document.createElement('button');
+    editBtn.className = 'btn-edit-crop';
+    editBtn.innerHTML = '✏️';
+    editBtn.title = 'Editar / Recortar imagem';
+    editBtn.style.cssText = 'position:absolute; bottom:6px; left:6px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:4px; width:28px; height:28px; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; z-index:5; transition:background 0.2s;';
+    editBtn.onmouseover = () => editBtn.style.background = 'var(--blue)';
+    editBtn.onmouseout = () => editBtn.style.background = 'rgba(0,0,0,0.6)';
+    editBtn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      abrirEditorComImagemExistente(grp, idx);
+    };
+    slot.appendChild(editBtn);
+  }
 }
 
 function descartarRestore() {
@@ -463,38 +479,334 @@ function ir(step) {
 // ═══════════════════════════════════════════════════
 // IMAGE LOADING
 // ═══════════════════════════════════════════════════
+// Variáveis de estado para o recorte de imagens
+let cropState = {
+  currentGrp: '',
+  currentIdx: '',
+  imgEl: null,
+  zoom: 1.0,
+  x: 0,
+  y: 0,
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  imgWidth: 0,
+  imgHeight: 0
+};
+
 function loadImg(input, grp, idx) {
   const file = input.files[0];
   if (!file) return;
 
-  // Mostra overlay para imagens grandes (> 3 MB)
   const isLarge = file.size > 3 * 1024 * 1024;
   if (isLarge) {
     document.getElementById('overlay').classList.add('show');
-    setLoad('Comprimindo imagem...');
+    setLoad('Carregando imagem...');
     document.getElementById('loadSub').textContent =
       `${(file.size / 1024 / 1024).toFixed(1)} MB — aguarde...`;
   }
 
-  compressImg(file, 1200, 0.82).then(compressed => {
+  // Lê e compacta a imagem original salvando-a diretamente no slot e no backup original
+  compressImg(file, 1200, 0.85).then(compressed => {
     const b64 = compressed.split(',')[1];
+    
+    // Inicializa origImgs caso não exista no estado S
+    if (!S.origImgs) S.origImgs = {};
+    if (!S.origImgs[grp]) S.origImgs[grp] = [];
+    
     S.imgs[grp][idx] = b64;
-    const slot = document.getElementById(`sl-${grp}-${idx}`);
-    if (slot) {
-      slot.classList.add('has-img');
-      let img = slot.querySelector('img');
-      if (!img) { img = document.createElement('img'); slot.appendChild(img); }
-      img.src = compressed;
+    S.origImgs[grp][idx] = b64; // Guarda o backup original original
+    
+    // Atualiza a visualização do slot injetando o botão de edição
+    restoreSlot(grp, idx, b64);
+    
+    if (grp === '3d') {
+      syncDeckPreview();
+      renderImgSelectors();
     }
-    // Sincronizar deck e seletores quando imagem 3D muda
-    if (grp === '3d') { syncDeckPreview(); renderImgSelectors(); }
+    
     autoSave();
+    
     if (isLarge) {
       document.getElementById('overlay').classList.remove('show');
       document.getElementById('loadSub').textContent = 'Aguarde, isto pode levar alguns segundos';
     }
+  }).catch(err => {
+    console.error(err);
+    if (isLarge) document.getElementById('overlay').classList.remove('show');
   });
 }
+
+function abrirEditorComImagemExistente(grp, idx) {
+  // Inicializa origImgs se necessário
+  if (!S.origImgs) S.origImgs = {};
+  if (!S.origImgs[grp]) S.origImgs[grp] = [];
+  
+  // Usa o backup original se ele existir para que o usuário re-edite a partir da imagem original e não do recorte anterior!
+  const b64 = S.origImgs[grp][idx] || S.imgs[grp][idx];
+  if (!b64) return;
+  
+  const dataUrl = imgSrc(b64);
+  
+  cropState.currentGrp = grp;
+  cropState.currentIdx = idx;
+  cropState.zoom = 1.0;
+  cropState.x = 0;
+  cropState.y = 0;
+
+  const cropImg = document.getElementById('cropImage');
+  cropImg.src = dataUrl;
+  
+  cropImg.onload = function() {
+    cropState.imgWidth = cropImg.naturalWidth;
+    cropState.imgHeight = cropImg.naturalHeight;
+    
+    // Ajusta zoom inicial para preencher o viewport (480x360)
+    const scaleX = 480 / cropState.imgWidth;
+    const scaleY = 360 / cropState.imgHeight;
+    const minScale = Math.max(scaleX, scaleY);
+    
+    cropState.zoom = Math.max(minScale, 1.0);
+    
+    // Limita os ranges do input slider
+    const zoomRange = document.getElementById('cropZoomRange');
+    zoomRange.min = (minScale * 0.8).toFixed(2);
+    zoomRange.max = (Math.max(minScale * 4, 3.5)).toFixed(2);
+    zoomRange.value = cropState.zoom;
+    
+    // Centraliza a imagem no viewport inicialmente
+    cropState.x = (480 - cropState.imgWidth * cropState.zoom) / 2;
+    cropState.y = (360 - cropState.imgHeight * cropState.zoom) / 2;
+    
+    applyCropTransform();
+    updateCropZoomUI();
+    
+    // Abre o modal
+    document.getElementById('cropModal').style.display = 'flex';
+  };
+}
+
+function applyCropTransform() {
+  const cropImg = document.getElementById('cropImage');
+  if (cropImg) {
+    // Definimos a origem da transformação no canto superior esquerdo para facilitar os cálculos de arrastar/redimensionar
+    cropImg.style.transformOrigin = '0 0';
+    cropImg.style.transform = `translate(${cropState.x}px, ${cropState.y}px) scale(${cropState.zoom})`;
+  }
+}
+
+function updateCropZoomUI() {
+  const zoomVal = document.getElementById('cropZoomValue');
+  if (zoomVal) {
+    zoomVal.textContent = `${Math.round(cropState.zoom * 100)}%`;
+  }
+  const zoomRange = document.getElementById('cropZoomRange');
+  if (zoomRange) {
+    zoomRange.value = cropState.zoom;
+  }
+}
+
+function changeCropZoom(delta) {
+  const zoomRange = document.getElementById('cropZoomRange');
+  if (!zoomRange) return;
+  const newZoom = Math.max(parseFloat(zoomRange.min), Math.min(parseFloat(zoomRange.max), cropState.zoom + delta));
+  
+  // Ajusta a posição x, y para fazer o zoom em relação ao centro do viewport (480x360)
+  const viewCenterX = 240;
+  const viewCenterY = 180;
+  
+  const imgCenterX = (viewCenterX - cropState.x) / cropState.zoom;
+  const imgCenterY = (viewCenterY - cropState.y) / cropState.zoom;
+  
+  cropState.zoom = newZoom;
+  cropState.x = viewCenterX - imgCenterX * cropState.zoom;
+  cropState.y = viewCenterY - imgCenterY * cropState.zoom;
+  
+  applyCropTransform();
+  updateCropZoomUI();
+}
+
+// Configura os ouvintes de eventos para arrastar e zoom do recorte
+document.addEventListener('DOMContentLoaded', () => {
+  const cropViewport = document.getElementById('cropViewport');
+  const zoomRange = document.getElementById('cropZoomRange');
+
+  if (cropViewport) {
+    // Eventos de Mouse/Touch para arrastar
+    const startDrag = (clientX, clientY) => {
+      cropState.isDragging = true;
+      cropState.startX = clientX - cropState.x;
+      cropState.startY = clientY - cropState.y;
+    };
+
+    const drag = (clientX, clientY) => {
+      if (!cropState.isDragging) return;
+      cropState.x = clientX - cropState.startX;
+      cropState.y = clientY - cropState.startY;
+      applyCropTransform();
+    };
+
+    const stopDrag = () => {
+      cropState.isDragging = false;
+    };
+
+    cropViewport.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => drag(e.clientX, e.clientY));
+    window.addEventListener('mouseup', stopDrag);
+
+    cropViewport.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        startDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    });
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1) {
+        drag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    });
+    window.addEventListener('touchend', stopDrag);
+
+    // Zoom com scroll do mouse
+    cropViewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.05 : -0.05;
+      changeCropZoom(delta);
+    }, { passive: false });
+  }
+
+  if (zoomRange) {
+    zoomRange.addEventListener('input', (e) => {
+      const targetZoom = parseFloat(e.target.value);
+      const viewCenterX = 240;
+      const viewCenterY = 180;
+      const imgCenterX = (viewCenterX - cropState.x) / cropState.zoom;
+      const imgCenterY = (viewCenterY - cropState.y) / cropState.zoom;
+      
+      cropState.zoom = targetZoom;
+      cropState.x = viewCenterX - imgCenterX * cropState.zoom;
+      cropState.y = viewCenterY - imgCenterY * cropState.zoom;
+      
+      applyCropTransform();
+      updateCropZoomUI();
+    });
+  }
+});
+
+function fecharCropModal() {
+  document.getElementById('cropModal').style.display = 'none';
+  const cropImg = document.getElementById('cropImage');
+  if (cropImg) cropImg.src = '';
+}
+
+function confirmarRecorte() {
+  document.getElementById('overlay').classList.add('show');
+  setLoad('Recortando imagem...');
+  
+  setTimeout(() => {
+    try {
+      const cropImg = document.getElementById('cropImage');
+      const canvas = document.createElement('canvas');
+      
+      // Assegura largura e altura padrão para visualização
+      canvas.width = 800;
+      canvas.height = 600;
+      const ctx = canvas.getContext('2d');
+      
+      // Fundo branco
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Fator de escala entre o tamanho do canvas de saída (800x600) e o viewport (480x360)
+      const scaleCanvas = 800 / 480;
+      
+      // Desenha a imagem baseada nos parâmetros do cropState escalados para o canvas final
+      ctx.drawImage(
+        cropImg,
+        cropState.x * scaleCanvas,
+        cropState.y * scaleCanvas,
+        cropState.imgWidth * cropState.zoom * scaleCanvas,
+        cropState.imgHeight * cropState.zoom * scaleCanvas
+      );
+      
+      // Comprime a imagem final recortada como jpeg de boa qualidade (0.85)
+      const compressed = canvas.toDataURL('image/jpeg', 0.85);
+      const b64 = compressed.split(',')[1];
+      
+      const grp = cropState.currentGrp;
+      const idx = cropState.currentIdx;
+      
+      S.imgs[grp][idx] = b64;
+      const slot = document.getElementById(`sl-${grp}-${idx}`);
+      if (slot) {
+        slot.classList.add('has-img');
+        let img = slot.querySelector('img');
+        if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+        img.src = compressed;
+      }
+      
+      if (grp === '3d') {
+        syncDeckPreview();
+        renderImgSelectors();
+      }
+      
+      autoSave();
+      fecharCropModal();
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao recortar imagem.');
+    } finally {
+      document.getElementById('overlay').classList.remove('show');
+      document.getElementById('loadSub').textContent = 'Aguarde, isto pode levar alguns segundos';
+    }
+  }, 100);
+}
+
+function usarOriginalSemRecortar() {
+  document.getElementById('overlay').classList.add('show');
+  setLoad('Processando imagem...');
+  
+  setTimeout(() => {
+    try {
+      const cropImg = document.getElementById('cropImage');
+      const grp = cropState.currentGrp;
+      const idx = cropState.currentIdx;
+      
+      // Podemos usar compressImg para assegurar um tamanho adequado sem recortar
+      // (reduzindo w/h para máx de 1200px para o IndexedDB não estourar)
+      compressImg(cropImg.src, 1200, 0.85).then(compressed => {
+        const b64 = compressed.split(',')[1];
+        S.imgs[grp][idx] = b64;
+        
+        const slot = document.getElementById(`sl-${grp}-${idx}`);
+        if (slot) {
+          slot.classList.add('has-img');
+          let img = slot.querySelector('img');
+          if (!img) { img = document.createElement('img'); slot.appendChild(img); }
+          img.src = compressed;
+        }
+        
+        if (grp === '3d') {
+          syncDeckPreview();
+          renderImgSelectors();
+        }
+        
+        autoSave();
+        fecharCropModal();
+        document.getElementById('overlay').classList.remove('show');
+        document.getElementById('loadSub').textContent = 'Aguarde, isto pode levar alguns segundos';
+      }).catch(err => {
+        console.error(err);
+        alert('Erro ao processar imagem original.');
+        document.getElementById('overlay').classList.remove('show');
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar imagem original.');
+      document.getElementById('overlay').classList.remove('show');
+    }
+  }, 100);
+}
+
 
 // ═══════════════════════════════════════════════════
 // TOGGLE DE SEÇÕES (Rev / Mob / Pai)
@@ -658,11 +970,15 @@ function compressImg(source, maxW, quality) {
 function rmImg(grp, idx, e) {
   e.stopPropagation();
   S.imgs[grp][idx] = '';
+  if (S.origImgs && S.origImgs[grp]) S.origImgs[grp][idx] = '';
+  
   const slot = document.getElementById(`sl-${grp}-${idx}`);
   if (slot) {
     slot.classList.remove('has-img');
     const img = slot.querySelector('img');
     if (img) img.remove();
+    const btnEdit = slot.querySelector('.btn-edit-crop');
+    if (btnEdit) btnEdit.remove();
     const inp = slot.querySelector('input');
     if (inp) inp.value = '';
   }
@@ -2103,6 +2419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (sessao.form)         { Object.entries(sessao.form).forEach(([k,v]) => { const el=document.getElementById(k); if(el) el.value=v||''; }); }
       if (sessao.imgs) {
         S.imgs = sessao.imgs;
+        if (sessao.origImgs) S.origImgs = sessao.origImgs;
         // Repopula os slots de upload com as imagens restauradas
         Object.entries(sessao.imgs).forEach(([grp, arr]) => {
           (arr || []).forEach((val, idx) => { if (val) restoreSlot(grp, idx, val); });

@@ -404,6 +404,47 @@
   </div>
 </div>
 
+<!-- Modal de Recorte de Imagem -->
+<div class="modal-overlay" id="cropModal" style="display:none; position:fixed; inset:0; background:rgba(18,30,42,.85); z-index:9999; align-items:center; justify-content:center;">
+  <div class="modal-box" style="background:#fff; border-radius:14px; padding:24px; width:90%; max-width:550px; box-shadow:0 8px 40px rgba(0,0,0,.25); box-sizing:border-box; display:flex; flex-direction:column; gap:16px;">
+    <div class="modal-title" style="font-size:16px; font-weight:700; color:#1a2a3a; display:flex; align-items:center; gap:8px;">
+      <span>✂️</span> Enquadrar / Recortar Foto
+    </div>
+    
+    <!-- Viewport do Recorte -->
+    <div style="display:flex; justify-content:center; align-items:center; width:100%; height:360px; background:#0b1116; border-radius:8px; border:2px solid #2c3e50; overflow:hidden;">
+      <div id="cropViewport" style="position:relative; width:480px; height:360px; background:#111; overflow:hidden; cursor:move; user-select:none;">
+        <img id="cropImage" src="" style="position:absolute; top:0; left:0; transform-origin:center; pointer-events:none; max-width:none; max-height:none;">
+        <!-- Grid de auxílio visual -->
+        <div style="position:absolute; inset:0; border:2px dashed rgba(255,255,255,0.4); pointer-events:none;"></div>
+      </div>
+    </div>
+
+    <!-- Controles -->
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700; color:var(--muted);">
+        <span>Zoom:</span>
+        <span id="cropZoomValue">100%</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button onclick="changeCropZoom(-0.1)" class="btn-filter" style="padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">-</button>
+        <input type="range" id="cropZoomRange" min="0.5" max="3.5" step="0.05" value="1" style="flex:1; cursor:pointer; height:6px;">
+        <button onclick="changeCropZoom(0.1)" class="btn-filter" style="padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;">+</button>
+      </div>
+      <div style="font-size:11px; color:var(--muted); text-align:center; margin-top:4px;">
+        💡 Arraste a imagem para reposicionar e use a barra para ajustar o zoom.
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
+      <button class="btn-modal cancel" onclick="fecharCropModal()" style="padding:10px 14px; font-weight:700; border-radius:8px; font-size:13px; white-space:nowrap;">Cancelar</button>
+      <button class="btn-modal" onclick="usarOriginalSemRecortar()" style="padding:10px 14px; font-weight:700; border-radius:8px; background:#f39c12; color:#fff; border:none; cursor:pointer; font-size:13px; white-space:nowrap;">Usar Original (Sem Recortar)</button>
+      <button class="btn-modal confirm" onclick="confirmarRecorte()" style="padding:10px 14px; font-weight:700; border-radius:8px; background:var(--blue); color:#fff; border:none; cursor:pointer; font-size:13px; white-space:nowrap;">Confirmar Enquadramento</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay">
   <div class="spin"></div>
   <div class="load-txt" id="loadTxt">Gerando PDF...</div>
