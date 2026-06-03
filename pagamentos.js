@@ -90,6 +90,72 @@ let filtroAtivo = "todos";
 let filtroTipoAtivo = "todos";
 let filtroLojaAtivo = "todos";
 
+const MESES = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
+
+function extrairMesAno(strData, defaultYear = 2026) {
+  if (!strData) return null;
+  const matchDmy = strData.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (matchDmy) {
+    return {
+      dia: parseInt(matchDmy[1]),
+      mes: parseInt(matchDmy[2]),
+      ano: parseInt(matchDmy[3])
+    };
+  }
+  const matchDm = strData.match(/^(\d{1,2})[-/](\d{1,2})$/);
+  if (matchDm) {
+    return {
+      dia: parseInt(matchDm[1]),
+      mes: parseInt(matchDm[2]),
+      ano: defaultYear
+    };
+  }
+  return null;
+}
+
+function obterDiferencaMeses(row, defaultYear = 2026) {
+  let dtRec = row.data ? row.data.toString().trim() : "";
+  let dtEnv = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+  if (!dtRec || !dtEnv) return false;
+  
+  const recParsed = extrairMesAno(dtRec, defaultYear);
+  const envParsed = extrairMesAno(dtEnv, defaultYear);
+  if (!recParsed || !envParsed) return false;
+  
+  const recMonths = recParsed.ano * 12 + recParsed.mes;
+  const envMonths = envParsed.ano * 12 + envParsed.mes;
+  
+  return envMonths > recMonths;
+}
+
+function syncFiltrosLista(mesVal, anoVal) {
+  if (mesVal) {
+    document.getElementById('pagamentoMes').value = mesVal;
+    const selectFiltroMes = document.getElementById('filtroListaMes');
+    if (selectFiltroMes) selectFiltroMes.value = mesVal;
+  }
+  if (anoVal) {
+    document.getElementById('pagamentoAno').value = anoVal;
+    const selectFiltroAno = document.getElementById('filtroListaAno');
+    if (selectFiltroAno) selectFiltroAno.value = anoVal;
+  }
+  salvarCabecalho();
+}
+
+function atualizarSelectsFiltro() {
+  const currentMonth = document.getElementById('pagamentoMes')?.value || 'Maio';
+  const currentYear = document.getElementById('pagamentoAno')?.value || '2026';
+  
+  const selectFiltroMes = document.getElementById('filtroListaMes');
+  if (selectFiltroMes) selectFiltroMes.value = currentMonth;
+  
+  const selectFiltroAno = document.getElementById('filtroListaAno');
+  if (selectFiltroAno) selectFiltroAno.value = currentYear;
+}
+
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', () => {
   carregarDados();
@@ -164,6 +230,7 @@ async function carregarDados() {
     const raw = localStorage.getItem(STORAGE_KEY);
     rowsData = raw ? JSON.parse(raw) : obterValoresIniciais();
   }
+  atualizarSelectsFiltro();
   renderTabela();
   recalcularFinanceiro();
 }
@@ -217,10 +284,13 @@ async function salvarTudoSupabase() {
 
 function salvarDados() {
   salvarTudoSupabase();
+  atualizarSelectsFiltro();
 }
 
 function salvarCabecalho() {
   salvarTudoSupabase();
+  atualizarSelectsFiltro();
+  renderTabela();
   recalcularFinanceiro();
 }
 
@@ -243,8 +313,93 @@ function renderTabela() {
   const dataInicioStr = document.getElementById('filtroDataInicio')?.value.trim() || "";
   const dataFimStr = document.getElementById('filtroDataFim')?.value.trim() || "";
   const anoSelecionado = parseInt(document.getElementById('pagamentoAno')?.value) || 2026;
+  const mesSelecionado = document.getElementById('pagamentoMes')?.value || 'Maio';
+
+  // Calcular contadores de status para o mês selecionado
+  let countTodos = 0;
+  let countConferidos = 0;
+  let countPendentes = 0;
+  let countAlterados = 0;
+
+  rowsData.forEach(row => {
+    if (!rowPertenceAoMesAno(row, mesSelecionado, anoSelecionado.toString())) return;
+
+    // Filtros por pesquisa
+    const numProj = nProjeto(row.raw);
+    const piscinaModel = piscina(row.raw);
+    const lojaFranquia = loja(row.raw);
+    
+    let matchesQuery = true;
+    if (query) {
+      matchesQuery = numProj.toLowerCase().includes(query) || 
+                     piscinaModel.toLowerCase().includes(query) || 
+                     lojaFranquia.toLowerCase().includes(query) || 
+                     (row.raw || '').toLowerCase().includes(query) ||
+                     (row.obs || '').toLowerCase().includes(query);
+    }
+    
+    // Filtros por período
+    let matchesPeriodo = true;
+    const dtInicioObj = obterObjetoData(dataInicioStr, anoSelecionado);
+    const dtFimObj = obterObjetoData(dataFimStr, anoSelecionado);
+    if (dtInicioObj || dtFimObj) {
+      const rowDtStr = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+      const rowDtObj = obterObjetoData(rowDtStr, anoSelecionado);
+      if (rowDtObj) {
+        if (dtInicioObj && rowDtObj < dtInicioObj) matchesPeriodo = false;
+        if (dtFimObj && rowDtObj > dtFimObj) matchesPeriodo = false;
+      } else {
+        matchesPeriodo = false;
+      }
+    }
+
+    // Filtros por Loja
+    let matchesLoja = true;
+    if (filtroLojaAtivo !== 'todos') {
+      if (filtroLojaAtivo === 'Splash') {
+        matchesLoja = numProj === 'Splash';
+      } else if (filtroLojaAtivo === 'Inter.') {
+        matchesLoja = numProj === 'Inter.';
+      } else if (filtroLojaAtivo === 'iGUi') {
+        matchesLoja = /^\d+$/.test(numProj);
+      }
+    }
+
+    // Filtros por tipo
+    let matchesTipo = true;
+    if (filtroTipoAtivo !== 'todos') {
+      if (filtroTipoAtivo === 'Projeto 360º') {
+        matchesTipo = row.tipo === 'Projeto 360º' || row.tipo === 'Projeto 360º (3 Modificações)';
+      } else {
+        matchesTipo = row.tipo === filtroTipoAtivo;
+      }
+    }
+
+    if (matchesQuery && matchesPeriodo && matchesLoja && matchesTipo) {
+      countTodos++;
+      if (row.conf) countConferidos++;
+      else countPendentes++;
+      if (row.alt) countAlterados++;
+    }
+  });
+
+  // Atualizar botões de filtro de status com os contadores dinâmicos
+  const btnTodos = document.getElementById('btnFiltroTodos');
+  const btnConferidos = document.getElementById('btnFiltroConferidos');
+  const btnPendentes = document.getElementById('btnFiltroPendentes');
+  const btnAlterados = document.getElementById('btnFiltroAlterados');
+
+  if (btnTodos) btnTodos.innerText = `Todos (${countTodos})`;
+  if (btnConferidos) btnConferidos.innerText = `Conferidos (${countConferidos})`;
+  if (btnPendentes) btnPendentes.innerText = `Pendentes (${countPendentes})`;
+  if (btnAlterados) btnAlterados.innerText = `Alterações (${countAlterados})`;
 
   rowsData.forEach((row, index) => {
+    // Apenas renderizar linhas pertencentes ao mês ativo (separado por data de recebimento)
+    if (!rowPertenceAoMesAno(row, mesSelecionado, anoSelecionado.toString())) {
+      return;
+    }
+
     const tr = document.createElement('tr');
     
     // Se estiver conferido, adiciona classe de destaque
@@ -340,6 +495,12 @@ function renderTabela() {
       badgeColor = '#0369a1';
     }
 
+    const warningHtml = obterDiferencaMeses(row, anoSelecionado) ? `
+      <div style="margin-top: 4px; color: #c0392b; background: #fdf2f2; border: 1px solid #f8d7da; padding: 3px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; display: flex; align-items: center; gap: 4px; max-width: 100px; line-height: 1.2;" title="Projeto recebido no mês e enviado no mês seguinte">
+        ⚠️ Enviado mês seguinte
+      </div>
+    ` : '';
+
     tr.innerHTML = `
       <td style="text-align: center; vertical-align: middle; white-space: nowrap; cursor: pointer;" onclick="toggleRowCheckboxFromCell(event, ${index})">
         <span style="font-weight: bold; color: var(--muted); margin-right: 6px; font-size: 13px; user-select: none;">${index + 1}</span>
@@ -359,6 +520,7 @@ function renderTabela() {
             </div>
             <input type="text" value="${dtEnvio || ''}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px;" oninput="atualizarCampo(${index}, 'data_envio', this.value)">
           </div>
+          ${warningHtml}
         </div>
       </td>
       <td>
@@ -851,32 +1013,30 @@ function rowPertenceAoMesAno(row, mesNome, anoStr) {
   const mesNum = mesesMap[mesNome];
   if (!mesNum) return false;
   
-  // Obtém a representação da data de envio
-  let dtEnvio = "";
-  if (row.data_envio !== undefined && row.data_envio !== null) {
-    dtEnvio = row.data_envio.toString().trim();
-  } else if (row.raw) {
-    dtEnvio = dataEnvio(row.raw);
+  // Obtém a representação da data de recebimento (row.data)
+  let dtRecebimento = "";
+  if (row.data !== undefined && row.data !== null) {
+    dtRecebimento = row.data.toString().trim();
   }
   
-  if (!dtEnvio) return false;
+  if (!dtRecebimento) return false;
   
   let rowMes = "";
   let rowAno = "";
   
-  // Tenta extrair mês e ano de dtEnvio
-  let match = dtEnvio.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  // Tenta extrair mês e ano de dtRecebimento
+  let match = dtRecebimento.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
   if (match) {
     rowMes = match[2].padStart(2, '0');
     rowAno = match[3];
   } else {
-    match = dtEnvio.match(/(\d{1,2})[-/](\d{1,2})/);
+    match = dtRecebimento.match(/(\d{1,2})[-/](\d{1,2})/);
     if (match) {
       rowMes = match[2].padStart(2, '0');
     }
   }
   
-  // Se não encontrou o ano em dtEnvio, busca um ano de 4 dígitos no raw
+  // Se não encontrou o ano em dtRecebimento, busca um ano de 4 dígitos no raw
   if (!rowAno && row.raw) {
     let yearMatch = row.raw.toString().match(/[-/](\d{4})/);
     if (yearMatch) {
@@ -894,6 +1054,7 @@ function rowPertenceAoMesAno(row, mesNome, anoStr) {
   
   return mesBate && anoBate;
 }
+
 
 async function exportarPDF() {
   const btn = document.querySelector('.btn-minimal[onclick="exportarPDF()"]');

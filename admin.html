@@ -7,11 +7,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <link rel="stylesheet" href="styles.css?v=20260527">
-<script>
-  if (window.innerWidth <= 768) {
-    window.location.href = 'pagamentos.html';
-  }
-</script>
 <style>
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
   .tab{padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
@@ -75,6 +70,9 @@
 <body class="pg-projetos">
 
 <header>
+  <button id="btnMenuToggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" class="btn-menu-toggle" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; display:none; align-items:center; justify-content:center; padding: 0 12px 0 0; outline:none;">
+    ☰
+  </button>
   <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
   <div>
     <h1>ADMIN <span>PAINEL</span></h1>
@@ -113,9 +111,10 @@
         </a>
         <a class="stp" href="chat.html" id="navChat">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H8l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z"/>
+            <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
+            <path d="M6 13a2 2 0 0 0 4 0"/>
           </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
+          <span class="stp-txt" style="font-weight:inherit;">Avisos</span>
           <span class="chat-nav-badge" id="chatNavBadge"></span>
         </a>
         <a class="stp" href="pagamentos.html">

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chat — iGUi Space</title>
+<title>Avisos — iGUi Space</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <link rel="stylesheet" href="styles.css?v=20260527">
@@ -16,7 +16,7 @@
   </button>
   <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
   <div>
-    <h1>CHAT <span>IGUI</span></h1>
+    <h1>AVISOS <span>IGUI</span></h1>
     <div class="hdr-sub">Equipe iGUi &nbsp;·&nbsp; By: Victor L.</div>
   </div>
   <div class="hdr-right" style="margin-left:auto;display:flex;align-items:center;gap:10px;">
@@ -56,9 +56,10 @@
         </a>
         <a class="stp active" href="chat.html" id="navChat">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <path d="M2 3.5A1.5 1.5 0 013.5 2h9A1.5 1.5 0 0114 3.5v6A1.5 1.5 0 0112.5 11H8l-3 3v-3H3.5A1.5 1.5 0 012 9.5v-6z"/>
+            <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
+            <path d="M6 13a2 2 0 0 0 4 0"/>
           </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
+          <span class="stp-txt" style="font-weight:inherit;">Avisos</span>
           <span class="chat-nav-badge" id="chatNavBadge"></span>
         </a>
         <a class="stp" href="pagamentos.html">
@@ -126,8 +127,8 @@
   <div class="main-content" style="padding:0;overflow:hidden;">
     <div class="chat-wrap">
 
-      <!-- Coluna esquerda: lista de canais/DMs -->
-      <div class="chat-left">
+      <!-- Coluna esquerda: lista de canais/DMs (Ocultada) -->
+      <div class="chat-left" style="display:none !important;">
         <div class="chat-section-label">CANAIS</div>
         <div id="channelList">
           <button class="chat-ch-item" id="btnGeral" onclick="selecionarCanal(null, 'public', '#geral')">
@@ -154,10 +155,10 @@
         </div>
 
         <!-- Banner de mensagem fixada -->
-        <div class="pin-banner" id="pinBanner" style="display:none">
+        <div class="pin-banner" id="pinBanner" style="display:none; cursor:pointer;" onclick="irParaMensagemFixada(event)">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 1.5l5 5-3 1-4 4-1 3-3-3 4-4 1-3 1-3z"/><path d="M2 14l3.5-3.5"/></svg>
-          <span id="pinBannerText"></span>
-          <button class="pin-banner-close" id="btnDesafixar" onclick="desafixarMsg()">✕</button>
+          <span id="pinBannerText" style="flex:1; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;"></span>
+          <button class="pin-banner-close" id="btnDesafixar" onclick="desafixarMsgEvent(event)" style="position:relative; z-index:10;">✕</button>
         </div>
 
         <!-- Mensagens -->

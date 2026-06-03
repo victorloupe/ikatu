@@ -168,9 +168,9 @@ async function selecionarCanal(channelId, type, name) {
   }
 
   // Update header
-  const title = type === 'public' ? `<span style="color:var(--muted)">#</span> ${escHtml(name.replace('#',''))}` : escHtml(name);
+  const title = type === 'public' ? `📢 Mural de Avisos` : escHtml(name);
   document.getElementById('chatAreaTitle').innerHTML = title;
-  document.getElementById('chatAreaSub').textContent = type === 'public' ? 'Canal público da equipe' : 'Mensagem direta';
+  document.getElementById('chatAreaSub').textContent = type === 'public' ? 'Avisos e comunicados importantes' : 'Mensagem direta';
 
   // Clear messages
   document.getElementById('msgList').innerHTML = '';
@@ -351,11 +351,17 @@ function criarBolha(msg) {
 
   const hora = new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
+  // Check if sender is admin to highlight announcements
+  const senderUser = usuarios.find(u => u.id === msg.sender_id);
+  const senderIsAdmin = senderUser?.role === 'admin';
+  const adminBadge = senderIsAdmin ? ' <span class="badge-role-admin" style="background:#edf7fd; color:var(--blue); font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px; border:1px solid rgba(0,174,239,.3); vertical-align:middle; text-transform:uppercase; display:inline-block;">Admin</span>' : '';
+
   // Bubble classes
   let bubbleClass = `msg-bubble ${isMine ? 'mine' : 'other'}`;
   if (msg.deleted) bubbleClass += ' deleted';
   else if (msg.status === 'scheduled') bubbleClass += ' scheduled';
   if (msg.pinned && !msg.deleted) bubbleClass += ' pinned-msg';
+  if (senderIsAdmin && !msg.deleted) bubbleClass += ' admin-bubble';
 
   // Content
   let content = msg.deleted
@@ -394,7 +400,7 @@ function criarBolha(msg) {
   }
 
   wrap.innerHTML = `
-    ${!isMine ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Usuário')}</div>` : ''}
+    ${!isMine ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Usuário')}${adminBadge}</div>` : (senderIsAdmin ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Você')}${adminBadge}</div>` : '')}
     <div class="${bubbleClass}" style="position:relative;">
       ${actions}
       ${content}
@@ -509,6 +515,29 @@ async function desafixarMsg(msgId) {
     await sbDesafixarMensagem(id);
   } catch (e) {
     showToast('Erro ao desafixar: ' + e.message, 'err');
+  }
+}
+
+function desafixarMsgEvent(event) {
+  if (event) event.stopPropagation();
+  desafixarMsg();
+}
+
+function irParaMensagemFixada(event) {
+  if (pinnedMsg) {
+    const el = document.getElementById('msg-' + pinnedMsg.id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const bubble = el.querySelector('.msg-bubble');
+      if (bubble) {
+        bubble.classList.add('highlight-announcement');
+        setTimeout(() => {
+          bubble.classList.remove('highlight-announcement');
+        }, 2000);
+      }
+    } else {
+      showToast('Aviso fixado antigo ou fora do limite visível.', 'info');
+    }
   }
 }
 

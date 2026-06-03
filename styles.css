@@ -814,6 +814,32 @@ body.pg-projetos { background: #e2eaf3; }
   border-left: 3px solid #f5b731 !important;
 }
 
+.msg-bubble.admin-bubble {
+  border-left: 3px solid var(--blue) !important;
+  background: #f4fbfe !important;
+  color: #1a2a3a !important;
+}
+.msg-bubble.admin-bubble::after {
+  border-top-color: #f4fbfe !important;
+}
+.msg-bubble.admin-bubble.mine {
+  border-left: none !important;
+  border-right: 3px solid var(--blue) !important;
+  background: #f4fbfe !important;
+  color: #1a2a3a !important;
+}
+.msg-bubble.admin-bubble.mine::after {
+  border-top-color: #f4fbfe !important;
+}
+
+.msg-bubble.highlight-announcement {
+  animation: highlightMessage 2s ease;
+}
+@keyframes highlightMessage {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); background-color: rgba(0, 174, 239, 0.2) !important; box-shadow: 0 0 15px rgba(0, 174, 239, 0.35) !important; }
+}
+
 /* ── Meta ─────────────────────────────── */
 .msg-meta {
   font-size: 10px;
@@ -1044,6 +1070,9 @@ body.pg-projetos { background: #e2eaf3; }
     padding: 20px 12px 24px !important;
     border-right: 1.5px solid var(--border);
     box-shadow: 4px 0 15px rgba(0,0,0,0.15);
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   /* Exibe textos, etiquetas e card de usuário ao abrir no mobile */
@@ -1066,7 +1095,6 @@ body.pg-projetos { background: #e2eaf3; }
   .sidebar nav.steps a[href*="index"],
   .sidebar nav.steps a[href*="projetos"],
   .sidebar nav.steps a[href*="links"],
-  .sidebar nav.steps a[href*="admin"],
   .sidebar nav.steps a[href="/"] {
     display: none !important;
   }

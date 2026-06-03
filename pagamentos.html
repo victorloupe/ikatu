@@ -663,9 +663,33 @@
             <h2 style="font-family: 'Inter Tight', sans-serif; font-size: 18px; font-weight: 700;">Lista de Projetos Enviados</h2>
             <div style="display: flex; gap: 8px;">
               <button class="btn-action success" onclick="adicionarLinha()">+ Add Linha</button>
-              <button class="btn-action danger" onclick="limparTabela()">Limpar Tudo</button>
             </div>
           </div>
+          <!-- Filtro de Mês e Ano para a Lista -->
+          <div id="filtroMesAnoContainer" class="btn-print-hide" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: nowrap;">
+            <span style="font-weight: 700; color: var(--muted); font-size: 13px; white-space: nowrap; margin-right: 4px;">Período da Lista:</span>
+            <select id="filtroListaMes" class="month-select" style="padding: 6px 10px; font-size: 12px; font-weight: 700; width: 110px; min-width: 110px; box-sizing: border-box;" onchange="syncFiltrosLista(this.value, null)">
+              <option value="Janeiro">Janeiro</option>
+              <option value="Fevereiro">Fevereiro</option>
+              <option value="Março">Março</option>
+              <option value="Abril">Abril</option>
+              <option value="Maio" selected>Maio</option>
+              <option value="Junho">Junho</option>
+              <option value="Julho">Julho</option>
+              <option value="Agosto">Agosto</option>
+              <option value="Setembro">Setembro</option>
+              <option value="Outubro">Outubro</option>
+              <option value="Novembro">Novembro</option>
+              <option value="Dezembro">Dezembro</option>
+            </select>
+            <select id="filtroListaAno" class="month-select" style="padding: 6px 10px; font-size: 12px; font-weight: 700; width: 80px; min-width: 80px; box-sizing: border-box;" onchange="syncFiltrosLista(null, this.value)">
+              <option value="2025">2025</option>
+              <option value="2026" selected>2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+
           <!-- Filtros e Pesquisa -->
           <div class="search-filter-container btn-print-hide" style="display: flex; gap: 12px; margin-bottom: 16px; align-items: center; background: #f8fafc; border: 1.5px solid var(--border); border-radius: 8px; padding: 12px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 200px; position: relative;">
@@ -686,12 +710,17 @@
             <div style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
               
               <!-- Status Filter -->
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                <span style="font-weight: 700; color: var(--muted); margin-right: 4px; width: 50px;">Status:</span>
-                <button id="btnFiltroTodos" class="btn-filter active" onclick="definirFiltro('todos')">Todos</button>
-                <button id="btnFiltroConferidos" class="btn-filter" onclick="definirFiltro('conferidos')">Conferidos</button>
-                <button id="btnFiltroPendentes" class="btn-filter" onclick="definirFiltro('pendentes')">Pendentes</button>
-                <button id="btnFiltroAlterados" class="btn-filter" onclick="definirFiltro('alterados')">Alterações</button>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                  <span style="font-weight: 700; color: var(--muted); margin-right: 4px; width: 50px;">Status:</span>
+                  <button id="btnFiltroTodos" class="btn-filter active" onclick="definirFiltro('todos')">Todos</button>
+                  <button id="btnFiltroConferidos" class="btn-filter" onclick="definirFiltro('conferidos')">Conferidos</button>
+                  <button id="btnFiltroPendentes" class="btn-filter" onclick="definirFiltro('pendentes')">Pendentes</button>
+                  <button id="btnFiltroAlterados" class="btn-filter" onclick="definirFiltro('alterados')">Alterações</button>
+                </div>
+                <button class="btn-action success" onclick="marcarVisiveisComoConferidos()" style="padding: 6px 12px; font-size: 11px; margin-left: auto; white-space: nowrap;">
+                  ✓ Marcar Filtrados
+                </button>
               </div>
               
               <!-- Loja Filter -->
@@ -702,7 +731,7 @@
                 <button id="btnFiltroLojaInter" class="btn-filter" onclick="definirFiltroLoja('Inter.')">Inter.</button>
                 <button id="btnFiltroLojaIgui" class="btn-filter" onclick="definirFiltroLoja('iGUi')">iGUi</button>
               </div>
-
+ 
               <!-- Tipo Filter -->
               <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                 <span style="font-weight: 700; color: var(--muted); margin-right: 4px; width: 50px;">Tipo:</span>
@@ -714,13 +743,6 @@
                 <button id="btnFiltroTipoConceito" class="btn-filter" onclick="definirFiltroTipo('Conceito')">Conceito</button>
                 <button id="btnFiltroTipoAltGrandes" class="btn-filter" onclick="definirFiltroTipo('Alterações GRANDES')">Alt. Grandes</button>
               </div>
-
-            </div>
-
-            <div style="margin-left: auto;">
-              <button class="btn-action success" onclick="marcarVisiveisComoConferidos()" style="padding: 6px 12px; font-size: 11px;">
-                ✓ Marcar Filtrados
-              </button>
             </div>
           </div>
           

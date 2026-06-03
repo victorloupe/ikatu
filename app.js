@@ -1325,7 +1325,6 @@ function validarCampos() {
   f.cliente  ? add('✅','ok',`Cliente: ${f.cliente}`)      : add('❌','err','Cliente não preenchido');
   f.id_projeto? add('✅','ok',`ID: ${f.id_projeto}`)        : add('❌','err','ID do Projeto não preenchido');
   f.loja     ? add('✅','ok',`Loja: ${f.loja}`)            : add('⚠️','warn','Loja/Franquia não preenchida');
-  f.cidade   ? add('✅','ok',`Cidade: ${f.cidade}`)        : add('⚠️','warn','Cidade não preenchida');
   f.modelo   ? add('✅','ok',`Modelo: ${f.modelo}`)        : add('❌','err','Modelo da piscina não preenchido');
 
   // Imagens 3D
@@ -1647,12 +1646,12 @@ async function _executarGerarPDF() {
       // Faixa cinza escuro no topo do rodapé
       fill(C.accent); doc.rect(0,fy,PW,1.5,'F');
 
-      tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      // SEM aspas na loja
-      const lojaStr = (includeLoja && form.loja) ? ' ' + (form.loja||'') : '';
+      tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      // SEM aspas na loja, sempre em maiúsculas no PDF
+      const lojaStr = (includeLoja && form.loja) ? ' ' + (form.loja||'').toUpperCase() : '';
       doc.text('PROJETO 3D - IGUI CONCEITO'+lojaStr, 10, fy+6.5);
 
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); tc(C.muted);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); tc(C.muted);
       doc.text('CLIENTE:  '+(form.cliente||''),   10, fy+11.5);
       doc.text('ID:  '+(form.id_projeto||''),      10, fy+15.5);
       const LW=20, LH=+(20/1.4638).toFixed(1);
@@ -1707,13 +1706,13 @@ async function _executarGerarPDF() {
       stroke(C.line); doc.setLineWidth(0.3); doc.rect(cx,0,HW,IMG2_H,'S');
       if(deckImgs[i]) await ins(deckImgs[i],cx,0,HW,IMG2_H);
     }
-    lineV(HW,0,IMG2_H,C.line,0.3);
+    lineV(HW,0,IMG2_H,C.accent,0.6);
 
     // Label MEDIDAS DECK (cinza escuro)
     const LBX=HW+1.5, LBY=IMG2_H-10, LBW=34, LBH=7.5;
     fill(C.dark); doc.rect(LBX,LBY,LBW,LBH,'F');
     fill(C.accent); doc.rect(LBX,LBY,3,LBH,'F');
-    tc(C.white); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+    tc(C.white); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
     doc.text('MEDIDAS DECK', LBX+5, LBY+5);
 
     // Fundo branco semitransparente aviso
@@ -1723,19 +1722,19 @@ async function _executarGerarPDF() {
     doc.setFillColor(255,255,255);
     doc.rect(avX,avY,avW,avH,'F');
     doc.restoreGraphicsState();
-    tc(C.text); doc.setFont('helvetica','normal'); doc.setFontSize(6);
+    tc(C.text); doc.setFont('helvetica','normal'); doc.setFontSize(7);
     doc.text('MEDIDAS INDICADAS SAO REFERENCIAIS, BASEADAS NAS INFORMACOES FORNECIDAS.', avX+2, LBY+3);
     doc.text('RECOMENDA-SE A CONFERENCIA DAS MEDIDAS NO LOCAL ANTES DA EXECUCAO/INSTALACAO.', avX+2, LBY+7);
 
     const DY=IMG2_H;
-    lineH(DY,0,PW,C.line,0.4);
+    lineH(DY,0,PW,C.accent,0.6);
 
     const M=8;
-    tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(10);
+    tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(11.5);
     doc.text('DESCRITIVO PISCINAS', M, DY+11);
 
     // MODELO
-    doc.setFontSize(8); tc(C.muted); doc.setFont('helvetica','normal');
+    doc.setFontSize(9); tc(C.muted); doc.setFont('helvetica','normal');
     doc.text('MODELO:', M, DY+20);
     const mW=doc.getTextWidth('MODELO:')+3;
     doc.setFont('helvetica','bold'); tc(C.text);
@@ -1746,19 +1745,19 @@ async function _executarGerarPDF() {
 
     // CERAMICA
     const C2X=SEP_X+6;
-    tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
     doc.text('CERAMICA:', C2X, DY+11);
     const cLW=doc.getTextWidth('CERAMICA:')+3;
     // Nome em cinza escuro (era azul)
-    tc(C.accent); doc.setFontSize(9);
+    tc(C.accent); doc.setFontSize(10.5);
     if(form.ceramica_nome) doc.text((form.ceramica_nome||''), C2X+cLW, DY+11);
 
     if(form.ceramica_marca){
-      tc(C.muted); doc.setFont('helvetica','normal'); doc.setFontSize(7);
+      tc(C.muted); doc.setFont('helvetica','normal'); doc.setFontSize(8);
       doc.text((form.ceramica_marca||''), C2X+cLW, DY+17);
     }
 
-    tc(C.muted); doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+    tc(C.muted); doc.setFont('helvetica','normal'); doc.setFontSize(8.5);
     doc.text('TAMANHO REAL:', C2X+3, DY+24);
     tc(C.text); doc.setFont('helvetica','bold');
     doc.text((form.ceramica_tamanho||''), C2X+41, DY+24);
@@ -1777,7 +1776,7 @@ async function _executarGerarPDF() {
     // ACESSÓRIOS — faixa cinza escuro
     const ASPY=DY+38;
     fill(C.accent); doc.rect(M,ASPY,PW-2*M,8,'F');
-    tc(C.white); doc.setFont('helvetica','bold'); doc.setFontSize(8.5);
+    tc(C.white); doc.setFont('helvetica','bold'); doc.setFontSize(9.5);
     doc.text('ACESSORIOS E DISPOSITIVOS', M+4, ASPY+5.8);
 
     // Grid acessórios 3×2
@@ -1795,10 +1794,10 @@ async function _executarGerarPDF() {
       doc.setFillColor(...rgb(a.on ? C.accent : '#BBBBBB'));
       doc.circle(ax+2.5, ay+1.5, 2, 'F');
 
-      tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(8);
+      tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(9);
       doc.text(label, ax+7, ay+3);
       if(a.modelo){
-        doc.setFont('helvetica','normal'); tc(C.muted); doc.setFontSize(7);
+        doc.setFont('helvetica','normal'); tc(C.muted); doc.setFontSize(8);
         doc.text(a.modelo, ax+7, ay+9);
       }
       if(a.on && a.img){
@@ -1847,12 +1846,12 @@ async function _executarGerarPDF() {
         const secImg = (selIdx !== null && selIdx !== undefined) ? S.imgs['3d'][selIdx] : null;
         if(secImg) await ins(secImg, cx, 0, HW, IH);
       }
-      lineV(HW,0,IH,C.line,0.3);
-      lineH(IH,0,PW,C.line,0.4);
+      lineV(HW,0,IH,C.accent,0.6);
+      lineH(IH,0,PW,C.accent,0.6);
 
       // Faixa cinza escuro com título
       fill(C.accent); doc.rect(0,IH,PW,TITLE_H,'F');
-      tc(C.white); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+      tc(C.white); doc.setFont('helvetica','bold'); doc.setFontSize(10);
       doc.text(sec.title, M, IH+6.2);
 
       if(items.length===0){
@@ -1902,11 +1901,11 @@ async function _executarGerarPDF() {
         if(item.imagem) await insFit(item.imagem, ix, iy, IMG_W, IMG_H);
         else { stroke(C.line); doc.setLineWidth(0.2); doc.rect(ix,iy,IMG_W,IMG_H,'S'); }
 
-        // Texto à direita — fonte SEMPRE 8pt, mesma em todas as linhas
+        // Texto à direita — fonte SEMPRE 9pt, mesma em todas as linhas
         const TX  = ix+IMG_W+3;
         const TW  = cw-IMG_W-PAD*2-3;
-        const FONT_SZ = 8;
-        const LINE_H  = 4.8; // espaçamento entre linhas
+        const FONT_SZ = 9;
+        const LINE_H  = 5.2; // espaçamento entre linhas
 
         // Quebrar o nome em linhas mantendo sempre o mesmo tamanho de fonte
         tc(C.text); doc.setFont('helvetica','bold'); doc.setFontSize(FONT_SZ);
@@ -1941,7 +1940,7 @@ async function _executarGerarPDF() {
         // Descrição (só para Rev e Mob)
         if(!isPai && item.descricao){
           const descY = TY1 + lines.length * (LINE_H + 0.5) + 1;
-          doc.setFont('helvetica','normal'); tc(C.muted); doc.setFontSize(7);
+          doc.setFont('helvetica','normal'); tc(C.muted); doc.setFontSize(8);
           const desc = U(item.descricao||'');
           doc.getTextWidth(desc) <= TW
             ? doc.text(desc, TX, descY)
