@@ -63,6 +63,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Render DM list e subscrições de notificação
   renderDMList();
   subscribeAllDMsNotify();
+  
+  // Escuta novas mensagens no canal público geral para atualizar o alerta do menu
+  const publicChannel = canais.find(c => c.type === 'public' && c.name === '#geral');
+  if (publicChannel) {
+    sbEscutarNovaMensagemDM(publicChannel.id, (payload) => {
+      if (payload.new?.sender_id === meId) return; // Própria mensagem
+      if (payload.new?.status !== 'sent') return;
+      if (canalAtual?.id === publicChannel.id) return; // Se já está vendo, ignora
+      atualizarNavBadge();
+    });
+  }
+  
   atualizarNavBadge();
 
   // Find the #geral channel and select it
@@ -111,10 +123,24 @@ function marcarDMComoLido(userId, channelId) {
   atualizarNavBadge();
 }
 
-function atualizarNavBadge() {
-  const hasAny = Object.values(dmUnread).some(v => v.hasUnread);
+async function atualizarNavBadge() {
+  const hasAnyDM = Object.values(dmUnread).some(v => v.hasUnread);
+  let hasPublicUnread = false;
+  
+  try {
+    // Se o canal atual não for o canal público geral, verifica se há novas mensagens nele
+    const isViewingGeral = canalAtual && canalAtual.type === 'public';
+    if (!isViewingGeral) {
+      hasPublicUnread = await sbVerificarMsgNaoLidas();
+    }
+  } catch (e) {
+    console.warn('Erro ao verificar mensagens não lidas no geral:', e);
+  }
+
   const badge = document.getElementById('chatNavBadge');
-  if (badge) badge.style.display = hasAny ? 'block' : 'none';
+  if (badge) {
+    badge.style.display = (hasAnyDM || hasPublicUnread) ? 'block' : 'none';
+  }
 }
 
 function subscribeAllDMsNotify() {
@@ -363,10 +389,13 @@ function criarBolha(msg) {
   if (msg.pinned && !msg.deleted) bubbleClass += ' pinned-msg';
   if (senderIsAdmin && !msg.deleted) bubbleClass += ' admin-bubble';
 
-  // Content
-  let content = msg.deleted
-    ? '<em>mensagem apagada</em>'
-    : escHtml(msg.content);
+  // Format content with bold, italic, underline, lists and break lines safely
+  let content = '';
+  if (msg.deleted) {
+    content = '<em>mensagem apagada</em>';
+  } else {
+    content = formatarMensagemHTML(msg.content);
+  }
 
   // Meta badges
   let metaExtra = '';
@@ -391,6 +420,9 @@ function criarBolha(msg) {
         btns += `<button class="msg-action-btn" onclick="msgFixarBtn('${msg.id}')">📌 Fixar</button>`;
       }
     }
+    if (isMine || isAdmin) {
+      btns += `<button class="msg-action-btn" onclick="abrirModalEditar('${msg.id}')">✏️ Editar</button>`;
+    }
     if (canDelete) {
       btns += `<button class="msg-action-btn danger" onclick="abrirModalDelete('${msg.id}')">🗑</button>`;
     }
@@ -399,17 +431,7 @@ function criarBolha(msg) {
     }
   }
 
-  wrap.innerHTML = `
-    ${!isMine ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Usuário')}${adminBadge}</div>` : (senderIsAdmin ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Você')}${adminBadge}</div>` : '')}
-    <div class="${bubbleClass}" style="position:relative;">
-      ${actions}
-      ${content}
-    </div>
-    <div class="msg-meta">
-      ${hora}
-      ${metaExtra}
-    </div>
-  `;
+  wrap.innerHTML = `${!isMine ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Usuário')}${adminBadge}</div>` : (senderIsAdmin ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Você')}${adminBadge}</div>` : '')}<div class="${bubbleClass}" style="position:relative;">${actions}${content}</div><div class="msg-meta">${hora}${metaExtra}</div>`;
 
   return wrap;
 }
@@ -427,7 +449,22 @@ function atualizarPinBanner() {
   }
 }
 
+// Helper para formatar o texto substituindo negrito, itálico, sublinhado e quebras de linha
+function formatarMensagemHTML(rawText) {
+  let formatted = escHtml(rawText);
+  // Negrito: **texto**
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Itálico: _texto_
+  formatted = formatted.replace(/_(.*?)_/g, '<em>$1</em>');
+  // Sublinhado: ~texto~
+  formatted = formatted.replace(/~(.*?)~/g, '<u>$1</u>');
+  // Quebras de linha
+  formatted = formatted.replace(/\n/g, '<br>');
+  return formatted;
+}
+
 // ── Send message ───────────────────────────────────────────────────────────
+
 async function enviarMensagem() {
   const input = document.getElementById('chatInput');
   const content = input.value.trim();
@@ -438,10 +475,10 @@ async function enviarMensagem() {
 
   try {
     await sbEnviarMensagem(canalAtual.id, content);
-    // Realtime will deliver it; no need to manually add
   } catch (e) {
     showToast('Erro ao enviar: ' + e.message, 'err');
     input.value = content;
+    autoResizeInput(input);
   }
 }
 
@@ -484,6 +521,49 @@ async function confirmarDeleteMsg() {
   }
   mensagemParaDeletar = null;
 }
+
+// ── Edit message ───────────────────────────────────────────────────────────
+let mensagemParaEditar = null;
+
+function abrirModalEditar(msgId) {
+  mensagemParaEditar = msgId;
+  const msg = mensagens.find(m => m.id === msgId);
+  if (!msg) return;
+  
+  document.getElementById('editMsgContent').value = msg.content || '';
+  document.getElementById('editMsgModal').classList.add('show');
+}
+
+async function confirmarEditarMsg() {
+  if (!mensagemParaEditar) return;
+  const content = document.getElementById('editMsgContent').value.trim();
+  if (!content) {
+    showToast('A mensagem não pode ficar vazia', 'err');
+    return;
+  }
+  
+  fecharModais();
+  try {
+    await sbEditarMensagem(mensagemParaEditar, content);
+    showToast('Mensagem atualizada!', 'ok');
+    
+    // Atualizar UI localmente também se necessário (a assinatura do realtime fará o mesmo)
+    const msg = mensagens.find(m => m.id === mensagemParaEditar);
+    if (msg) {
+      msg.content = content;
+      // Re-renderizar mensagem individual
+      const oldWrap = document.getElementById('msg-' + mensagemParaEditar);
+      if (oldWrap) {
+        const newWrap = criarBolha(msg);
+        oldWrap.replaceWith(newWrap);
+      }
+    }
+  } catch (e) {
+    showToast('Erro ao editar: ' + e.message, 'err');
+  }
+  mensagemParaEditar = null;
+}
+
 
 // ── Pin message ────────────────────────────────────────────────────────────
 function msgFixarBtn(msgId) {
@@ -577,6 +657,47 @@ function scrollToBottom() {
 function autoResizeInput(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function formatarInputText(type) {
+  const input = document.getElementById('chatInput');
+  if (!input) return;
+
+  const start = input.selectionStart;
+  const end = input.selectionEnd;
+  const text = input.value;
+  const selectedText = text.substring(start, end);
+
+  let replacement = '';
+  switch(type) {
+    case 'bold':
+      replacement = `**${selectedText}**`;
+      break;
+    case 'italic':
+      replacement = `_${selectedText}_`;
+      break;
+    case 'underline':
+      replacement = `~${selectedText}~`;
+      break;
+    case 'linebreak':
+      replacement = selectedText ? `${selectedText}\n` : '\n';
+      break;
+    case 'bullet':
+      replacement = selectedText ? `• ${selectedText}` : '• ';
+      break;
+    case 'paragraph':
+      replacement = selectedText ? `${selectedText}\n\n` : '\n\n';
+      break;
+  }
+
+  input.value = text.substring(0, start) + replacement + text.substring(end);
+  input.focus();
+  
+  // Reposiciona o cursor
+  const newCursorPos = start + replacement.length;
+  input.setSelectionRange(newCursorPos, newCursorPos);
+  
+  autoResizeInput(input);
 }
 
 function fecharModais() {

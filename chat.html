@@ -169,6 +169,15 @@
 
         <!-- Input -->
         <div class="chat-input-wrap">
+          <!-- Barra de ferramentas de formatação -->
+          <div class="chat-format-toolbar" style="display:flex; gap:8px; margin-bottom:8px; align-items:center; flex-wrap:wrap;">
+            <button onclick="formatarInputText('bold')" style="background:#fff; border:1.5px solid var(--border); border-radius:6px; padding:4px 10px; font-weight:bold; font-size:12px; cursor:pointer; color:var(--text); transition:all 0.15s;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" title="Negrito">N</button>
+            <button onclick="formatarInputText('italic')" style="background:#fff; border:1.5px solid var(--border); border-radius:6px; padding:4px 10px; font-style:italic; font-size:12px; cursor:pointer; color:var(--text); transition:all 0.15s;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" title="Itálico">I</button>
+            <button onclick="formatarInputText('underline')" style="background:#fff; border:1.5px solid var(--border); border-radius:6px; padding:4px 10px; text-decoration:underline; font-size:12px; cursor:pointer; color:var(--text); transition:all 0.15s;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" title="Sublinhado">S</button>
+            <button onclick="formatarInputText('linebreak')" style="background:#fff; border:1.5px solid var(--border); border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer; color:var(--muted); transition:all 0.15s; font-family:'Inter',sans-serif;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" title="Quebra de linha">↵ Linha</button>
+            <button onclick="formatarInputText('bullet')" style="background:#fff; border:1.5px solid var(--border); border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer; color:var(--muted); transition:all 0.15s; font-family:'Inter',sans-serif;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" title="Tópico">• Tópico</button>
+            <button onclick="formatarInputText('paragraph')" style="background:#fff; border:1.5px solid var(--border); border-radius:6px; padding:4px 8px; font-size:11px; cursor:pointer; color:var(--muted); transition:all 0.15s; font-family:'Inter',sans-serif;" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'" title="Novo parágrafo">¶ Parágrafo</button>
+          </div>
           <div class="chat-input-bar">
             <textarea
               id="chatInput"
@@ -243,6 +252,29 @@
     </div>
   </div>
 </div>
+
+<!-- Modal: editar mensagem -->
+<div class="modal-overlay" id="editMsgModal">
+  <div class="modal-box" style="max-width:440px;">
+    <div class="modal-title">Editar Mensagem</div>
+    <div class="modal-field" style="margin-bottom:16px;">
+      <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Conteúdo</label>
+      <textarea id="editMsgContent" rows="4" placeholder="Conteúdo..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+      <div style="font-size:11px; color:var(--muted); margin-top:6px;">
+        Dicas de formatação:<br>
+        • **negrito** → <strong>negrito</strong><br>
+        • _itálico_ → <em>itálico</em><br>
+        • ~sublinhado~ → <u>sublinhado</u>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
+      <button class="btn-modal confirm" onclick="confirmarEditarMsg()">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+
 
 <script src="chat.js"></script>
 </body>

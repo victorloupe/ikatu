@@ -47,42 +47,103 @@ function sbInjetarModalSenha() {
   const div = document.createElement('div');
   div.innerHTML = `
 <div class="modal-overlay" id="modalSenhaGlobal" style="display:none; position:fixed; inset:0; background:rgba(18,30,42,.7); z-index:9999; align-items:center; justify-content:center;">
-  <div class="modal-box" style="background:#fff; border-radius:14px; padding:28px; width:100%; max-width:380px; box-shadow:0 8px 40px rgba(0,0,0,.15); display: flex; flex-direction: column; gap: 14px;">
-    <div class="modal-title" style="font-size:16px; font-weight:700; color:#1a2a3a; margin-bottom:6px; display: flex; align-items: center; gap: 8px;">
-      <span>⚙️</span> Alterar Minha Senha
-    </div>
-    <p style="font-size:12px; color:#6a8090; margin:0 0 10px;">Digite e confirme sua nova senha de acesso.</p>
+  <div class="modal-box" style="background:#fff; border-radius:14px; padding:24px; width:100%; max-width:420px; box-shadow:0 8px 40px rgba(0,0,0,.15); display: flex; flex-direction: column; gap: 14px; box-sizing: border-box;">
     
-    <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
-      <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Nova Senha</label>
-      <input type="password" id="inputNovaSenha" placeholder="Mínimo 6 caracteres" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+    <!-- Abas do Modal -->
+    <div style="display:flex; border-bottom:1.5px solid #edf2f6; gap:16px; margin-bottom:4px;">
+      <button class="settings-tab-btn active" id="tabBtnSenha" onclick="abrirAbaModal('senha')" style="background:none; border:none; border-bottom:3px solid var(--blue); padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; color:var(--blue); cursor:pointer; transition:all 0.15s; outline:none;">⚙️ Senha</button>
+      <button class="settings-tab-btn" id="tabBtnSugestao" onclick="abrirAbaModal('sugestao')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none;">💡 Sugerir Melhorias</button>
     </div>
-    
-    <div class="modal-field" style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">
-      <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Confirmar Nova Senha</label>
-      <input type="password" id="inputConfirmarNovaSenha" placeholder="Repita a nova senha" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+
+    <!-- Aba 1: Senha -->
+    <div id="abaConfigSenha" style="display:flex; flex-direction:column; gap:14px;">
+      <p style="font-size:12px; color:#6a8090; margin:0 0 4px;">Digite e confirme sua nova senha de acesso.</p>
+      
+      <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
+        <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Nova Senha</label>
+        <input type="password" id="inputNovaSenha" placeholder="Mínimo 6 caracteres" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+      </div>
+      
+      <div class="modal-field" style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">
+        <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Confirmar Nova Senha</label>
+        <input type="password" id="inputConfirmarNovaSenha" placeholder="Repita a nova senha" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+      </div>
+      
+      <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+        <button class="btn-modal cancel" onclick="fecharModalSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#f0f4f8; color:#6a8090;">Cancelar</button>
+        <button class="btn-modal confirm" onclick="confirmarAlterarSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:var(--blue); color:#fff;">Alterar Senha</button>
+      </div>
     </div>
-    
-    <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
-      <button class="btn-modal cancel" onclick="fecharModalSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#f0f4f8; color:#6a8090;">Cancelar</button>
-      <button class="btn-modal confirm" onclick="confirmarAlterarSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#1a2a3a; color:#fff;">Alterar Senha</button>
+
+    <!-- Aba 2: Sugestão de Melhorias -->
+    <div id="abaConfigSugestao" style="display:none; flex-direction:column; gap:14px;">
+      <p style="font-size:12px; color:#6a8090; margin:0 0 4px;">Envie sua opinião ou sugestões de melhorias para o sistema iGUi Space.</p>
+      
+      <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
+        <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Minha Sugestão</label>
+        <textarea id="inputSugestaoTexto" rows="5" placeholder="Descreva sua sugestão ou ideia de melhoria..." style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
+      </div>
+      
+      <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+        <button class="btn-modal cancel" onclick="fecharModalSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#f0f4f8; color:#6a8090;">Cancelar</button>
+        <button class="btn-modal confirm" onclick="confirmarEnviarSugestao()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:var(--blue); color:#fff;">Enviar Sugestão</button>
+      </div>
     </div>
+
   </div>
 </div>`;
   
   const modal = div.firstElementChild;
   document.body.appendChild(modal);
 
-  // Fecha clicando fora
   modal.addEventListener('click', e => {
     if (e.target === modal) fecharModalSenha();
   });
+}
+
+function abrirAbaModal(tab) {
+  const btnSenha = document.getElementById('tabBtnSenha');
+  const btnSug = document.getElementById('tabBtnSugestao');
+  const abaSenha = document.getElementById('abaConfigSenha');
+  const abaSug = document.getElementById('abaConfigSugestao');
+
+  if (tab === 'senha') {
+    btnSenha.classList.add('active');
+    btnSenha.style.color = 'var(--blue)';
+    btnSenha.style.borderColor = 'var(--blue)';
+    btnSenha.style.fontWeight = '700';
+
+    btnSug.classList.remove('active');
+    btnSug.style.color = '#7f8c8d';
+    btnSug.style.borderColor = 'transparent';
+    btnSug.style.fontWeight = '600';
+
+    abaSenha.style.display = 'flex';
+    abaSug.style.display = 'none';
+  } else {
+    btnSug.classList.add('active');
+    btnSug.style.color = 'var(--blue)';
+    btnSug.style.borderColor = 'var(--blue)';
+    btnSug.style.fontWeight = '700';
+
+    btnSenha.classList.remove('active');
+    btnSenha.style.color = '#7f8c8d';
+    btnSenha.style.borderColor = 'transparent';
+    btnSenha.style.fontWeight = '600';
+
+    abaSenha.style.display = 'none';
+    abaSug.style.display = 'flex';
+  }
 }
 
 function abrirModalSenha() {
   sbInjetarModalSenha();
   document.getElementById('inputNovaSenha').value = '';
   document.getElementById('inputConfirmarNovaSenha').value = '';
+  const textSug = document.getElementById('inputSugestaoTexto');
+  if (textSug) textSug.value = '';
+  
+  abrirAbaModal('senha');
   document.getElementById('modalSenhaGlobal').style.display = 'flex';
 }
 
@@ -122,9 +183,44 @@ async function confirmarAlterarSenha() {
   }
 }
 
+async function confirmarEnviarSugestao() {
+  const texto = document.getElementById('inputSugestaoTexto').value.trim();
+  if (!texto) {
+    alert('Por favor, digite sua sugestão antes de enviar.');
+    return;
+  }
+
+  try {
+    const user = await sbGetUser();
+    const profile = await sbGetProfile();
+    const userName = profile?.name || user?.email?.split('@')[0] || 'Usuário';
+
+    // Grava na tabela customizada 'suggestions'
+    const { error } = await sb.from('suggestions').insert({
+      user_id: user.id,
+      user_name: userName,
+      user_email: user.email,
+      content: texto
+    });
+
+    if (error) throw error;
+
+    fecharModalSenha();
+    if (typeof showToast === 'function') {
+      showToast('✅ Sugestão enviada com sucesso! Obrigado pelo feedback.', 'ok');
+    } else {
+      alert('Sugestão enviada com sucesso! Obrigado pelo feedback.');
+    }
+  } catch (e) {
+    alert('Erro ao enviar sugestão: ' + e.message);
+  }
+}
+
 window.abrirModalSenha = abrirModalSenha;
 window.fecharModalSenha = fecharModalSenha;
 window.confirmarAlterarSenha = confirmarAlterarSenha;
+window.abrirAbaModal = abrirAbaModal;
+window.confirmarEnviarSugestao = confirmarEnviarSugestao;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -708,6 +804,15 @@ async function sbEnviarMensagem(channelId, content) {
   if (error) throw error;
 }
 
+/** Edita o conteúdo de uma mensagem existente. */
+async function sbEditarMensagem(msgId, newContent) {
+  const { error } = await sb.from('chat_messages')
+    .update({ content: newContent })
+    .eq('id', msgId);
+  if (error) throw error;
+}
+
+
 /** Cria mensagem agendada (admin). */
 async function sbAgendarMensagem(channelId, content, scheduledAt) {
   const user = await sbGetUser();
@@ -894,4 +999,17 @@ async function sbVerificarBackupPendente() {
     console.warn('Erro ao verificar backup pendente:', e);
     return false;
   }
+}
+
+/** Lista todas as sugestões enviadas por usuários, ordenadas pelas mais recentes. */
+async function sbListarSugestoes() {
+  const { data, error } = await sb.from('suggestions').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+/** Deleta uma sugestão pelo id. */
+async function sbDeletarSugestao(id) {
+  const { error } = await sb.from('suggestions').delete().eq('id', id);
+  if (error) throw error;
 }
