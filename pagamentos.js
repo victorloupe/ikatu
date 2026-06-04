@@ -1092,11 +1092,13 @@ async function exportarPDF() {
   const originalMaxWidth = element.style.maxWidth;
   const originalBoxShadow = element.style.boxShadow;
   const originalMargin = element.style.margin;
+  const originalPaddingBottom = element.style.paddingBottom;
 
   element.style.width = '680px';
   element.style.maxWidth = '680px';
   element.style.boxShadow = 'none';
   element.style.margin = '0 auto';
+  element.style.paddingBottom = '20px';
 
   try {
     await html2pdf().set(opt).from(element).save();
@@ -1110,6 +1112,7 @@ async function exportarPDF() {
     element.style.maxWidth = originalMaxWidth;
     element.style.boxShadow = originalBoxShadow;
     element.style.margin = originalMargin;
+    element.style.paddingBottom = originalPaddingBottom;
 
     printHides.forEach(el => el.style.visibility = 'visible');
     if (btn) btn.innerHTML = originalText;

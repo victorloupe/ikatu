@@ -202,7 +202,7 @@
   }
   .budget-list-item {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
+    grid-template-columns: 220px 1fr;
     border-bottom: 1px solid var(--border);
     font-size: 12px;
   }
@@ -212,20 +212,20 @@
   .budget-list-label {
     background: #edf7fd;
     color: var(--dark);
-    padding: 12px;
+    padding: 10px 12px;
     font-weight: 700;
     display: flex;
     align-items: center;
   }
   .budget-list-value {
-    padding: 12px;
+    padding: 10px 12px;
     background: #fff;
-    word-break: break-all;
-    display: flex;
-    align-items: center;
-    font-family: monospace;
+    font-family: inherit;
     font-size: 12px;
+    line-height: 1.5;
     color: var(--text);
+    word-break: normal;
+    overflow-wrap: break-word;
   }
   .bulk-import-area {
     margin-top: 14px;
