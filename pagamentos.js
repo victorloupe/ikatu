@@ -70,12 +70,18 @@ function badgesPiscina(raw) {
 }
 
 // Linha de "editado" embaixo do projeto (última edição feita por um admin)
-function renderEditadoLine(ed) {
+function renderEditadoLine(ed, index) {
   if (!ed) return '';
   const mudancas = (ed.campos || []).map(c =>
     `<b>${esc(c.c)}</b>: ${esc(c.de || '—')} → ${esc(c.para || '—')}`
   ).join(' · ');
-  return `<div class="row-editado">✏️ Editado${mudancas ? ` — ${mudancas}` : ''}</div>`;
+  
+  let btnApagar = '';
+  if (isAdminUser) {
+    btnApagar = `<button class="btn-apagar-editado" onclick="removerEditado(${index}, event)" title="Excluir histórico de edição" style="background:none; border:none; color:#b7791f; font-weight:700; cursor:pointer; font-size:11px; margin-left:8px; padding: 2px 6px; border-radius: 4px; transition: background 0.2s; outline:none;" onmouseover="this.style.background='#fde68a'; this.style.color='#7a5c00';" onmouseout="this.style.background='none'; this.style.color='#b7791f';">✕</button>`;
+  }
+  
+  return `<div class="row-editado" style="display:flex; justify-content:space-between; align-items:center;"><span>✏️ Editado${mudancas ? ` — ${mudancas}` : ''}</span>${btnApagar}</div>`;
 }
 
 // Compara a linha original com os novos valores e devolve os campos alterados
@@ -410,30 +416,13 @@ async function carregarDados() {
       nomeCompleto = (targetUserName || '').toUpperCase();
     }
 
-    const { data: list, error } = await sb.from('payments').select('*').eq('user_id', alvoId).order('updated_at', { ascending: false });
+    const { data: list, error } = await sb.from('payments').select('*').eq('user_id', alvoId);
     if (error) throw error;
     
     if (list && list.length > 0) {
       const data = list[0];
       pagId = data.id;
-      
-      // Mescla os rows_data de todos os registros de pagamentos deste usuário
-      let mergedRows = [];
-      list.forEach(item => {
-        if (item.rows_data && Array.isArray(item.rows_data)) {
-          mergedRows = mergedRows.concat(item.rows_data);
-        }
-      });
-      
-      // Remove duplicados pelo identificador 'raw'
-      const seen = new Set();
-      rowsData = mergedRows.filter(r => {
-        if (!r.raw) return true;
-        const key = r.raw.toString().trim();
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      });
+      rowsData = Array.isArray(data.rows_data) ? data.rows_data : [];
       
       const meses = [
         "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -1031,7 +1020,7 @@ function renderTabela() {
       const trEd = document.createElement('tr');
       trEd.className = 'row-editado-tr';
       trEd.style.display = tr.style.display;
-      trEd.innerHTML = `<td colspan="6" style="padding:0;">${renderEditadoLine(row._edit)}</td>`;
+      trEd.innerHTML = `<td colspan="6" style="padding:0;">${renderEditadoLine(row._edit, index)}</td>`;
       tbody.appendChild(trEd);
     }
   });
@@ -1137,6 +1126,23 @@ function enviarParaOutroMes(index) {
 
 window.enviarParaOutroMes = enviarParaOutroMes;
 
+function removerEditado(index, event) {
+  if (event) event.stopPropagation();
+  if (!isAdminUser) {
+    showToast('❌ Apenas administradores podem apagar o histórico de edição.', 'err');
+    return;
+  }
+  confirmar('Excluir histórico', 'Deseja apagar o histórico de edição deste projeto?', () => {
+    if (rowsData[index]) {
+      delete rowsData[index]._edit;
+      salvarDados();
+      renderTabela();
+    }
+  });
+}
+
+window.removerEditado = removerEditado;
+
 function limparTabela() {
   confirmar('Limpar Tabela', 'Tem certeza que deseja apagar todos os projetos desta lista?', () => {
     rowsData = [];
@@ -1169,7 +1175,20 @@ function confirmar(titulo, msg, cb) {
 }
 
 function atualizarCampo(index, campo, valor) {
+  const antigo = rowsData[index][campo];
   rowsData[index][campo] = valor;
+
+  // Admin trocou o Tipo do projeto pelo dropdown da tabela → registra na linha de "Editado"
+  // (a troca pelo modal já é registrada em salvarProjetoManual). Mantém só a última edição.
+  if (campo === 'tipo' && isAdminUser && String(antigo || '') !== String(valor || '')) {
+    rowsData[index]._edit = {
+      por: (localStorage.getItem('igui_user_name') || 'Admin').trim(),
+      em: new Date().toISOString(),
+      campos: [{ c: 'Tipo', de: antigo || '—', para: valor || '—' }]
+    };
+    // o onchange do dropdown chama reprocessarLinha() em seguida, que re-renderiza a tabela
+  }
+
   // Apenas salvar, recalcular e atualizar sem re-renderizar a tabela inteira para não tirar o foco do input
   localStorage.setItem(STORAGE_KEY, JSON.stringify(rowsData));
   recalcularFinanceiro();

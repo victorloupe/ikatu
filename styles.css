@@ -366,6 +366,9 @@ textarea{resize:vertical;min-height:65px;}
 .proj-trash-btn:hover{border-color:#e74c3c;color:#e74c3c;}
 .proj-trash-btn.active{background:#e74c3c;border-color:#e74c3c;color:#fff;}
 
+.proj-export-btn{background:#fff;border:1.5px solid var(--blue);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--blue);cursor:pointer;white-space:nowrap;transition:all .15s;font-family:'Inter',sans-serif;flex-shrink:0;}
+.proj-export-btn:hover{background:var(--blue);color:#fff;}
+
 /* GERADOR — pré-visualização da prancha */
 .overlay-preview{display:none;position:fixed;inset:0;background:rgba(18,30,42,.85);z-index:900;align-items:center;justify-content:center;padding:24px;}
 .overlay-preview.show{display:flex;}

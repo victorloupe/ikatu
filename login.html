@@ -8,17 +8,69 @@
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js?v=20260615d"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/sirxemic/jquery.ripples/dist/jquery.ripples-min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Inter',sans-serif;background:#e2eaf3;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
+  body{
+    font-family:'Inter',sans-serif;
+    background: transparent;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    overflow: hidden;
+  }
 
-  .logo-wrap{display:flex;align-items:center;gap:14px;margin-bottom:32px;}
+  /* Container de Fundo Mantendo Proporção da Imagem (1024x564 = 1.8156) */
+  .bg-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100vw;
+    height: 55.078vw; /* 564/1024 * 100 */
+    min-height: 100vh;
+    min-width: 181.56vh; /* 1024/564 * 100 */
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  .bg-img, .ripple-bg {
+    position: absolute;
+    inset: 0;
+    background-image: url('bg_water.jpg');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* Recorte da Piscina: apenas nesta área as ondas ocorrem (deslocado levemente para dentro da água para não mexer na borda de pedra) */
+  .ripple-bg {
+    z-index: 1;
+    clip-path: polygon(11.5% 15.0%, 90.0% 15.0%, 90.0% 83.5%, 11.5% 83.5%);
+  }
+
+  .logo-wrap{display:flex;justify-content:center;align-items:center;margin-bottom:20px;z-index:10;}
   .logo-text{font-family:'Inter Tight',sans-serif;font-size:22px;font-weight:800;color:#1a2a3a;letter-spacing:.5px;}
   .logo-text span{color:#00AEEF;}
   .logo-badge{background:#1a2a3a;color:#fff;font-size:9px;font-weight:700;letter-spacing:1px;padding:3px 8px;border-radius:4px;text-transform:uppercase;}
 
-  .card{background:#fff;border-radius:16px;box-shadow:0 4px 32px rgba(0,0,0,.10);padding:40px 44px;width:100%;max-width:400px;}
+  .card{
+    background: rgba(255, 255, 255, 0.55); /* Mais transparente */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius:16px;
+    box-shadow:0 20px 40px rgba(0,0,0,.15);
+    padding:32px 36px 24px; /* Mais compacto e equilibrado */
+    width:100%;
+    max-width:400px;
+    z-index: 10;
+  }
   .card-title{font-family:'Inter Tight',sans-serif;font-size:20px;font-weight:800;color:#1a2a3a;margin-bottom:4px;}
   .card-sub{font-size:13px;color:#7f8c9a;margin-bottom:28px;}
 
@@ -47,7 +99,16 @@
   .success-msg{background:#e8f5e9;border:1px solid #c8e6c9;color:#27ae60;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:16px;display:none;}
   .success-msg.show{display:block;}
 
-  footer{margin-top:24px;font-size:11px;color:#a0b0c0;}
+  .card-footer {
+    margin-top: 24px;
+    font-size: 11px;
+    color: #475569;
+    font-weight: 700;
+    text-align: center;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding-top: 16px;
+    letter-spacing: 0.2px;
+  }
 
   .remember-row{display:flex;align-items:center;gap:8px;margin-top:4px;margin-bottom:4px;}
   .remember-row input[type=checkbox]{width:15px;height:15px;accent-color:#00AEEF;cursor:pointer;flex-shrink:0;}
@@ -57,7 +118,9 @@
   .splash{
     position:fixed; inset:0; z-index:9999;
     display:none; flex-direction:column; align-items:center; justify-content:center; gap:26px;
-    background:linear-gradient(165deg,#eef3f9 0%,#e2eaf3 60%,#d8e3f0 100%);
+    background: rgba(226, 234, 243, 0.75);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     opacity:0; transition:opacity .4s ease;
   }
   .splash.show{ display:flex; opacity:1; }
@@ -141,6 +204,12 @@
 </head>
 <body>
 
+<!-- Container de Fundo Responsivo para Efeito de Ondas apenas na Piscina -->
+<div class="bg-container">
+  <div class="bg-img"></div>
+  <div class="ripple-bg"></div>
+</div>
+
 <!-- Tela de abertura (exibida após login bem-sucedido) -->
 <div class="splash" id="splashScreen" aria-hidden="true">
   <img src="logo_site.png" alt="iGUi" class="splash-logo">
@@ -153,12 +222,13 @@
   </div>
 </div>
 
-<div class="logo-wrap">
-  <img src="logo_site.png" alt="iGUi Pranchas" style="height:150px;width:auto;">
-</div>
-
 <!-- LOGIN -->
 <div class="card" id="loginCard">
+
+  <!-- Logo dentro do Card -->
+  <div class="logo-wrap">
+    <img src="logo_site.png" alt="iGUi Pranchas" style="height:90px; width:auto; display:block; margin:0 auto;">
+  </div>
 
   <div class="login-wrap" id="loginWrap">
     <div class="card-title">Entrar</div>
@@ -203,9 +273,10 @@
     <span class="back-link" onclick="mostrarLogin()" style="margin-top: 24px; font-weight: 600;">← Voltar ao login</span>
   </div>
 
-</div>
+  <!-- Rodapé dentro do Card -->
+  <div class="card-footer">iGUi © 2026 · By: Victor L.</div>
 
-<footer>iGUi © 2026 · By: Victor L.</footer>
+</div>
 
 <script>
   // Se já estiver logado, redireciona
@@ -423,6 +494,76 @@
       `;
     }
   }
+
+  // Efeito de Ondas de Água (WebGL Ripples) com auto-pause inteligente para economizar CPU
+  $(document).ready(function() {
+    try {
+      const $bg = $('.ripple-bg');
+      $bg.ripples({
+        resolution: 256,
+        perturbance: 0.005,
+        dropRadius: 20,
+        interactive: false // Desabilitado para usarmos o controle manual de coordenadas
+      });
+
+      let rippleTimer = null;
+      let isRippling = true;
+
+      function pauseRipplesAfterDelay() {
+        clearTimeout(rippleTimer);
+        rippleTimer = setTimeout(() => {
+          if (isRippling) {
+            $bg.ripples('pause');
+            isRippling = false;
+          }
+        }, 6000); // 6 segundos após a última interação
+      }
+
+      function resumeRipples() {
+        if (!isRippling) {
+          $bg.ripples('play');
+          isRippling = true;
+        }
+        pauseRipplesAfterDelay();
+      }
+
+      // Função para capturar eventos e disparar ondas apenas se o mouse estiver dentro da piscina
+      function handleInteraction(e) {
+        resumeRipples();
+
+        let clientX, clientY;
+        if (e.touches && e.touches.length) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        }
+
+        if (clientX === undefined || clientY === undefined) return;
+
+        const offset = $bg.offset();
+        const x = clientX - offset.left;
+        const y = clientY - offset.top;
+
+        const width = $bg.width();
+        const height = $bg.height();
+        const pctX = (x / width) * 100;
+        const pctY = (y / height) * 100;
+
+        // Limites da piscina (deslocado levemente para dentro para poupar as bordas de pedra)
+        if (pctX >= 11.5 && pctX <= 90.0 && pctY >= 15.0 && pctY <= 83.5) {
+          const strength = (e.type === 'mousedown' || e.type === 'touchstart' || e.type === 'click') ? 0.035 : 0.012;
+          $bg.ripples('drop', x, y, 20, strength);
+        }
+      }
+
+      $(window).on('mousemove mousedown touchmove touchstart click', handleInteraction);
+      pauseRipplesAfterDelay();
+    } catch (e) {
+      console.warn('WebGL Ripples não suportado neste navegador:', e);
+    }
+  });
 </script>
 </body>
 </html>

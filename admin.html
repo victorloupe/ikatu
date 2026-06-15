@@ -306,11 +306,30 @@
 
       <!-- ABA BACKUP -->
       <div class="tab-pane" id="paneBackup">
-        <div style="background: #fffcfc; border: 1.5px dashed #f5c2c2; border-radius: 10px; padding: 24px; width: 100%; margin-bottom: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Bloco 1: Apenas Exportação -->
+        <div style="background: #fafcff; border: 1.5px dashed var(--border); border-radius: 10px; padding: 24px; width: 100%; margin-bottom: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <h3 style="font-size: 15px; font-weight: 700; color: #1a2a3a; margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-family: 'Inter Tight', sans-serif;">
+              💾 Exportar Backup do Sistema
+            </h3>
+            <p style="font-size: 12px; color: #5c6b73; line-height: 1.5; margin: 0;">
+              Baixe um arquivo ZIP contendo as pranchas de todos os projetistas do sistema para o período selecionado. Esta operação <strong>não altera nem apaga</strong> dados no servidor.
+            </p>
+          </div>
           
+          <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+            <button id="btnAdminExportar" class="btn-sm primary" onclick="abrirAdminExportModal()" style="padding: 10px 24px; font-size: 12px; cursor: pointer; background: var(--blue); color: #fff; border: 1.5px solid var(--blue); border-radius: 6px; font-weight: 700; transition: background 0.2s;" onmouseover="this.style.background='#009fd4'" onmouseout="this.style.background='var(--blue)'">
+              Exportar Backup (Apenas Download)
+            </button>
+          </div>
+        </div>
+
+        <!-- Bloco 2: Backup & Limpeza (Crítico) -->
+        <div style="background: #fffcfc; border: 1.5px dashed #f5c2c2; border-radius: 10px; padding: 24px; width: 100%; margin-bottom: 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 16px;">
           <div>
             <h3 style="font-size: 15px; font-weight: 700; color: #c62828; margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-family: 'Inter Tight', sans-serif;">
-              💾 Limpeza de Histórico do Sistema
+              🧹 Limpeza de Histórico do Sistema
             </h3>
             <p style="font-size: 12px; color: #5c6b73; line-height: 1.5; margin: 0;">
               Mantenha o banco de dados otimizado realizando a limpeza periódica do sistema. Projetos antigos que não estão mais em uso ativo podem ser arquivados localmente e removidos do servidor.
@@ -327,13 +346,13 @@
               A exclusão pós-backup removerá permanentemente todas as pranchas antigas e as imagens hospedadas no servidor.
             </p>
             <p style="font-size: 11px; color: #7f5a5a; line-height: 1.5; margin: 0; padding-top: 6px; border-top: 1px dashed #ffccd2;">
-              <strong>Período de retenção:</strong> Projetos com mais de 4 meses de criação. Certifique-se de baixar o backup ZIP antes de confirmar a exclusão.
+              <strong>Período de retenção:</strong> Definido pelo administrador (seleção por meses). Certifique-se de baixar o backup ZIP antes de confirmar a exclusão.
             </p>
           </div>
           
           <!-- Botão no canto inferior direito -->
           <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-            <button id="btnIniciarBackup" class="btn-sm" onclick="iniciarBackupELimpeza()" style="padding: 10px 24px; font-size: 12px; cursor: pointer; background: #d32f2f; color: #fff; border: 1.5px solid #d32f2f; border-radius: 6px; font-weight: 700; transition: background 0.2s;" onmouseover="this.style.background='#b71c1c'" onmouseout="this.style.background='#d32f2f'">
+            <button id="btnIniciarBackup" class="btn-sm" onclick="abrirBackupLimpezaModal()" style="padding: 10px 24px; font-size: 12px; cursor: pointer; background: #d32f2f; color: #fff; border: 1.5px solid #d32f2f; border-radius: 6px; font-weight: 700; transition: background 0.2s;" onmouseover="this.style.background='#b71c1c'" onmouseout="this.style.background='#d32f2f'">
               Fazer Backup e Iniciar Limpeza
             </button>
           </div>
@@ -342,6 +361,56 @@
       </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- Modal Exportar Backup Admin -->
+<div class="modal-overlay" id="adminExportModal">
+  <div class="modal-box">
+    <div class="modal-title">💾 Exportar Backup do Sistema</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:15px;line-height:1.6">
+      Escolha o período limite das pranchas de todos os usuários para exportação (em meses):
+    </div>
+    <div style="margin-bottom:20px;">
+      <select id="adminExportMesesSelect" style="width:100%; padding:10px; border-radius:6px; border:1.5px solid var(--border); font-family:inherit; font-size:14px; background:#fafcff; outline:none;">
+        <option value="1">Apenas o último mês (1 mês)</option>
+        <option value="3" selected>Últimos 3 meses</option>
+        <option value="6">Últimos 6 meses</option>
+        <option value="12">Último ano (12 meses)</option>
+        <option value="all">Todo o período (Sem limite)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharAdminExportModal()">Cancelar</button>
+      <button class="btn-modal confirm" id="btnConfirmAdminExport" onclick="executarAdminExport()" style="background:var(--blue); color:#fff;">Confirmar Exportação</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backup e Limpeza -->
+<div class="modal-overlay" id="backupLimpezaModal">
+  <div class="modal-box">
+    <div class="modal-title">💾 Backup & Limpeza</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:15px;line-height:1.6">
+      Escolha o período limite para o backup e exclusão permanente das pranchas (em meses):
+    </div>
+    <div style="margin-bottom:20px;">
+      <select id="backupLimpezaMesesSelect" style="width:100%; padding:10px; border-radius:6px; border:1.5px solid var(--border); font-family:inherit; font-size:14px; background:#fafcff; outline:none;">
+        <option value="1">Projetos com mais de 1 mês</option>
+        <option value="2">Projetos com mais de 2 meses</option>
+        <option value="3">Projetos com mais de 3 meses</option>
+        <option value="4" selected>Projetos com mais de 4 meses</option>
+        <option value="6">Projetos com mais de 6 meses</option>
+        <option value="12">Projetos com mais de 12 meses (1 ano)</option>
+      </select>
+    </div>
+    <div style="font-size:12.5px;color:#e74c3c;margin-bottom:20px;line-height:1.5;font-weight:600;">
+      ⚠️ ATENÇÃO: As pranchas correspondentes serão salvas no arquivo ZIP e depois excluídas PERMANENTEMENTE do banco de dados e do servidor de imagens.
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharBackupLimpezaModal()">Cancelar</button>
+      <button class="btn-modal confirm" id="btnConfirmBackupLimpeza" onclick="iniciarBackupELimpeza()" style="background:#d32f2f; color:#fff;">Fazer Backup e Excluir</button>
     </div>
   </div>
 </div>
@@ -700,13 +769,25 @@ function renderSugestoesTable() {
   todasSugestoes.forEach(sug => {
     const data = new Date(sug.created_at).toLocaleString('pt-BR');
     const tr = document.createElement('tr');
+    
+    const badge = sug.done 
+      ? `<div style="margin-bottom:6px;"><span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; background:#e8f5e9; color:#2e7d32; font-size:10px; font-weight:700;">✓ Resolvido</span></div>`
+      : `<div style="margin-bottom:6px;"><span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:12px; background:#fff8e1; color:#b78103; font-size:10px; font-weight:700;">⏰ Pendente</span></div>`;
+
+    const btnDone = sug.done
+      ? `<button class="btn-sm" onclick="toggleStatusSugestao('${sug.id}', false)" style="background:#f1f5f9; border-color:#cbd5e1; color:#475569; width:auto; padding:4px 8px;" title="Marcar como pendente">↩ Desfazer</button>`
+      : `<button class="btn-sm" onclick="toggleStatusSugestao('${sug.id}', true)" style="background:#f0fdf4; border-color:#bbf7d0; color:#16a34a; width:auto; padding:4px 8px;" title="Marcar como resolvido">✓ Resolvido</button>`;
+
     tr.innerHTML = `
       <td style="color:var(--muted);font-size:12px;white-space:nowrap">${data}</td>
       <td><strong>${escHtml(sug.user_name || '—')}</strong></td>
       <td style="color:var(--muted);font-size:12px">${escHtml(sug.user_email || '—')}</td>
-      <td style="font-size:13px;white-space:pre-wrap;max-width:350px">${escHtml(sug.content)}</td>
+      <td style="font-size:13px;white-space:pre-wrap;max-width:350px">${badge}${escHtml(sug.content)}</td>
       <td>
-        <button class="btn-sm danger" onclick="deletarSugestao('${sug.id}')">Excluir</button>
+        <div style="display:flex; gap:6px;">
+          ${btnDone}
+          <button class="btn-sm danger" onclick="deletarSugestao('${sug.id}')" style="width:auto; padding:4px 8px;">Excluir</button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -719,6 +800,17 @@ function deletarSugestao(id) {
     await carregarSugestoes();
     showToast('🗑 Sugestão excluída', 'ok');
   });
+}
+
+async function toggleStatusSugestao(id, status) {
+  try {
+    const { error } = await sb.from('suggestions').update({ done: status }).eq('id', id);
+    if (error) throw error;
+    showToast(status ? '✅ Sugestão resolvida!' : '↩ Sugestão marcada como pendente.', 'ok');
+    await carregarSugestoes();
+  } catch(e) {
+    showToast('Erro ao atualizar status: ' + e.message, 'err');
+  }
 }
 
 // ── Confirmar genérico ──
@@ -736,18 +828,132 @@ function fecharModal() {
   document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
 }
 
+function abrirAdminExportModal() {
+  document.getElementById('adminExportModal').classList.add('show');
+}
+
+function fecharAdminExportModal() {
+  document.getElementById('adminExportModal').classList.remove('show');
+}
+
+async function executarAdminExport() {
+  const select = document.getElementById('adminExportMesesSelect');
+  const meses = select ? select.value : '3';
+  fecharAdminExportModal();
+
+  const btn = document.getElementById('btnAdminExportar');
+  const originalTxt = btn.textContent;
+  try {
+    btn.disabled = true;
+    btn.textContent = 'Buscando pranchas...';
+
+    // 1) Listar projetos para exportação
+    let query = sb.from('projects')
+      .select('id, project_code, client_name, created_at, session_data')
+      .is('deleted_at', null);
+
+    if (meses !== 'all') {
+      const m = parseInt(meses);
+      const limitDate = new Date();
+      limitDate.setMonth(limitDate.getMonth() - m);
+      query = query.gte('created_at', limitDate.toISOString());
+    }
+
+    const { data: pranchas, error } = await query.order('created_at', { ascending: false });
+    if (error) throw error;
+
+    if (!pranchas || pranchas.length === 0) {
+      showToast(`Nenhuma prancha encontrada para o período selecionado.`, 'ok');
+      btn.disabled = false;
+      btn.textContent = originalTxt;
+      return;
+    }
+
+    btn.textContent = `Preparando ZIP de ${pranchas.length} pranchas...`;
+
+    // Carrega JSZip dinamicamente se não estiver carregado
+    if (!window.JSZip) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      }).catch(() => { throw new Error('Erro ao carregar biblioteca JSZip.'); });
+    }
+
+    const zip = new JSZip();
+    pranchas.forEach(p => {
+      let sessao;
+      try {
+        sessao = typeof p.session_data === 'string' ? JSON.parse(p.session_data) : p.session_data;
+      } catch(e) {
+        sessao = p.session_data || {};
+      }
+
+      const sessaoSalvar = {
+        version: '1.0',
+        app: 'PranchaIGUI',
+        ts: new Date(p.created_at).getTime(),
+        ...sessao
+      };
+
+      const nome = [
+        p.project_code || 'SEM_CODIGO',
+        p.client_name || 'SEM_CLIENTE',
+        new Date(p.created_at).toLocaleDateString('pt-BR').replace(/\//g, '-')
+      ].join('_').replace(/\s+/g, '_') + '.igui';
+
+      zip.file(nome, JSON.stringify(sessaoSalvar));
+    });
+
+    btn.textContent = 'Gerando arquivo de download...';
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const periodStr = meses === 'all' ? 'Completo' : `${meses}m`;
+    a.download = `Backup_iGUi_Space_Admin_${periodStr}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showToast('📦 Backup exportado com sucesso!', 'ok');
+    btn.disabled = false;
+    btn.textContent = originalTxt;
+  } catch(e) {
+    console.error(e);
+    showToast('Erro no processo: ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = originalTxt;
+  }
+}
+
+function abrirBackupLimpezaModal() {
+  document.getElementById('backupLimpezaModal').classList.add('show');
+}
+
+function fecharBackupLimpezaModal() {
+  document.getElementById('backupLimpezaModal').classList.remove('show');
+}
+
 async function iniciarBackupELimpeza() {
+  const select = document.getElementById('backupLimpezaMesesSelect');
+  const meses = select ? parseInt(select.value) : 4;
+  fecharBackupLimpezaModal();
+
   const btn = document.getElementById('btnIniciarBackup');
   const originalTxt = btn.textContent;
   try {
     btn.disabled = true;
     btn.textContent = 'Buscando pranchas antigas...';
     
-    // Busca pranchas com mais de 4 meses
-    const antigas = await sbListarProjetosAntigosComDados(4);
+    // Busca pranchas com mais de X meses
+    const antigas = await sbListarProjetosAntigosComDados(meses);
     
     if (!antigas || antigas.length === 0) {
-      showToast('Nenhuma prancha com mais de 4 meses encontrada para backup.', 'ok');
+      showToast(`Nenhuma prancha com mais de ${meses} meses encontrada para backup.`, 'ok');
       btn.disabled = false;
       btn.textContent = originalTxt;
       return;

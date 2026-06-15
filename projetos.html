@@ -154,6 +154,9 @@
         <button class="proj-trash-btn" id="btnLixeira" onclick="toggleLixeira()" title="Pranchas excluídas ficam aqui por 30 dias">
           🗑 Lixeira
         </button>
+        <button class="proj-export-btn" id="btnExportar" onclick="abrirExportModal()" title="Fazer backup das pranchas em um arquivo ZIP">
+          💾 Exportar Backup
+        </button>
       </div>
 
       <!-- Filtros por usuário -->
@@ -191,6 +194,29 @@
     <div class="modal-footer">
       <button class="btn-modal cancel" onclick="fecharModalDel()">Cancelar</button>
       <button class="btn-modal confirm" style="background:#e74c3c" id="btnConfirmDel">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Exportar Backup -->
+<div class="modal-overlay" id="exportModal">
+  <div class="modal-box">
+    <div class="modal-title">💾 Exportar Backup</div>
+    <div style="font-size:14px;color:var(--muted);margin-bottom:15px;line-height:1.6">
+      Escolha o período limite das pranchas para exportação (em meses):
+    </div>
+    <div style="margin-bottom:20px;">
+      <select id="exportMesesSelect" style="width:100%; padding:10px; border-radius:6px; border:1.5px solid var(--border); font-family:inherit; font-size:14px; background:#fafcff; outline:none;">
+        <option value="1">Apenas o último mês (1 mês)</option>
+        <option value="3" selected>Últimos 3 meses</option>
+        <option value="6">Últimos 6 meses</option>
+        <option value="12">Último ano (12 meses)</option>
+        <option value="all">Todo o período (Sem limite)</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharExportModal()">Cancelar</button>
+      <button class="btn-modal confirm" id="btnConfirmExport" style="background:var(--blue); color:#fff;">Confirmar Exportação</button>
     </div>
   </div>
 </div>

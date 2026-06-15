@@ -893,9 +893,8 @@ function montarAbasPrancha(tipo, cardSel) {
   tabs.id = `ptabs-${tipo}`;
   tabs.innerHTML =
     `<button class="ptab active" id="ptab-${tipo}-1" onclick="verPrancha('${tipo}',1)">Prancha 1</button>` +
-    `<button class="ptab" id="ptab-${tipo}-2" onclick="verPrancha('${tipo}',2)" style="display:none">Prancha 2</button>` +
-    `<button class="ptab-add" id="ptab-add-${tipo}" onclick="togglePranchaExtra('${tipo}')" title="Adicionar uma 2ª prancha a esta seção">＋ prancha</button>` +
-    `<button class="ptab-rm" id="ptab-rm-${tipo}" onclick="removerPranchaExtra('${tipo}')" title="Remover a 2ª prancha" style="display:none">🗑 Prancha 2</button>`;
+    `<button class="ptab" id="ptab-${tipo}-2" onclick="verPrancha('${tipo}',2)" style="display:none">Prancha 2 <span class="ptab-rm-icon" onclick="removerPranchaExtra('${tipo}', event)" title="Remover prancha">🗑</span></button>` +
+    `<button class="ptab-add" id="ptab-add-${tipo}" onclick="togglePranchaExtra('${tipo}')" title="Adicionar uma 2ª prancha a esta seção">＋ prancha</button>`;
 
   // Página 2 (mesma estrutura, vazia)
   const isPai = tipo === 'pai';
@@ -907,8 +906,8 @@ function montarAbasPrancha(tipo, cardSel) {
     `<div class="div"><span>Imagens de Referência (do Projeto 3D)</span></div>` +
     `<p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Escolha quais imagens do Projeto 3D aparecem nesta página da prancha.</p>` +
     `<div class="img-selector-grid" id="imgsel-${tipo}2">` +
-      `<div class="img-sel-col"><label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Esquerdo</label><div class="img-sel-options" id="imgsel-${tipo}2-0"></div><div class="img-sel-preview" id="imgsel-preview-${tipo}2-0"></div></div>` +
-      `<div class="img-sel-col"><label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Direito</label><div class="img-sel-options" id="imgsel-${tipo}2-1"></div><div class="img-sel-preview" id="imgsel-preview-${tipo}2-1"></div></div>` +
+    `  <div class="img-sel-col"><label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Esquerdo</label><div class="img-sel-options" id="imgsel-${tipo}2-0"></div><div class="img-sel-preview" id="imgsel-preview-${tipo}2-0"></div></div>` +
+    `  <div class="img-sel-col"><label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Direito</label><div class="img-sel-options" id="imgsel-${tipo}2-1"></div><div class="img-sel-preview" id="imgsel-preview-${tipo}2-1"></div></div>` +
     `</div>` +
     `<div class="div"><span>${isPai ? 'Plantas e Elementos' : 'Itens'}</span></div>` +
     `<div class="items-list" id="lst-${tipo}2"></div>` +
@@ -938,15 +937,27 @@ function togglePranchaExtra(tipo) {
   autoSave();
 }
 
-function removerPranchaExtra(tipo) {
+function removerPranchaExtra(tipo, event) {
+  if (event) {
+    event.stopPropagation();
+  }
   if (!S.pranchaExtra[tipo]) return;
-  if (!confirm('Remover a 2ª prancha desta seção? As imagens e itens dela serão apagados.')) return;
-  S.pranchaExtra[tipo] = false;
-  S.itens[tipo + '2'] = [];
-  S.selectedImgs[tipo + '2'] = [null, null];
-  atualizarPranchasExtra();
-  verPrancha(tipo, 1);
-  autoSave();
+  const modal = document.getElementById('rmPranchaModal');
+  if (modal) {
+    modal.classList.add('show');
+    const btnConfirm = document.getElementById('btnConfirmRmPrancha');
+    if (btnConfirm) {
+      btnConfirm.onclick = () => {
+        S.pranchaExtra[tipo] = false;
+        S.itens[tipo + '2'] = [];
+        S.selectedImgs[tipo + '2'] = [null, null];
+        fecharModal();
+        atualizarPranchasExtra();
+        verPrancha(tipo, 1);
+        autoSave();
+      };
+    }
+  }
 }
 
 // Sincroniza a UI das abas com o estado S.pranchaExtra
@@ -955,10 +966,8 @@ function atualizarPranchasExtra() {
     const ativa = !!(S.pranchaExtra && S.pranchaExtra[tipo]);
     const tab2 = document.getElementById(`ptab-${tipo}-2`);
     const add  = document.getElementById(`ptab-add-${tipo}`);
-    const rm   = document.getElementById(`ptab-rm-${tipo}`);
-    if (tab2) tab2.style.display = ativa ? '' : 'none';
+    if (tab2) tab2.style.display = ativa ? 'inline-flex' : 'none';
     if (add)  add.style.display  = ativa ? 'none' : '';
-    if (rm)   rm.style.display   = ativa ? '' : 'none';
     if (ativa) renderItems(tipo + '2');
     else verPrancha(tipo, 1);
   });
@@ -1123,8 +1132,10 @@ function rmImg(grp, idx, e) {
     if (inp) inp.value = '';
   }
   if (grp === '3d') {
-    ['rev','mob','pai'].forEach(tipo => {
-      S.selectedImgs[tipo] = S.selectedImgs[tipo].map(sel => sel === idx ? null : sel);
+    ['rev','mob','pai','rev2','mob2','pai2'].forEach(tipo => {
+      if (S.selectedImgs[tipo]) {
+        S.selectedImgs[tipo] = S.selectedImgs[tipo].map(sel => sel === idx ? null : sel);
+      }
     });
     syncDeckPreview();
     renderImgSelectors();
@@ -1769,6 +1780,8 @@ function fecharModal() {
   document.getElementById('validModal').classList.remove('show');
   document.getElementById('novaModal').classList.remove('show');
   document.getElementById('overwriteModal').classList.remove('show');
+  const rmModal = document.getElementById('rmPranchaModal');
+  if (rmModal) rmModal.classList.remove('show');
 }
 
 // Verifica preenchimento e retorna lista de itens
@@ -2641,6 +2654,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const pad = n => String(n).padStart(2,'0');
   document.getElementById('data_proj').value = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
 
+  // Init DB (autosave local)
+  try {
+    await initDB();
+  } catch(e) { console.warn('DB init error', e); }
+
   // Verificar se há um projeto vindo da página de pranchas (cloud load)
   const _cloudLoad = sessionStorage.getItem('igui_cloud_load');
   if (_cloudLoad) {
@@ -2673,11 +2691,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateEditBadge();
     } catch(e) { console.warn('Cloud load error:', e); }
   } else {
-    // Init DB and check for saved data (autosave local)
+    // Check for saved data (autosave local)
     try {
-      await initDB();
       await checkRestore();
-    } catch(e) { console.warn('DB init error', e); }
+    } catch(e) { console.warn('Restore check error', e); }
   }
 
   // Se o campo usuario_logado estiver vazio, preenche com o nome do perfil
@@ -2770,7 +2787,7 @@ function removerVista3D(idx) {
   }
 
   // Adjust selection indices to handle deletion
-  ['rev','mob','pai'].forEach(tipo => {
+  ['rev','mob','pai','rev2','mob2','pai2'].forEach(tipo => {
     if (S.selectedImgs[tipo]) {
       S.selectedImgs[tipo] = S.selectedImgs[tipo].map(sel => {
         if (sel === idx) return null;

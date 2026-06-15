@@ -4,59 +4,6 @@
 
 // Logo is handled globally by supabase-client.js
 
-// ── IndexedDB ─────────────────────────────────────────────────────
-let db = null;
-
-function initDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open('PranchaIGUI', 2);
-    req.onupgradeneeded = e => {
-      const d = e.target.result;
-      if (!d.objectStoreNames.contains('dados'))    d.createObjectStore('dados');
-      if (!d.objectStoreNames.contains('projetos')) {
-        const ps = d.createObjectStore('projetos', { keyPath: 'id' });
-        ps.createIndex('id_projeto', 'id_projeto', { unique: false });
-        ps.createIndex('loja',       'loja',       { unique: false });
-        ps.createIndex('modelo',     'modelo',     { unique: false });
-        ps.createIndex('ts',         'ts',         { unique: false });
-      }
-    };
-    req.onsuccess = e => { db = e.target.result; res(db); };
-    req.onerror   = e => { console.warn('IndexedDB error', e); rej(e); };
-  });
-}
-
-function dbSave(key, val) {
-  if (!db) return;
-  try {
-    const tx  = db.transaction('dados', 'readwrite');
-    tx.objectStore('dados').put(val, key);
-  } catch(e) { console.warn('dbSave error:', e); }
-}
-
-function listarProjetos() {
-  return new Promise(res => {
-    if (!db) { res([]); return; }
-    try {
-      const tx  = db.transaction('projetos', 'readonly');
-      const req = tx.objectStore('projetos').getAll();
-      req.onsuccess = e => res((e.target.result || []).sort((a, b) => b.ts - a.ts));
-      req.onerror   = () => res([]);
-    } catch { res([]); }
-  });
-}
-
-function deletarProjeto(id) {
-  return new Promise(res => {
-    if (!db) { res(); return; }
-    try {
-      const tx = db.transaction('projetos', 'readwrite');
-      tx.objectStore('projetos').delete(id);
-      tx.oncomplete = () => res();
-    } catch { res(); }
-  });
-}
-
 // ── Utilitários ───────────────────────────────────────────────────
 function escapeHtml(v) {
   return String(v ?? '')
@@ -504,9 +451,57 @@ function fecharModalDel() {
 }
 
 // ── Exportar todos como ZIP ───────────────────────────────────────
+function abrirExportModal() {
+  document.getElementById('exportModal').classList.add('show');
+  const btn = document.getElementById('btnConfirmExport');
+  if (btn) {
+    btn.onclick = () => {
+      fecharExportModal();
+      exportarTodos();
+    };
+  }
+}
+
+function fecharExportModal() {
+  document.getElementById('exportModal').classList.remove('show');
+}
+
+// ── Exportar todos como ZIP ───────────────────────────────────────
 async function exportarTodos() {
-  const lista = await sbListarProjetos();
-  if (!lista.length) { showToast('Nenhuma prancha para exportar.', 'err'); return; }
+  const select = document.getElementById('exportMesesSelect');
+  const meses = select ? select.value : '3';
+  
+  let dateLimit = null;
+  if (meses !== 'all') {
+    const m = parseInt(meses);
+    dateLimit = new Date();
+    dateLimit.setMonth(dateLimit.getMonth() - m);
+  }
+
+  showToast('📦 Carregando dados do banco...', 'ok');
+  
+  let lista = [];
+  try {
+    let query = sb.from('projects')
+      .select('id, project_code, client_name, updated_at, session_data')
+      .is('deleted_at', null);
+
+    if (dateLimit) {
+      query = query.gte('updated_at', dateLimit.toISOString());
+    }
+
+    const { data, error } = await query.order('updated_at', { ascending: false });
+    if (error) throw error;
+    lista = data || [];
+  } catch (e) {
+    showToast('❌ Erro ao buscar pranchas: ' + e.message, 'err');
+    return;
+  }
+
+  if (!lista.length) { 
+    showToast('Nenhuma prancha encontrada no período selecionado.', 'warn'); 
+    return; 
+  }
 
   showToast('📦 Preparando ZIP...', 'ok');
 
@@ -523,20 +518,36 @@ async function exportarTodos() {
 
   const zip = new JSZip();
   lista.forEach(p => {
-    const sessao = { version:'1.0', app:'PranchaIGUI', ts: p.ts, ...p.sessao };
+    let sessao;
+    try {
+      sessao = typeof p.session_data === 'string' ? JSON.parse(p.session_data) : p.session_data;
+    } catch(e) {
+      sessao = p.session_data || {};
+    }
+    
+    const timestamp = p.updated_at ? new Date(p.updated_at).getTime() : Date.now();
+    const sessaoSalvar = { 
+      version: '1.0', 
+      app: 'PranchaIGUI', 
+      ts: timestamp, 
+      ...sessao 
+    };
+    
     const nome = [
-      p.id_projeto || 'SEM_ID',
-      p.cliente    || 'SEM_CLIENTE',
-      new Date(p.ts).toLocaleDateString('pt-BR').replace(/\//g,'-'),
+      p.project_code || 'SEM_ID',
+      p.client_name  || 'SEM_CLIENTE',
+      new Date(timestamp).toLocaleDateString('pt-BR').replace(/\//g,'-'),
     ].join('_').replace(/\s+/g,'_') + '.igui';
-    zip.file(nome, JSON.stringify(sessao));
+    zip.file(nome, JSON.stringify(sessaoSalvar));
   });
 
   const blob = await zip.generateAsync({ type:'blob', compression:'DEFLATE', compressionOptions:{level:6} });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `iGUi_Pranchas_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.zip`;
+  
+  const periodStr = meses === 'all' ? 'Completo' : `${meses}m`;
+  a.download = `iGUi_Pranchas_${periodStr}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.zip`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

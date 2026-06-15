@@ -91,12 +91,19 @@ function sbInjetarModalSenha() {
       
       <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
         <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Minha Sugestão</label>
-        <textarea id="inputSugestaoTexto" rows="5" placeholder="Descreva sua sugestão ou ideia de melhoria..." style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
+        <textarea id="inputSugestaoTexto" rows="4" placeholder="Descreva sua sugestão ou ideia de melhoria..." style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box; resize:none;"></textarea>
       </div>
       
-      <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+      <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:4px;">
         <button class="btn-modal cancel" onclick="fecharModalSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#f0f4f8; color:#6a8090;">Cancelar</button>
         <button class="btn-modal confirm" onclick="confirmarEnviarSugestao()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:var(--blue); color:#fff;">Enviar Sugestão</button>
+      </div>
+
+      <div style="border-top:1.5px solid #edf2f6; padding-top:10px; margin-top:6px; display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Minhas Sugestões Enviadas</div>
+        <div id="listaMinhasSugestoes" style="max-height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; font-size:12px; padding-right:4px;">
+          <!-- Carregando... -->
+        </div>
       </div>
     </div>
 
@@ -157,6 +164,9 @@ function abrirAbaModal(tab) {
     btn.style.borderColor = ativo ? 'var(--blue)' : 'transparent';
     btn.style.fontWeight = ativo ? '700' : '600';
     painel.style.display = ativo ? 'flex' : 'none';
+    if (ativo && key === 'sugestao') {
+      carregarMinhasSugestoes();
+    }
   });
 }
 
@@ -229,6 +239,7 @@ async function confirmarEnviarSugestao() {
 
     if (error) throw error;
 
+    document.getElementById('inputSugestaoTexto').value = '';
     fecharModalSenha();
     if (typeof showToast === 'function') {
       showToast('✅ Sugestão enviada com sucesso! Obrigado pelo feedback.', 'ok');
@@ -240,11 +251,67 @@ async function confirmarEnviarSugestao() {
   }
 }
 
+async function sbListarMinhasSugestoes() {
+  const user = await sbGetUser();
+  if (!user) return [];
+  const { data, error } = await sb.from('suggestions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+async function carregarMinhasSugestoes() {
+  const container = document.getElementById('listaMinhasSugestoes');
+  if (!container) return;
+  container.innerHTML = '<div style="color:#8a9aaa; text-align:center; padding:10px;">Carregando...</div>';
+  try {
+    const list = await sbListarMinhasSugestoes();
+    if (!list.length) {
+      container.innerHTML = '<div style="color:#8a9aaa; text-align:center; padding:10px; font-style:italic;">Nenhuma sugestão enviada ainda.</div>';
+      return;
+    }
+    container.innerHTML = '';
+    list.forEach(sug => {
+      const dateStr = new Date(sug.created_at).toLocaleDateString('pt-BR');
+      const item = document.createElement('div');
+      item.style.cssText = 'padding:8px 10px; border-radius:6px; background:#f8fafc; border:1px solid #edf2f6; display:flex; flex-direction:column; gap:4px;';
+      
+      const header = document.createElement('div');
+      header.style.cssText = 'display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#8a9aaa; font-weight:600;';
+      header.innerHTML = `<span>📅 ${dateStr}</span>`;
+      
+      const badge = document.createElement('span');
+      if (sug.done) {
+        badge.style.cssText = 'display:inline-flex; align-items:center; gap:2px; font-size:10px; font-weight:700; color:#2e7d32;';
+        badge.textContent = '✓ Resolvido';
+      } else {
+        badge.style.cssText = 'display:inline-flex; align-items:center; gap:2px; font-size:10px; font-weight:700; color:#b78103;';
+        badge.textContent = '⏰ Pendente';
+      }
+      header.appendChild(badge);
+      
+      const content = document.createElement('div');
+      content.style.cssText = 'color:#2c3e50; line-height:1.4; word-break:break-word;';
+      content.textContent = sug.content;
+      
+      item.appendChild(header);
+      item.appendChild(content);
+      container.appendChild(item);
+    });
+  } catch(e) {
+    container.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:10px;">Erro ao carregar: ${e.message}</div>`;
+  }
+}
+
 window.abrirModalSenha = abrirModalSenha;
 window.fecharModalSenha = fecharModalSenha;
 window.confirmarAlterarSenha = confirmarAlterarSenha;
 window.abrirAbaModal = abrirAbaModal;
 window.confirmarEnviarSugestao = confirmarEnviarSugestao;
+window.sbListarMinhasSugestoes = sbListarMinhasSugestoes;
+window.carregarMinhasSugestoes = carregarMinhasSugestoes;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

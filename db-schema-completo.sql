@@ -254,7 +254,8 @@ CREATE TABLE IF NOT EXISTS payments (
   header_data  JSONB NOT NULL DEFAULT '{}',
   values_data  JSONB NOT NULL DEFAULT '{}',
   created_at   TIMESTAMPTZ DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ DEFAULT NOW()
+  updated_at   TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT payments_user_id_unique UNIQUE (user_id)
 );
 
 ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
@@ -402,6 +403,39 @@ SELECT 'public', '#geral'
 WHERE NOT EXISTS (
   SELECT 1 FROM chat_channels WHERE type = 'public' AND name = '#geral'
 );
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- 6.5. SUGGESTIONS (sugestões de melhorias)
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.suggestions (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_name   TEXT,
+  user_email  TEXT,
+  content     TEXT NOT NULL,
+  done        BOOLEAN NOT NULL DEFAULT false,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.suggestions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "suggestions_insert_own" ON public.suggestions;
+CREATE POLICY "suggestions_insert_own" ON public.suggestions
+  FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "suggestions_select_own" ON public.suggestions;
+CREATE POLICY "suggestions_select_own" ON public.suggestions
+  FOR SELECT TO authenticated
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "suggestions_admin_all" ON public.suggestions;
+CREATE POLICY "suggestions_admin_all" ON public.suggestions
+  FOR ALL TO authenticated
+  USING (public.is_admin())
+  WITH CHECK (public.is_admin());
 
 
 -- ══════════════════════════════════════════════════════════════════
