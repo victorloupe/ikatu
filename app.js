@@ -7,6 +7,7 @@
 // ═══════════════════════════════════════════════════
 const S = {
   imgs: { '3d':['','','','',''], deck:['',''], cer:[''], rev:['',''], mob:['',''], pai:['',''] },
+  exibirCapa3d: {},
   acc: {
     corrimao:   {on:false, modelo:'', img:''},
     cascata:    {on:false, modelo:'', img:'', cor_pedra:''},
@@ -14,15 +15,20 @@ const S = {
     aquecimento:{on:false, modelo:'', img:''},
     igui_stone: {on:false, modelo:'', img:''},
   },
-  itens: {rev:[], mob:[], pai:[]},
+  itens: {rev:[], mob:[], pai:[], rev2:[], mob2:[], pai2:[]},
   // Índice das imagens 3D selecionadas (0-3: Vista1/2/3/Superior, sem deck)
   selectedImgs: {
     rev: [null, null],
     mob: [null, null],
     pai: [null, null],
+    rev2: [null, null],
+    mob2: [null, null],
+    pai2: [null, null],
   },
   // Seções ativas (false = não aparece no PDF e step oculto)
   secAtiva: { rev: true, mob: true, pai: true },
+  // Prancha extra (2ª página) por seção — false = não existe
+  pranchaExtra: { rev: false, mob: false, pai: false },
   // ID do projeto sendo editado (null = nova prancha)
   _editandoId: null,
 };
@@ -174,6 +180,7 @@ async function exportarSessao() {
       itens: S.itens,
       selectedImgs: S.selectedImgs,
       secAtiva: S.secAtiva,
+      pranchaExtra: S.pranchaExtra,
       step: cur,
       obsPadrao: obsPadraoAtivo,
     };
@@ -186,11 +193,11 @@ async function exportarSessao() {
     // Nome do arquivo de sessão
     const id      = (payload.form.id_projeto||'000000').trim();
     const modelo_ = (payload.form.modelo||'').replace(/[<>:"/\\|?*]/g,'').trim();
-    const cidadeRaw = (payload.form.cidade||'').split(/\s*[–\-]\s*/)[0].trim();
+    const lojaRaw = (payload.form.loja||'').replace(/[<>:"/\\|?*]/g,'').trim();
     const d       = new Date();
     const data    = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
     a.href     = url;
-    a.download = `${id}_Prancha Tecnica-${modelo_}_${cidadeRaw}_${data}.igui`;
+    a.download = `${id}_Prancha Tecnica-${modelo_}_${lojaRaw}_${data}.igui`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -262,6 +269,11 @@ async function importarSessao(input) {
     // Restaurar seções ativas
     if (d.secAtiva) Object.assign(S.secAtiva, d.secAtiva);
     updateAllSecUI();
+
+    // Restaurar pranchas extras (2ª página por seção)
+    if (d.pranchaExtra) Object.assign(S.pranchaExtra, d.pranchaExtra);
+    atualizarPranchasExtra();
+
   updateStepChecks();
 
     // Restaurar estado do toggle obs padrão
@@ -327,6 +339,8 @@ function autoSave() {
         itens: S.itens,
         selectedImgs: S.selectedImgs,
         secAtiva: S.secAtiva,
+        pranchaExtra: S.pranchaExtra,
+        exibirCapa3d: S.exibirCapa3d || {},
         _editandoId: S._editandoId,
         step: cur,
         obsPadrao: obsPadraoAtivo,
@@ -388,9 +402,10 @@ function restaurar() {
   if (d.imgs) {
     Object.assign(S.imgs, d.imgs);
     if (d.origImgs) S.origImgs = JSON.parse(JSON.stringify(d.origImgs));
+    if (typeof renderVistas3D === 'function') renderVistas3D();
     Object.entries(d.imgs).forEach(([grp, arr]) => {
       arr.forEach((b64, idx) => {
-        if (b64) restoreSlot(grp, idx, b64);
+        if (b64 && (grp !== '3d' || idx === 4)) restoreSlot(grp, idx, b64);
       });
     });
   }
@@ -412,6 +427,13 @@ function restaurar() {
 
   // Restaurar seções ativas
   if (d.secAtiva) Object.assign(S.secAtiva, d.secAtiva);
+
+  // Restaurar pranchas extras (2ª página por seção)
+  if (d.pranchaExtra) Object.assign(S.pranchaExtra, d.pranchaExtra);
+  atualizarPranchasExtra();
+
+  // Restaurar exibirCapa3d
+  if (d.exibirCapa3d) S.exibirCapa3d = d.exibirCapa3d;
 
   // Restaurar ID de edição (mantém vínculo com o projeto original)
   S._editandoId = d._editandoId || null;
@@ -838,28 +860,142 @@ function updateAllSecUI() {
 }
 
 // ═══════════════════════════════════════════════════
+// PRANCHAS EXTRAS — 2ª página opcional por seção (rev/mob/pai)
+// ═══════════════════════════════════════════════════
+const PRANCHA_ADD_LABEL = {
+  rev: '＋ Adicionar Item',
+  mob: '＋ Adicionar Item',
+  pai: '＋ Adicionar Planta / Elemento',
+};
+
+// Injeta a barra de abas e a página 2 (oculta) dentro do card da seção
+function montarAbasPrancha(tipo, cardSel) {
+  const card = document.querySelector(cardSel);
+  if (!card) return;
+  const bd = card.querySelector('.card-bd');
+  if (!bd || document.getElementById(`ptabs-${tipo}`)) return; // já montado
+  const navActs = bd.querySelector('.nav-acts');
+  const toggle  = bd.querySelector('.sec-toggle-wrap');
+  if (!navActs || !toggle) return;
+
+  // Move o conteúdo atual (entre o toggle e o nav-acts) para a "Prancha 1"
+  const page1 = document.createElement('div');
+  page1.className = 'prancha-page';
+  page1.id = `ppage-${tipo}-1`;
+  let n = toggle.nextSibling;
+  const mover = [];
+  while (n && n !== navActs) { mover.push(n); n = n.nextSibling; }
+  mover.forEach(x => page1.appendChild(x));
+
+  // Barra de abas
+  const tabs = document.createElement('div');
+  tabs.className = 'prancha-tabs';
+  tabs.id = `ptabs-${tipo}`;
+  tabs.innerHTML =
+    `<button class="ptab active" id="ptab-${tipo}-1" onclick="verPrancha('${tipo}',1)">Prancha 1</button>` +
+    `<button class="ptab" id="ptab-${tipo}-2" onclick="verPrancha('${tipo}',2)" style="display:none">Prancha 2</button>` +
+    `<button class="ptab-add" id="ptab-add-${tipo}" onclick="togglePranchaExtra('${tipo}')" title="Adicionar uma 2ª prancha a esta seção">＋ prancha</button>` +
+    `<button class="ptab-rm" id="ptab-rm-${tipo}" onclick="removerPranchaExtra('${tipo}')" title="Remover a 2ª prancha" style="display:none">🗑 Prancha 2</button>`;
+
+  // Página 2 (mesma estrutura, vazia)
+  const isPai = tipo === 'pai';
+  const page2 = document.createElement('div');
+  page2.className = 'prancha-page';
+  page2.id = `ppage-${tipo}-2`;
+  page2.style.display = 'none';
+  page2.innerHTML =
+    `<div class="div"><span>Imagens de Referência (do Projeto 3D)</span></div>` +
+    `<p style="font-size:11px;color:var(--muted);margin-bottom:10px;">Escolha quais imagens do Projeto 3D aparecem nesta página da prancha.</p>` +
+    `<div class="img-selector-grid" id="imgsel-${tipo}2">` +
+      `<div class="img-sel-col"><label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Esquerdo</label><div class="img-sel-options" id="imgsel-${tipo}2-0"></div><div class="img-sel-preview" id="imgsel-preview-${tipo}2-0"></div></div>` +
+      `<div class="img-sel-col"><label style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.3px;display:block;margin-bottom:6px">Painel Direito</label><div class="img-sel-options" id="imgsel-${tipo}2-1"></div><div class="img-sel-preview" id="imgsel-preview-${tipo}2-1"></div></div>` +
+    `</div>` +
+    `<div class="div"><span>${isPai ? 'Plantas e Elementos' : 'Itens'}</span></div>` +
+    `<div class="items-list" id="lst-${tipo}2"></div>` +
+    `<div class="btn-add-wrap"><button class="btn-add" onclick="addItem('${tipo}2')">${PRANCHA_ADD_LABEL[tipo]}</button><span class="item-count" id="item-count-${tipo}2">0 / 6</span></div>`;
+
+  bd.insertBefore(tabs, navActs);
+  bd.insertBefore(page1, navActs);
+  bd.insertBefore(page2, navActs);
+}
+
+function verPrancha(tipo, n) {
+  const p1 = document.getElementById(`ppage-${tipo}-1`);
+  const p2 = document.getElementById(`ppage-${tipo}-2`);
+  const t1 = document.getElementById(`ptab-${tipo}-1`);
+  const t2 = document.getElementById(`ptab-${tipo}-2`);
+  if (p1) p1.style.display = n === 1 ? '' : 'none';
+  if (p2) p2.style.display = n === 2 ? '' : 'none';
+  if (t1) t1.classList.toggle('active', n === 1);
+  if (t2) t2.classList.toggle('active', n === 2);
+}
+
+function togglePranchaExtra(tipo) {
+  if (S.pranchaExtra[tipo]) { verPrancha(tipo, 2); return; }
+  S.pranchaExtra[tipo] = true;
+  atualizarPranchasExtra();
+  verPrancha(tipo, 2);
+  autoSave();
+}
+
+function removerPranchaExtra(tipo) {
+  if (!S.pranchaExtra[tipo]) return;
+  if (!confirm('Remover a 2ª prancha desta seção? As imagens e itens dela serão apagados.')) return;
+  S.pranchaExtra[tipo] = false;
+  S.itens[tipo + '2'] = [];
+  S.selectedImgs[tipo + '2'] = [null, null];
+  atualizarPranchasExtra();
+  verPrancha(tipo, 1);
+  autoSave();
+}
+
+// Sincroniza a UI das abas com o estado S.pranchaExtra
+function atualizarPranchasExtra() {
+  ['rev','mob','pai'].forEach(tipo => {
+    const ativa = !!(S.pranchaExtra && S.pranchaExtra[tipo]);
+    const tab2 = document.getElementById(`ptab-${tipo}-2`);
+    const add  = document.getElementById(`ptab-add-${tipo}`);
+    const rm   = document.getElementById(`ptab-rm-${tipo}`);
+    if (tab2) tab2.style.display = ativa ? '' : 'none';
+    if (add)  add.style.display  = ativa ? 'none' : '';
+    if (rm)   rm.style.display   = ativa ? '' : 'none';
+    if (ativa) renderItems(tipo + '2');
+    else verPrancha(tipo, 1);
+  });
+  renderImgSelectors();
+}
+
+// ═══════════════════════════════════════════════════
 // SELETORES DE IMAGEM (Rev / Mob / Pai)
 // ═══════════════════════════════════════════════════
 const IMG_LABELS_3D = ['Vista 1','Vista 2','Vista 3','Vista Superior','Medidas do Deck'];
 const IMG_LABELS_SEL = ['Vista 1','Vista 2','Vista 3','Vista Superior']; // sem deck nos seletores
 
 function renderImgSelectors() {
-  ['rev','mob','pai'].forEach(tipo => {
+  const tipos = [];
+  ['rev','mob','pai'].forEach(t => { tipos.push(t); if (S.pranchaExtra && S.pranchaExtra[t]) tipos.push(t + '2'); });
+  tipos.forEach(tipo => {
     [0,1].forEach(painel => {
       const container = document.getElementById(`imgsel-${tipo}-${painel}`);
       if (!container) return;
       clearNode(container);
 
-      // Botões para cada imagem do 3D (só Vista 1-4, sem Medidas do Deck)
-      for (let i = 0; i < 4; i++) {
-        const b64 = S.imgs['3d'][i];
+      // Botões para cada imagem do 3D (Vista 1-4 e extras, sem Medidas do Deck)
+      S.imgs['3d'].forEach((b64, i) => {
+        if (i === 4) return; // ignora medidas do deck
+        
+        const b64_val = S.imgs['3d'][i];
         const btn = document.createElement('div');
         const isActive = S.selectedImgs[tipo][painel] === i;
-        btn.className = 'img-sel-btn' + (isActive ? ' active' : '') + (!b64 ? ' empty' : '');
-        btn.title = IMG_LABELS_SEL[i];
-        if (b64) {
+        btn.className = 'img-sel-btn' + (isActive ? ' active' : '') + (!b64_val ? ' empty' : '');
+        
+        let labelText = `Vista ${i < 4 ? i + 1 : i}`;
+        if (i === 3) labelText = 'Vista Superior';
+        btn.title = labelText;
+        
+        if (b64_val) {
           const img = document.createElement('img');
-          img.src = imgSrc(b64);
+          img.src = imgSrc(b64_val);
           btn.appendChild(img);
           btn.onclick = () => selectImg(tipo, painel, i);
         } else {
@@ -869,10 +1005,10 @@ function renderImgSelectors() {
           btn.appendChild(empty);
         }
         const label = document.createElement('span');
-        label.textContent = IMG_LABELS_SEL[i];
+        label.textContent = labelText;
         btn.appendChild(label);
         container.appendChild(btn);
-      }
+      });
 
       updateSelectorPreview(tipo, painel);
     });
@@ -937,7 +1073,11 @@ function compressImg(source, maxW, quality) {
     if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
     const canvas = document.createElement('canvas');
     canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(drawable, 0, 0, w, h);
+    const ctx = canvas.getContext('2d');
+    // Fundo branco: evita que PNG com transparência vire preto no JPEG
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(drawable, 0, 0, w, h);
     if (drawable.close) drawable.close(); // libera ImageBitmap da memória
     return canvas.toDataURL('image/jpeg', quality);
   };
@@ -1510,7 +1650,7 @@ function renderItems(tipo) {
   }
   list.forEach((item, i) => {
     const row = document.createElement('div');
-    const isPai = tipo === 'pai';
+    const isPai = tipo === 'pai' || tipo === 'pai2';
     row.className = 'item-row' + (isPai ? ' item-row-simple' : '');
     row.draggable = true;
     row.innerHTML = `
@@ -1644,9 +1784,12 @@ function validarCampos() {
   f.modelo   ? add('✅','ok',`Modelo: ${f.modelo}`)        : add('❌','err','Modelo da piscina não preenchido');
 
   // Imagens 3D
-  const imgs3d = S.imgs['3d'].filter(Boolean).length;
-  imgs3d > 0 ? add('✅','ok',`${imgs3d} imagem(ns) do Projeto 3D`)
-             : add('⚠️','warn','Nenhuma imagem do Projeto 3D');
+  const imgs3d = S.imgs['3d'].filter((val, idx) => {
+    if (idx === 4 || !val) return false;
+    return !S.exibirCapa3d || S.exibirCapa3d[idx] !== false;
+  }).length;
+  imgs3d > 0 ? add('✅','ok',`${imgs3d} imagem(ns) do Projeto 3D (na Capa)`)
+             : add('⚠️','warn','Nenhuma imagem do Projeto 3D na Capa');
 
   // Medidas deck
   S.imgs['3d'][4] ? add('✅','ok','Imagem de Medidas do Deck incluída')
@@ -1834,7 +1977,7 @@ async function salvarSessao() {
     const projetoPayload = {
       form: getFormData(), imgs: S.imgs, acc: S.acc,
       itens: S.itens, selectedImgs: S.selectedImgs,
-      secAtiva: S.secAtiva, obsPadrao: obsPadraoAtivo, step: cur,
+      secAtiva: S.secAtiva, pranchaExtra: S.pranchaExtra, exibirCapa3d: S.exibirCapa3d || {}, obsPadrao: obsPadraoAtivo, step: cur,
     };
     setLoad('Salvando sessão...', 75);
     const savedId = await salvarProjeto(projetoPayload, S._editandoId || null);
@@ -1859,9 +2002,10 @@ async function salvarSessao() {
 
 let _skipOverwriteCheck = false;
 
-async function _executarGerarPDF() {
+async function _executarGerarPDF(preview = false) {
   // Se editando um projeto existente, pedir confirmação antes de sobrescrever
-  if (S._editandoId && !_skipOverwriteCheck) {
+  // (pré-visualização não salva nada, então não precisa confirmar)
+  if (!preview && S._editandoId && !_skipOverwriteCheck) {
     document.getElementById('overwriteModal').classList.add('show');
     return;
   }
@@ -1880,6 +2024,15 @@ async function _executarGerarPDF() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+
+    // Todo texto do PDF sai em CAIXA ALTA, mesmo digitado em minúsculo
+    const _docText = doc.text.bind(doc);
+    doc.text = function(txt, ...rest) {
+      if (typeof txt === 'string') txt = txt.toUpperCase();
+      else if (Array.isArray(txt)) txt = txt.map(s => (typeof s === 'string' ? s.toUpperCase() : s));
+      return _docText(txt, ...rest);
+    };
+
     const PW = 297, PH = 210;
     const FOOTER_H = 22;
 
@@ -1915,7 +2068,9 @@ async function _executarGerarPDF() {
           const cv=document.createElement('canvas');
           const sc=Math.min(1,1600/sw);
           cv.width=Math.round(sw*sc); cv.height=Math.round(sh*sc);
-          cv.getContext('2d').drawImage(img,sx,sy,sw,sh,0,0,cv.width,cv.height);
+          const cx=cv.getContext('2d');
+          cx.fillStyle='#ffffff'; cx.fillRect(0,0,cv.width,cv.height);
+          cx.drawImage(img,sx,sy,sw,sh,0,0,cv.width,cv.height);
           res(cv.toDataURL('image/jpeg',q).split(',')[1]);
         };
         img.onerror=()=>res(null);
@@ -1941,7 +2096,9 @@ async function _executarGerarPDF() {
           // Usa resolução nativa da imagem para PDF nítido
           const cv=document.createElement('canvas');
           cv.width=img.width; cv.height=img.height;
-          cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+          const cx=cv.getContext('2d');
+          cx.fillStyle='#ffffff'; cx.fillRect(0,0,cv.width,cv.height);
+          cx.drawImage(img,0,0,cv.width,cv.height);
           doc.addImage(cv.toDataURL('image/jpeg',0.92),'JPEG',dx,dy,dw,dh);
           res();
         };
@@ -1987,23 +2144,51 @@ async function _executarGerarPDF() {
     }
 
     // ════════════════════════════
-    // PÁG 1 — Capa 3D
+    // ════════════════════════════
+    // PÁG 1 — Capa 3D (e extras)
     // ════════════════════════════
     setLoad('Pagina 1: Capa 3D...', 20);
     await new Promise(r=>setTimeout(r,20));
 
-    const CH=PH-FOOTER_H, HW=PW/2, HH=CH/2;
-    const cells=[[0,0,HW,HH],[HW,0,HW,HH],[0,HH,HW,HH],[HW,HH,HW,HH]];
-    for(let i=0;i<4;i++){
-      const [cx,cy,cw,ch]=cells[i];
-      fill(C.lightbg); doc.rect(cx,cy,cw,ch,'F');
-      if(S.imgs['3d'][i]) await ins(S.imgs['3d'][i],cx,cy,cw,ch);
+    // Agrupa todas as vistas 3D existentes, não-nulas e marcadas para exibição (ignorando index 4 - Medidas do Deck)
+    const vistas3d = [];
+    S.imgs['3d'].forEach((val, idx) => {
+      if (idx !== 4 && val) {
+        const exibir = !S.exibirCapa3d || S.exibirCapa3d[idx] !== false;
+        if (exibir) {
+          vistas3d.push(val);
+        }
+      }
+    });
+
+    const viewsPerPage = 4;
+    const totalPages = Math.max(1, Math.ceil(vistas3d.length / viewsPerPage));
+
+    const CH = PH - FOOTER_H, HW = PW / 2, HH = CH / 2;
+    for (let p = 0; p < totalPages; p++) {
+      if (p > 0) {
+        doc.addPage();
+      }
+      
+      const cells = [[0, 0, HW, HH], [HW, 0, HW, HH], [0, HH, HW, HH], [HW, HH, HW, HH]];
+      
+      const startIdx = p * viewsPerPage;
+      for (let i = 0; i < 4; i++) {
+        const [cx, cy, cw, ch] = cells[i];
+        fill(C.lightbg); doc.rect(cx, cy, cw, ch, 'F');
+        const viewImg = vistas3d[startIdx + i];
+        if (viewImg) {
+          await ins(viewImg, cx, cy, cw, ch);
+        }
+      }
+      
+      // Grade cinza escuro
+      stroke(C.accent); doc.setLineWidth(0.6);
+      doc.line(HW, 0, HW, CH);
+      doc.line(0, HH, PW, HH);
+      
+      drawFooter(true);
     }
-    // Grade cinza escuro
-    stroke(C.accent); doc.setLineWidth(0.6);
-    doc.line(HW,0,HW,CH);
-    doc.line(0,HH,PW,HH);
-    drawFooter(true);
 
     // ════════════════════════════
     // PÁG 2 — Descritivo
@@ -2127,21 +2312,25 @@ async function _executarGerarPDF() {
     // ════════════════════════════════════════════════════
     // PÁGS 3-5 — Revestimentos / Mobiliário / Paisagismo
     // ════════════════════════════════════════════════════
-    const SECS=[
-      {title:'REVESTIMENTOS', grp:'rev', tipo:'rev'},
-      {title:'MOBILIARIO',    grp:'mob', tipo:'mob'},
-      {title:'PAISAGISMO',    grp:'pai', tipo:'pai'},
-    ];
+    const SECS=[];
+    [['REVESTIMENTOS','rev'],['MOBILIARIO','mob'],['PAISAGISMO','pai']].forEach(([title,tipo])=>{
+      const ativa = !(S.secAtiva && S.secAtiva[tipo] === false);
+      SECS.push({title, grp:tipo, tipo, isPai: tipo==='pai'});
+      // Prancha extra (2ª página): só se a seção estiver ativa e a extra existir
+      if(ativa && S.pranchaExtra && S.pranchaExtra[tipo]){
+        SECS.push({title, grp:tipo, tipo: tipo+'2', isPai: tipo==='pai'});
+      }
+    });
 
     for(const sec of SECS){
-      // Pular se seção desativada
+      // Pular se seção desativada (a extra já foi filtrada acima)
       if(S.secAtiva && S.secAtiva[sec.tipo] === false) continue;
       doc.addPage();
       const _secPcts = { rev: 55, mob: 68, pai: 82 };
       setLoad('Montando '+sec.title+'...', _secPcts[sec.tipo] || 60);
       await new Promise(r=>setTimeout(r,20));
 
-      const isPai = sec.tipo==='pai';
+      const isPai = sec.isPai;
       const items = S.itens[sec.tipo]||[];
 
       // Altura da imagem FIXA = igual ao descritivo (PH - FOOTER_H - DESC_H)
@@ -2272,12 +2461,19 @@ async function _executarGerarPDF() {
     await new Promise(r=>setTimeout(r,50));
     const id      = (form.id_projeto||'000000').trim();
     const modelo_ = (form.modelo||'').replace(/[<>:"/\\|?*]/g,'').trim();
-    const cidadeRaw = (form.cidade||'').split(/\s*[–\-]\s*/)[0].trim();
+    const lojaRaw = (form.loja||'').replace(/[<>:"/\\|?*]/g,'').trim();
     const data    = (form.data_proj||'').replace(/\//g,'-') || (()=>{
       const d=new Date();
       return `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
     })();
-    const baseName = `${id}_Prancha Tecnica-${modelo_}_${cidadeRaw}_${data}`;
+    const baseName = `${id}_Prancha Tecnica-${modelo_}_${lojaRaw}_${data}`;
+
+    // Pré-visualização: abre o PDF num modal, sem baixar nem salvar
+    if (preview) {
+      setLoad('Abrindo pré-visualização...', 96);
+      abrirPreviewPrancha(doc.output('bloburl'));
+      return;
+    }
 
     // 1) Salvar PDF
     doc.save(`${baseName}.pdf`);
@@ -2289,7 +2485,7 @@ async function _executarGerarPDF() {
       const projetoPayload = {
         form: getFormData(), imgs: S.imgs, acc: S.acc,
         itens: S.itens, selectedImgs: S.selectedImgs,
-        secAtiva: S.secAtiva, obsPadrao: obsPadraoAtivo, step: cur,
+        secAtiva: S.secAtiva, pranchaExtra: S.pranchaExtra, exibirCapa3d: S.exibirCapa3d || {}, obsPadrao: obsPadraoAtivo, step: cur,
       };
       const savedId = await salvarProjeto(projetoPayload, S._editandoId || null);
       if (!S._editandoId && savedId) {
@@ -2302,7 +2498,7 @@ async function _executarGerarPDF() {
     dbSave('autosave', {
       form: getFormData(), imgs: S.imgs, acc: S.acc,
       itens: S.itens, selectedImgs: S.selectedImgs,
-      secAtiva: S.secAtiva, obsPadrao: obsPadraoAtivo, step: cur,
+      secAtiva: S.secAtiva, pranchaExtra: S.pranchaExtra, exibirCapa3d: S.exibirCapa3d || {}, obsPadrao: obsPadraoAtivo, step: cur,
       _editandoId: S._editandoId, ts: Date.now(),
     });
 
@@ -2315,6 +2511,37 @@ async function _executarGerarPDF() {
     btn.disabled=false;
     ov.classList.remove('show');
   }
+}
+
+// ── Pré-visualização da prancha ─────────────────────────────────────
+async function previewPrancha() {
+  await _executarGerarPDF(true);
+}
+
+let _previewUrl = null;
+
+function abrirPreviewPrancha(blobUrl) {
+  _previewUrl = blobUrl;
+  const frame = document.getElementById('previewFrame');
+  if (frame) frame.src = blobUrl;
+  document.getElementById('previewModal')?.classList.add('show');
+}
+
+function fecharPreviewPrancha() {
+  document.getElementById('previewModal')?.classList.remove('show');
+  const frame = document.getElementById('previewFrame');
+  if (frame) frame.src = 'about:blank';
+  if (_previewUrl) { try { URL.revokeObjectURL(_previewUrl); } catch {} _previewUrl = null; }
+}
+
+function abrirPreviewNovaGuia() {
+  if (_previewUrl) window.open(_previewUrl, '_blank');
+}
+
+// Confirmar a partir da pré-visualização: fecha o modal e gera o PDF final
+function confirmarPreview() {
+  fecharPreviewPrancha();
+  gerarPDF();
 }
 
 function setLoad(msg, pct) {
@@ -2404,6 +2631,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setLogoImages();
 
+  // Monta as abas de prancha extra nos cards das seções
+  montarAbasPrancha('rev', '#s3');
+  montarAbasPrancha('mob', '#s4');
+  montarAbasPrancha('pai', '#s5');
+
   // Init date
   const d = new Date();
   const pad = n => String(n).padStart(2,'0');
@@ -2420,15 +2652,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (sessao.imgs) {
         S.imgs = sessao.imgs;
         if (sessao.origImgs) S.origImgs = sessao.origImgs;
-        // Repopula os slots de upload com as imagens restauradas
+        if (typeof renderVistas3D === 'function') renderVistas3D();
+        // Repopula os slots de upload com as imagens restauradas (não-3D e medidas do deck)
         Object.entries(sessao.imgs).forEach(([grp, arr]) => {
-          (arr || []).forEach((val, idx) => { if (val) restoreSlot(grp, idx, val); });
+          (arr || []).forEach((val, idx) => {
+            if (val && (grp !== '3d' || idx === 4)) restoreSlot(grp, idx, val);
+          });
         });
       }
       if (sessao.acc)          S.acc          = sessao.acc;
       if (sessao.itens)        S.itens        = sessao.itens;
       if (sessao.selectedImgs) S.selectedImgs = sessao.selectedImgs;
       if (sessao.secAtiva)     S.secAtiva     = sessao.secAtiva;
+      if (sessao.pranchaExtra) Object.assign(S.pranchaExtra, sessao.pranchaExtra);
+      // Garante as chaves da 2ª página mesmo em pranchas salvas antes dessa feature
+      ['rev2','mob2','pai2'].forEach(k => { if(!S.itens[k]) S.itens[k]=[]; if(!S.selectedImgs[k]) S.selectedImgs[k]=[null,null]; });
+      if (sessao.exibirCapa3d) S.exibirCapa3d = sessao.exibirCapa3d;
       if (sessao.obsPadrao)    { obsPadraoAtivo = sessao.obsPadrao; }
       S._editandoId = editandoId || null;
       updateEditBadge();
@@ -2448,6 +2687,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Render components
+  if (typeof renderVistas3D === 'function') renderVistas3D();
   renderAcc();
   renderItems('rev');
   renderItems('mob');
@@ -2455,9 +2695,98 @@ document.addEventListener('DOMContentLoaded', async () => {
   syncDeckPreview();
   renderImgSelectors();
   updateAllSecUI();
+  atualizarPranchasExtra();
   updateStepChecks();
   initDropZones();
 
   // Auto-save on all input changes (form fields already have oninput)
   document.addEventListener('change', () => autoSave());
 });
+
+function renderVistas3D() {
+  const grid = document.getElementById('grid-vistas-3d');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  S.imgs['3d'].forEach((b64, idx) => {
+    if (idx === 4) return; // 4 is deck measures
+
+    const slotWrap = document.createElement('div');
+    slotWrap.className = 'slot-wrap';
+
+    let labelText = `Vista ${idx < 4 ? idx + 1 : idx}`;
+    if (idx === 3) labelText = 'Vista Superior';
+
+    const exibirChecked = (!S.exibirCapa3d || S.exibirCapa3d[idx] !== false) ? 'checked' : '';
+
+    slotWrap.innerHTML = `
+      <div class="slot" id="sl-3d-${idx}">
+        <input type="file" accept="image/*" onchange="loadImg(this,'3d',${idx})">
+        <div class="ph">
+          <div class="i">🖼️</div>
+          <div class="t">${labelText}</div>
+        </div>
+        <button class="rm" onclick="rmImg('3d',${idx},event)">✕</button>
+      </div>
+      <div class="slot-lbl" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <span>${labelText}</span>
+        ${idx >= 5 ? `<button type="button" onclick="removerVista3D(${idx})" style="background:none; border:none; color:#ef4444; font-size:10px; font-weight:600; cursor:pointer; padding:2px;">Excluir</button>` : ''}
+      </div>
+      <div style="display:flex; align-items:center; width:100%; margin-top:2px;">
+        <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:#6b7280; cursor:pointer;">
+          <input type="checkbox" onchange="atualizarExibirCapa3d(${idx}, this.checked)" ${exibirChecked}>
+          <span>Exibir na Capa</span>
+        </label>
+      </div>
+    `;
+
+    grid.appendChild(slotWrap);
+
+    if (b64) {
+      restoreSlot('3d', idx, b64);
+    }
+  });
+
+  if (typeof initDropZones === 'function') {
+    initDropZones();
+  }
+}
+
+function adicionarVista3D() {
+  S.imgs['3d'].push('');
+  if (S.origImgs && S.origImgs['3d']) {
+    S.origImgs['3d'].push('');
+  }
+  renderVistas3D();
+  renderImgSelectors();
+  autoSave();
+}
+
+function removerVista3D(idx) {
+  if (idx < 5) return;
+  S.imgs['3d'].splice(idx, 1);
+  if (S.origImgs && S.origImgs['3d']) {
+    S.origImgs['3d'].splice(idx, 1);
+  }
+
+  // Adjust selection indices to handle deletion
+  ['rev','mob','pai'].forEach(tipo => {
+    if (S.selectedImgs[tipo]) {
+      S.selectedImgs[tipo] = S.selectedImgs[tipo].map(sel => {
+        if (sel === idx) return null;
+        if (sel > idx) return sel - 1;
+        return sel;
+      });
+    }
+  });
+
+  renderVistas3D();
+  renderImgSelectors();
+  autoSave();
+}
+
+function atualizarExibirCapa3d(idx, checked) {
+  if (!S.exibirCapa3d) S.exibirCapa3d = {};
+  S.exibirCapa3d[idx] = checked;
+  autoSave();
+}

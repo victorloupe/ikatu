@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pranchas Geradas – iGUi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-<link rel="stylesheet" href="styles.css?v=20260527">
+<script src="supabase-client.js?v=20260615d"></script>
+<meta name="theme-color" content="#00AEEF">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css?v=20260615e">
 <script>
   if (window.innerWidth <= 768) {
     window.location.href = 'pagamentos.html';
@@ -57,13 +59,20 @@
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Links</span>
         </a>
-        <a class="stp" href="chat.html" id="navChat">
+        <a class="stp" href="avisos.html" id="navChat">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
             <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
             <path d="M6 13a2 2 0 0 0 4 0"/>
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Avisos</span>
           <span class="chat-nav-badge" id="chatNavBadge"></span>
+        </a>
+        <a class="stp" href="chat.html" id="navChatDM">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
+          <span class="chat-nav-badge" id="chatDmNavBadge"></span>
         </a>
         <a class="stp" href="pagamentos.html">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
@@ -142,6 +151,9 @@
           <button class="proj-search-clear" id="btnLimparBusca" onclick="limparBusca()" title="Limpar">✕</button>
         </div>
         <div class="proj-count" id="projetosCount">Carregando...</div>
+        <button class="proj-trash-btn" id="btnLixeira" onclick="toggleLixeira()" title="Pranchas excluídas ficam aqui por 30 dias">
+          🗑 Lixeira
+        </button>
       </div>
 
       <!-- Filtros por usuário -->
@@ -171,9 +183,9 @@
 <!-- Modal de confirmação de exclusão -->
 <div class="modal-overlay" id="delModal">
   <div class="modal-box">
-    <div class="modal-title">Excluir Prancha</div>
-    <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6">
-      Excluir esta prancha do histórico?<br>
+    <div class="modal-title" id="delModalTitle">Mover para a Lixeira</div>
+    <div id="delModalMsg" style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6">
+      A prancha vai para a <strong>Lixeira</strong>, onde pode ser restaurada por até <strong>30 dias</strong>. Depois disso é excluída definitivamente.<br>
       <strong>O PDF já gerado não é afetado.</strong>
     </div>
     <div class="modal-footer">
@@ -183,6 +195,6 @@
   </div>
 </div>
 
-<script src="projetos.js"></script>
+<script src="projetos.js?v=20260614"></script>
 </body>
 </html>

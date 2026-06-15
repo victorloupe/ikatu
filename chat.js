@@ -1,484 +1,502 @@
-// ── State ──────────────────────────────────────────────────────────────────
-let meId = null;
+// ════════════════════════════════════════════════════════════════════════
+//  Chat — iGUi Space  ·  GetStream Chat
+//  Canal "Geral" da equipe + Mensagens Diretas 1:1 + envio de arquivos.
+//  Token gerado pela Edge Function `stream-token` (API Secret fica no servidor).
+// ════════════════════════════════════════════════════════════════════════
+
+// ── State ───────────────────────────────────────────────────────────────
+let client = null;            // StreamChat client
+let meId = null;              // id do usuário logado (= id no Stream)
 let meNome = '';
 let isAdmin = false;
-let canalAtual = null;       // { id, type, name }
-let mensagens = [];
-let usuarios = [];
-let realtimeChannel = null;
-const MSGS_LIMIT = 50;
-let hasMore = false;
-let oldestCreatedAt = null;
-let mensagemParaDeletar = null;
-let mensagemParaFixar = null;
-let pinnedMsg = null;        // mensagem fixada atual no canal
+let usuarios = [];            // profiles da equipe (sem mim)
+let canalAtual = null;        // channel Stream aberto
+let peerAtualId = null;       // id da pessoa (null no canal Geral)
+let ehGrupoAtual = false;     // true quando o canal aberto é o Geral
+let listenerCanal = null;     // unsubscribe do listener de mensagens
+let anexosPendentes = [];     // arquivos já enviados ao Stream, aguardando a mensagem
+let enviandoAnexo = false;
 
-// ── DM unread state ────────────────────────────────────────────────────────
-let dmUnread = {};           // userId → { channelId, hasUnread }
-let dmNotifySubs = [];       // subscriptions de notificação (bolinhas)
-let dmSubscribedChannels = new Set();
+const ID_GERAL = 'geral';
 
-// ── Init ───────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', async () => {
-  const session = await sbRequireAuth();
-  if (!session) return;
+// ── Boot ────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', init);
 
-  const profile = await sbGetProfile();
-  meId = session.user.id;
-  meNome = profile?.name || profile?.email || 'Usuário';
-  isAdmin = profile?.role === 'admin';
+async function init() {
+  try {
+    if (typeof StreamChat === 'undefined') {
+      return mostrarErroConexao('Biblioteca do chat não carregou. Verifique sua conexão.');
+    }
 
-  const displayName = profile?.name || profile?.email || '—';
-  document.getElementById('hdrUser').textContent = displayName;
-  const av = document.getElementById('userAvatar');
-  if (av) {
-    const pts = displayName.trim().split(/\s+/);
-    av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
-  }
+    const session = await sbGetSession();
+    if (!session) { location.href = 'login.html'; return; }
 
-  if (isAdmin) {
-    document.getElementById('adminBadge').style.display = 'inline-block';
-    document.getElementById('navAdmin').style.display = 'flex';
-    document.getElementById('btnSchedule').style.display = 'flex';
-  }
+    const profile = await sbGetProfile().catch(() => null);
+    meId = session.user.id;
+    meNome = (profile && profile.name) || localStorage.getItem('igui_user_name') || 'Você';
+    isAdmin = !!(profile && profile.role === 'admin');
 
-  if (typeof setLogoImages === 'function') setLogoImages();
+    const creds = await obterCredenciaisStream();
+    if (!creds) return;
 
-  // Mark chat as seen now
-  localStorage.setItem('igui_chat_last_seen', new Date().toISOString());
+    client = StreamChat.getInstance(creds.apiKey);
+    await client.connectUser({ id: creds.userId, name: meNome }, creds.token);
 
-  // Process expired pins and scheduled messages silently in background
-  sbProcessarPinsExpirados().catch(() => {});
-
-  // Load channels and users in parallel
-  const [canais, users] = await Promise.all([
-    sbListarCanais().catch(() => []),
-    sbListarTodosUsuarios().catch(() => [])
-  ]);
-  usuarios = users;
-
-  // Carregar status de não lidos nos DMs
-  dmUnread = await sbCarregarStatusDMs().catch(() => ({}));
-
-  // Render DM list e subscrições de notificação
-  renderDMList();
-  subscribeAllDMsNotify();
-  
-  // Escuta novas mensagens no canal público geral para atualizar o alerta do menu
-  const publicChannel = canais.find(c => c.type === 'public' && c.name === '#geral');
-  if (publicChannel) {
-    sbEscutarNovaMensagemDM(publicChannel.id, (payload) => {
-      if (payload.new?.sender_id === meId) return; // Própria mensagem
-      if (payload.new?.status !== 'sent') return;
-      if (canalAtual?.id === publicChannel.id) return; // Se já está vendo, ignora
-      atualizarNavBadge();
+    client.on(ev => {
+      if (typeof ev.total_unread_count === 'number') atualizarBadgeTotal(ev.total_unread_count);
+      if (ev.type === 'message.new' && (!canalAtual || ev.cid !== canalAtual.cid)) {
+        marcarUnreadNaLista();
+      }
     });
-  }
-  
-  atualizarNavBadge();
+    atualizarBadgeTotal(client.user?.total_unread_count || 0);
 
-  // Find the #geral channel and select it
-  const geral = canais.find(c => c.type === 'public' && c.name === '#geral');
-  if (geral) {
-    selecionarCanal(geral.id, 'public', '#geral');
-  } else {
-    // Fallback: try to find any public channel
-    const pub = canais.find(c => c.type === 'public');
-    if (pub) selecionarCanal(pub.id, pub.type, pub.name || '#geral');
-  }
-});
+    await carregarUsuarios();
+    configurarDragDrop();
 
-// ── Render DM list ─────────────────────────────────────────────────────────
-function renderDMList() {
-  const container = document.getElementById('dmList');
-  const outros = usuarios.filter(u => u.id !== meId);
-  if (!outros.length) {
-    container.innerHTML = '<div style="padding:6px 14px;font-size:11px;color:var(--muted);">Nenhum usuário</div>';
-    return;
-  }
-  container.innerHTML = '';
-  outros.forEach(u => {
-    const btn = document.createElement('button');
-    btn.className = 'chat-ch-item';
-    btn.dataset.userId = u.id;
-    const initials = getInitials(u.name || u.email || '?');
-    const hasUnread = dmUnread[u.id]?.hasUnread || false;
-    btn.innerHTML = `
-      <div class="chat-dm-avatar">${escHtml(initials)}</div>
-      <span style="flex:1">${escHtml(u.name || u.email)}</span>
-      <span class="dm-unread-dot" id="dm-dot-${u.id}" style="${hasUnread ? '' : 'display:none'}"></span>
-    `;
-    btn.onclick = () => abrirDM(u.id, u.name || u.email);
-    container.appendChild(btn);
-  });
-}
-
-// ── DM unread helpers ──────────────────────────────────────────────────────
-function marcarDMComoLido(userId, channelId) {
-  localStorage.setItem(`igui_dm_seen_${channelId}`, new Date().toISOString());
-  if (dmUnread[userId]) dmUnread[userId].hasUnread = false;
-  else dmUnread[userId] = { channelId, hasUnread: false };
-  const dot = document.getElementById(`dm-dot-${userId}`);
-  if (dot) dot.style.display = 'none';
-  atualizarNavBadge();
-}
-
-async function atualizarNavBadge() {
-  const hasAnyDM = Object.values(dmUnread).some(v => v.hasUnread);
-  let hasPublicUnread = false;
-  
-  try {
-    // Se o canal atual não for o canal público geral, verifica se há novas mensagens nele
-    const isViewingGeral = canalAtual && canalAtual.type === 'public';
-    if (!isViewingGeral) {
-      hasPublicUnread = await sbVerificarMsgNaoLidas();
-    }
   } catch (e) {
-    console.warn('Erro ao verificar mensagens não lidas no geral:', e);
-  }
-
-  const badge = document.getElementById('chatNavBadge');
-  if (badge) {
-    badge.style.display = (hasAnyDM || hasPublicUnread) ? 'block' : 'none';
+    console.error('[chat] erro de inicialização:', e);
+    mostrarErroConexao('Não foi possível conectar ao chat. ' + (e?.message || ''));
   }
 }
 
-function subscribeAllDMsNotify() {
-  Object.entries(dmUnread).forEach(([userId, info]) => {
-    if (!info.channelId || dmSubscribedChannels.has(info.channelId)) return;
-    dmSubscribedChannels.add(info.channelId);
-    const handle = sbEscutarNovaMensagemDM(info.channelId, (payload) => {
-      if (payload.new?.sender_id === meId) return;       // própria msg
-      if (payload.new?.status !== 'sent') return;
-      if (canalAtual?.id === info.channelId) return;     // já está vendo
-      // Mostrar bolinha
-      if (dmUnread[userId]) dmUnread[userId].hasUnread = true;
-      else dmUnread[userId] = { channelId: info.channelId, hasUnread: true };
-      const dot = document.getElementById(`dm-dot-${userId}`);
-      if (dot) dot.style.display = 'block';
-      atualizarNavBadge();
+async function obterCredenciaisStream() {
+  const session = await sbGetSession();
+  if (!session) { location.href = 'login.html'; return null; }
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/stream-token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+  });
+  if (!resp.ok) {
+    let msg = 'Falha ao obter token (' + resp.status + ')';
+    try { const j = await resp.json(); if (j.error) msg = j.error; } catch (_) {}
+    throw new Error(msg);
+  }
+  return await resp.json(); // { token, apiKey, userId }
+}
+
+// ── Lista (Geral + pessoas) ─────────────────────────────────────────────
+async function carregarUsuarios() {
+  let profiles = [];
+  try { profiles = await sbListarUsuarios(); } catch (_) { profiles = []; }
+
+  usuarios = (profiles || [])
+    .filter(p => p && p.id && p.id !== meId && p.active !== false)
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+
+  const cont = document.getElementById('dmUserList');
+  const skel = document.getElementById('dmListSkel');
+  if (skel) skel.remove();
+
+  const geralHtml = `
+    <div class="chat-section-label">EQUIPE</div>
+    <button class="chat-ch-item conv-geral" data-conv="geral" onclick="abrirGeral()">
+      <span class="chat-dm-avatar grupo">#</span>
+      <span class="dm-user-name" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Geral</span>
+      <span class="dm-unread-dot" data-dot="geral" style="display:none;"></span>
+    </button>
+    <div class="chat-section-label" style="margin-top:12px;">MENSAGENS DIRETAS</div>`;
+
+  let usersHtml;
+  if (!usuarios.length) {
+    usersHtml = '<div style="padding:10px 14px;font-size:12px;color:var(--muted);">Nenhuma outra pessoa na equipe ainda.</div>';
+  } else {
+    usersHtml = usuarios.map(u => `
+      <button class="chat-ch-item dm-user" data-peer="${escHtml(u.id)}" data-name="${escHtml(u.name || 'Usuário')}" onclick="selecionarPeer('${escHtml(u.id)}')">
+        <span class="chat-dm-avatar">${escHtml(iniciais(u.name))}</span>
+        <span class="dm-user-name" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtml(u.name || 'Usuário')}</span>
+        <span class="dm-unread-dot" data-dot="${escHtml(u.id)}" style="display:none;"></span>
+      </button>
+    `).join('');
+  }
+
+  cont.innerHTML = geralHtml + usersHtml;
+  marcarUnreadNaLista();
+}
+
+// Consulta os canais do Stream e marca quem tem mensagem não lida
+async function marcarUnreadNaLista() {
+  if (!client) return;
+  try {
+    const canais = await client.queryChannels(
+      { type: 'messaging', members: { $in: [meId] } },
+      { last_message_at: -1 },
+      { watch: false, state: true, limit: 30 }
+    );
+    document.querySelectorAll('[data-dot]').forEach(d => d.style.display = 'none');
+    for (const ch of canais) {
+      const naoLidas = ch.countUnread();
+      const chave = (ch.id === ID_GERAL) ? 'geral' : outroMembro(ch);
+      if (!chave) continue;
+      const dot = document.querySelector(`[data-dot="${cssEsc(chave)}"]`);
+      if (dot) dot.style.display = naoLidas > 0 ? 'block' : 'none';
+    }
+  } catch (e) { /* silencioso */ }
+}
+
+function outroMembro(channel) {
+  const ids = Object.keys(channel.state?.members || {});
+  return ids.find(id => id !== meId) || null;
+}
+
+// ── Abrir canal Geral ───────────────────────────────────────────────────
+async function abrirGeral() {
+  if (!client) return;
+  peerAtualId = null;
+  ehGrupoAtual = true;
+  marcarItemAtivo('[data-conv="geral"]');
+  const channel = client.channel('messaging', ID_GERAL);
+  await montarConversa(channel, 'Geral', 'Conversa de toda a equipe', '#');
+}
+
+// ── Abrir conversa 1:1 ──────────────────────────────────────────────────
+async function selecionarPeer(peerId) {
+  if (!client || !peerId) return;
+  peerAtualId = peerId;
+  ehGrupoAtual = false;
+  const u = usuarios.find(x => x.id === peerId);
+  const peerNome = (u && u.name) || 'Usuário';
+  marcarItemAtivo(`[data-peer="${cssEsc(peerId)}"]`);
+  const channel = client.channel('messaging', { members: [meId, peerId] });
+  await montarConversa(channel, peerNome, 'Mensagem direta', iniciais(peerNome));
+}
+
+function marcarItemAtivo(sel) {
+  document.querySelectorAll('.chat-ch-item').forEach(b => b.classList.remove('active'));
+  const el = document.querySelector(sel);
+  if (el) el.classList.add('active');
+}
+
+// ── Montagem comum da conversa ──────────────────────────────────────────
+async function montarConversa(channel, titulo, subtitulo, avatarTxt) {
+  document.getElementById('chatEmpty').style.display = 'none';
+  document.getElementById('chatConv').style.display = 'flex';
+  document.getElementById('chatConnError').style.display = 'none';
+  document.getElementById('chatPeerName').textContent = titulo;
+  document.getElementById('chatPeerStatus').textContent = subtitulo;
+  const av = document.getElementById('chatPeerAvatar');
+  av.textContent = avatarTxt;
+  av.classList.toggle('grupo', ehGrupoAtual);
+  document.getElementById('chatWrap').classList.add('mobile-conv');
+
+  limparAnexosPendentes();
+  const lista = document.getElementById('msgList');
+  lista.innerHTML = skeletonMensagens();
+
+  if (listenerCanal) { try { listenerCanal.unsubscribe(); } catch (_) {} listenerCanal = null; }
+
+  try {
+    await channel.watch();
+    canalAtual = channel;
+
+    renderizarMensagens(channel.state.messages || []);
+    await channel.markRead().catch(() => {});
+
+    listenerCanal = channel.on('message.new', () => {
+      renderizarMensagens(canalAtual.state.messages || []);
+      if (document.visibilityState === 'visible') channel.markRead().catch(() => {});
     });
-    dmNotifySubs.push(handle);
-  });
-}
+    channel.on('message.updated', () => renderizarMensagens(canalAtual.state.messages || []));
+    channel.on('message.deleted', () => renderizarMensagens(canalAtual.state.messages || []));
 
-function getInitials(name) {
-  const pts = name.trim().split(/\s+/);
-  return ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
-}
+    const btnMore = document.getElementById('btnLoadMore');
+    btnMore.style.display = (channel.state.messages || []).length >= 25 ? 'block' : 'none';
 
-// ── Select channel ─────────────────────────────────────────────────────────
-async function selecionarCanal(channelId, type, name) {
-  // If no channelId, we need to get it from the DB
-  if (!channelId && type === 'public') {
-    const canais = await sbListarCanais().catch(() => []);
-    const ch = canais.find(c => c.type === 'public');
-    if (ch) channelId = ch.id;
-    if (!channelId) { showToast('Canal #geral não encontrado. Execute o SQL do banco.', 'err'); return; }
-  }
-
-  canalAtual = { id: channelId, type, name };
-  mensagens = [];
-  hasMore = false;
-  oldestCreatedAt = null;
-  pinnedMsg = null;
-  localStorage.setItem('igui_chat_last_seen', new Date().toISOString());
-
-  // Update UI active state
-  document.querySelectorAll('.chat-ch-item').forEach(el => el.classList.remove('active'));
-  if (type === 'public') {
-    document.getElementById('btnGeral')?.classList.add('active');
-  } else {
-    const dmBtn = document.querySelector(`.chat-ch-item[data-channel="${channelId}"]`);
-    if (dmBtn) dmBtn.classList.add('active');
-  }
-
-  // Update header
-  const title = type === 'public' ? `📢 Mural de Avisos` : escHtml(name);
-  document.getElementById('chatAreaTitle').innerHTML = title;
-  document.getElementById('chatAreaSub').textContent = type === 'public' ? 'Avisos e comunicados importantes' : 'Mensagem direta';
-
-  // Clear messages
-  document.getElementById('msgList').innerHTML = '';
-  document.getElementById('pinBanner').style.display = 'none';
-  document.getElementById('btnLoadMore').style.display = 'none';
-
-  // Unsubscribe previous channel
-  if (realtimeChannel) {
-    realtimeChannel.unsubscribe();
-    realtimeChannel = null;
-  }
-
-  // Process scheduled messages (admin triggers delivery for everyone)
-  if (isAdmin) sbProcessarAgendadas(channelId).catch(() => {});
-
-  // Load messages
-  await carregarMensagens();
-
-  // Subscribe to realtime
-  realtimeChannel = sbEscutarMensagens(channelId, onMensagemEvento);
-}
-
-// ── Open DM ────────────────────────────────────────────────────────────────
-async function abrirDM(userId, userName) {
-  try {
-    const canal = await sbCriarOuAbrirDM(userId);
-    const channelId = canal.id;
-
-    // Marcar como lido e atualizar mapa
-    if (!dmUnread[userId]) dmUnread[userId] = { channelId, hasUnread: false };
-    else dmUnread[userId].channelId = channelId;
-    marcarDMComoLido(userId, channelId);
-
-    // Assinar notificação se ainda não estiver (novo DM criado agora)
-    if (!dmSubscribedChannels.has(channelId)) {
-      subscribeAllDMsNotify();
-    }
-
-    // Mark this DM button as active by channel
-    document.querySelectorAll('.chat-ch-item').forEach(el => el.classList.remove('active'));
-    const dmBtn = document.querySelector(`.chat-ch-item[data-user-id="${userId}"]`);
-    if (dmBtn) {
-      dmBtn.classList.add('active');
-      dmBtn.dataset.channel = channelId;
-    }
-    await selecionarCanal(channelId, 'dm', userName);
+    marcarUnreadNaLista();
+    document.getElementById('chatInput')?.focus();
   } catch (e) {
-    showToast('Erro ao abrir DM: ' + e.message, 'err');
+    console.error('[chat] erro ao abrir conversa:', e);
+    const dica = ehGrupoAtual
+      ? 'O canal Geral ainda não foi criado. Confirme que a Edge Function foi re-publicada.'
+      : 'Não foi possível abrir a conversa.';
+    lista.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px;">${escHtml(dica)}</div>`;
   }
 }
 
-// ── Load messages ──────────────────────────────────────────────────────────
-async function carregarMensagens() {
-  if (!canalAtual) return;
-  try {
-    const res = await sbCarregarMensagens(canalAtual.id, oldestCreatedAt);
-    hasMore = res.hasMore;
-    const novas = res.mensagens;
+// ── Render de mensagens ─────────────────────────────────────────────────
+function renderizarMensagens(mensagens) {
+  const lista = document.getElementById('msgList');
+  if (!lista) return;
+  const cont = document.getElementById('msgContainer');
+  const perto = cont ? (cont.scrollHeight - cont.scrollTop - cont.clientHeight < 120) : true;
 
-    if (!oldestCreatedAt) {
-      // First load
-      mensagens = novas;
-      renderMensagens(true);
-      scrollToBottom();
+  let html = '';
+  let ultimaData = '';
+  for (const m of mensagens) {
+    if (m.type === 'deleted') continue;
+    const dt = new Date(m.created_at);
+    const dataLabel = formatDate(dt);
+    if (dataLabel !== ultimaData) {
+      html += `<div class="msg-date-sep">${escHtml(dataLabel)}</div>`;
+      ultimaData = dataLabel;
+    }
+    const mine = m.user?.id === meId;
+    const hora = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const temTexto = (m.text || '').trim().length > 0;
+    const anexosHtml = renderAnexos(m.attachments || []);
+
+    const podeEditar = mine && temTexto;
+    const podeExcluir = mine || isAdmin;
+    const acoes = (podeEditar || podeExcluir) ? `
+        <div class="msg-actions">
+          ${podeEditar ? `<button class="msg-action-btn" onclick="abrirEditarMsg('${m.id}')" title="Editar"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5L3 14l.5-3.5z"/></svg> Editar</button>` : ''}
+          ${podeExcluir ? `<button class="msg-action-btn danger" onclick="abrirDeleteMsg('${m.id}')" title="Apagar"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h10M6 4V2.5h4V4M5 4l.7 9h4.6L11 4z"/></svg> Apagar</button>` : ''}
+        </div>` : '';
+
+    html += `
+      <div class="msg-wrap ${mine ? 'mine' : 'other'}">
+        ${temTexto ? `<div class="msg-bubble ${mine ? 'mine' : 'other'}">${escHtml(m.text)}</div>` : ''}
+        ${anexosHtml ? `<div class="msg-attach-wrap ${mine ? 'mine' : 'other'}">${anexosHtml}</div>` : ''}
+        ${(!mine) ? `<span class="msg-sender">${escHtml(m.user?.name || 'Usuário')}</span>` : ''}
+        <div class="msg-meta">${escHtml(hora)}</div>
+        ${acoes}
+      </div>`;
+  }
+  lista.innerHTML = html || '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px;">Nenhuma mensagem ainda. Diga oi! 👋</div>';
+
+  if (cont && perto) cont.scrollTop = cont.scrollHeight;
+}
+
+function renderAnexos(attachments) {
+  let html = '';
+  for (const a of attachments) {
+    const ehImagem = a.type === 'image' || (!!a.image_url && !a.asset_url);
+    if (ehImagem) {
+      const url = a.image_url || a.thumb_url || a.asset_url;
+      if (url) html += `<a href="${escHtml(url)}" target="_blank" rel="noopener" class="msg-attach-img-link"><img class="msg-attach-img" src="${escHtml(url)}" loading="lazy" alt="imagem"></a>`;
     } else {
-      // Prepend older messages
-      const prevScrollHeight = document.getElementById('msgContainer').scrollHeight;
-      mensagens = [...novas, ...mensagens];
-      renderMensagens(false);
-      const container = document.getElementById('msgContainer');
-      container.scrollTop = container.scrollHeight - prevScrollHeight;
+      const url = a.asset_url || a.image_url;
+      const nome = a.title || a.fallback || 'arquivo';
+      if (url) html += `
+        <a class="msg-attach-file" href="${escHtml(url)}" target="_blank" rel="noopener" title="${escHtml(nome)}">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z"/><path d="M9 1v4h4"/></svg>
+          <span>${escHtml(nome)}</span>
+        </a>`;
     }
-
-    if (novas.length > 0) {
-      oldestCreatedAt = novas[0].created_at;
-    }
-
-    document.getElementById('btnLoadMore').style.display = hasMore ? 'block' : 'none';
-  } catch (e) {
-    showToast('Erro ao carregar mensagens: ' + e.message, 'err');
   }
+  return html;
 }
 
+// ── Carregar histórico ──────────────────────────────────────────────────
 async function carregarMais() {
-  await carregarMensagens();
-}
-
-// ── Realtime event ─────────────────────────────────────────────────────────
-function onMensagemEvento(payload) {
-  const { eventType, new: nova, old: antiga } = payload;
-
-  if (eventType === 'INSERT') {
-    // Skip scheduled messages for non-admin (they shouldn't be received via RLS, but guard anyway)
-    if (nova.status === 'scheduled' && !isAdmin) return;
-    // Avoid duplicates
-    if (mensagens.find(m => m.id === nova.id)) return;
-    mensagens.push(nova);
-    appendBolha(nova);
-    scrollToBottom();
-  } else if (eventType === 'UPDATE') {
-    const idx = mensagens.findIndex(m => m.id === nova.id);
-    if (idx === -1) {
-      // Message newly visible (was scheduled, now sent)
-      if (nova.status === 'sent') {
-        mensagens.push(nova);
-        appendBolha(nova);
-        scrollToBottom();
-      }
-      return;
-    }
-    mensagens[idx] = nova;
-    // Re-render the specific bubble
-    const el = document.getElementById('msg-' + nova.id);
-    if (el) {
-      const novo = criarBolha(nova);
-      el.replaceWith(novo);
-    }
-    // Update pin banner if this was the pinned message
-    if (nova.pinned) {
-      pinnedMsg = nova;
-      atualizarPinBanner();
-    } else if (pinnedMsg?.id === nova.id && !nova.pinned) {
-      pinnedMsg = null;
-      atualizarPinBanner();
-    }
-  } else if (eventType === 'DELETE') {
-    mensagens = mensagens.filter(m => m.id !== antiga.id);
-    const el = document.getElementById('msg-' + antiga.id);
-    if (el) el.remove();
+  if (!canalAtual) return;
+  const msgs = canalAtual.state.messages || [];
+  if (!msgs.length) return;
+  const btn = document.getElementById('btnLoadMore');
+  const cont = document.getElementById('msgContainer');
+  const alturaAntes = cont ? cont.scrollHeight : 0;
+  btn.textContent = 'Carregando...';
+  try {
+    const r = await canalAtual.query({ messages: { limit: 25, id_lt: msgs[0].id } });
+    renderizarMensagens(canalAtual.state.messages || []);
+    if (cont) cont.scrollTop = cont.scrollHeight - alturaAntes;
+    const trouxe = r?.messages?.length || 0;
+    btn.style.display = trouxe >= 25 ? 'block' : 'none';
+  } catch (e) {
+    btn.style.display = 'none';
+  } finally {
+    btn.textContent = 'Carregar mensagens anteriores';
   }
 }
 
-// ── Render all messages ────────────────────────────────────────────────────
-function renderMensagens(scrollDown) {
-  const list = document.getElementById('msgList');
-  list.innerHTML = '';
-  pinnedMsg = null;
+// ── Editar / Apagar mensagem ────────────────────────────────────────────
+let msgEditandoId = null;
+let msgApagandoId = null;
 
-  let lastDate = null;
-  mensagens.forEach(msg => {
-    const msgDate = new Date(msg.created_at).toDateString();
-    if (msgDate !== lastDate) {
-      const sep = document.createElement('div');
-      sep.className = 'msg-date-sep';
-      sep.textContent = formatDate(new Date(msg.created_at));
-      list.appendChild(sep);
-      lastDate = msgDate;
+function acharMensagem(id) {
+  return (canalAtual?.state?.messages || []).find(m => m.id === id) || null;
+}
+
+function abrirEditarMsg(id) {
+  const m = acharMensagem(id);
+  if (!m) return;
+  msgEditandoId = id;
+  const ta = document.getElementById('editMsgContent');
+  ta.value = m.text || '';
+  document.getElementById('editMsgModal').classList.add('show');
+  setTimeout(() => ta.focus(), 50);
+}
+
+async function confirmarEditarMsg() {
+  if (!msgEditandoId || !client) return;
+  const texto = (document.getElementById('editMsgContent').value || '').trim();
+  if (!texto) { showToast('A mensagem não pode ficar vazia', 'err'); return; }
+  fecharModais();
+  try {
+    await client.partialUpdateMessage(msgEditandoId, { set: { text: texto } });
+    // evento message.updated re-renderiza
+  } catch (e) {
+    console.error('[chat] erro ao editar:', e);
+    showToast('Não foi possível editar a mensagem', 'err');
+  }
+  msgEditandoId = null;
+}
+
+function abrirDeleteMsg(id) {
+  msgApagandoId = id;
+  document.getElementById('deleteMsgModal').classList.add('show');
+}
+
+async function confirmarDeleteMsg() {
+  if (!msgApagandoId || !client) return;
+  const id = msgApagandoId;
+  fecharModais();
+  try {
+    await client.deleteMessage(id);
+    // evento message.deleted re-renderiza (mensagens apagadas somem)
+  } catch (e) {
+    console.error('[chat] erro ao apagar:', e);
+    showToast('Não foi possível apagar a mensagem', 'err');
+  }
+  msgApagandoId = null;
+}
+
+function fecharModais() {
+  document.getElementById('editMsgModal')?.classList.remove('show');
+  document.getElementById('deleteMsgModal')?.classList.remove('show');
+}
+
+// ── Anexos ──────────────────────────────────────────────────────────────
+async function anexarArquivos(input) {
+  const files = Array.from(input.files || []);
+  input.value = '';
+  await processarArquivos(files);
+}
+
+async function processarArquivos(files) {
+  files = Array.from(files || []);
+  if (!files.length) return;
+  if (!canalAtual) { showToast('Abra uma conversa primeiro', 'err'); return; }
+
+  enviandoAnexo = true;
+  atualizarBotaoAnexo();
+
+  for (const file of files) {
+    if (file.size > 25 * 1024 * 1024) { // 25 MB
+      showToast(`"${file.name}" passa de 25 MB`, 'err');
+      continue;
     }
-    list.appendChild(criarBolha(msg));
-    if (msg.pinned && !msg.deleted) pinnedMsg = msg;
+    try {
+      const ehImagem = (file.type || '').startsWith('image/');
+      const resp = ehImagem ? await canalAtual.sendImage(file) : await canalAtual.sendFile(file);
+      const url = resp?.file;
+      if (!url) throw new Error('upload falhou');
+      anexosPendentes.push(ehImagem
+        ? { type: 'image', image_url: url, fallback: file.name }
+        : { type: 'file', asset_url: url, title: file.name, mime_type: file.type, file_size: file.size });
+    } catch (e) {
+      console.error('[chat] erro no upload:', e);
+      showToast(`Falha ao enviar "${file.name}"`, 'err');
+    }
+  }
+
+  enviandoAnexo = false;
+  atualizarBotaoAnexo();
+  renderPreviewAnexos();
+  document.getElementById('chatInput')?.focus();
+}
+
+function renderPreviewAnexos() {
+  const bar = document.getElementById('attachPreview');
+  if (!bar) return;
+  if (!anexosPendentes.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = anexosPendentes.map((a, i) => {
+    const ehImg = a.type === 'image';
+    const nome = a.title || a.fallback || (ehImg ? 'imagem' : 'arquivo');
+    const thumb = ehImg
+      ? `<img src="${escHtml(a.image_url)}" alt="">`
+      : `<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z"/><path d="M9 1v4h4"/></svg>`;
+    return `<div class="attach-chip" title="${escHtml(nome)}">
+      ${thumb}<span>${escHtml(nome)}</span>
+      <button class="attach-chip-remove" onclick="removerAnexo(${i})" title="Remover">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function removerAnexo(i) {
+  anexosPendentes.splice(i, 1);
+  renderPreviewAnexos();
+}
+
+function limparAnexosPendentes() {
+  anexosPendentes = [];
+  renderPreviewAnexos();
+}
+
+function atualizarBotaoAnexo() {
+  const btn = document.getElementById('btnAttach');
+  if (!btn) return;
+  btn.classList.toggle('carregando', enviandoAnexo);
+  btn.disabled = enviandoAnexo;
+}
+
+// ── Arrastar e soltar arquivos externos ─────────────────────────────────
+let dragDepth = 0;
+function configurarDragDrop() {
+  const zona = document.getElementById('chatConv');
+  const overlay = document.getElementById('dropOverlay');
+  if (!zona || !overlay) return;
+
+  const mostrar = () => { if (canalAtual) overlay.classList.add('ativo'); };
+  const esconder = () => overlay.classList.remove('ativo');
+
+  zona.addEventListener('dragenter', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    mostrar();
   });
-
-  atualizarPinBanner();
+  zona.addEventListener('dragover', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy';
+  });
+  zona.addEventListener('dragleave', () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) esconder();
+  });
+  zona.addEventListener('drop', e => {
+    e.preventDefault();
+    dragDepth = 0;
+    esconder();
+    const files = e.dataTransfer?.files;
+    if (files && files.length) processarArquivos(files);
+  });
 }
 
-function appendBolha(msg) {
-  const list = document.getElementById('msgList');
-  // Check if we need a date separator
-  const lastSep = list.querySelector('.msg-date-sep:last-of-type');
-  const msgDate = new Date(msg.created_at).toDateString();
-  const lastDate = lastSep?.dataset.date;
-  if (msgDate !== lastDate) {
-    const sep = document.createElement('div');
-    sep.className = 'msg-date-sep';
-    sep.dataset.date = msgDate;
-    sep.textContent = formatDate(new Date(msg.created_at));
-    list.appendChild(sep);
-  }
-  list.appendChild(criarBolha(msg));
+function temArquivos(e) {
+  const dt = e.dataTransfer;
+  if (!dt) return false;
+  return Array.from(dt.types || []).includes('Files');
 }
 
-// ── Create message bubble ──────────────────────────────────────────────────
-function criarBolha(msg) {
-  const isMine = msg.sender_id === meId;
-  const wrap = document.createElement('div');
-  wrap.className = `msg-wrap ${isMine ? 'mine' : 'other'}`;
-  wrap.id = 'msg-' + msg.id;
-
-  const hora = new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-  // Check if sender is admin to highlight announcements
-  const senderUser = usuarios.find(u => u.id === msg.sender_id);
-  const senderIsAdmin = senderUser?.role === 'admin';
-  const adminBadge = senderIsAdmin ? ' <span class="badge-role-admin" style="background:#edf7fd; color:var(--blue); font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px; border:1px solid rgba(0,174,239,.3); vertical-align:middle; text-transform:uppercase; display:inline-block;">Admin</span>' : '';
-
-  // Bubble classes
-  let bubbleClass = `msg-bubble ${isMine ? 'mine' : 'other'}`;
-  if (msg.deleted) bubbleClass += ' deleted';
-  else if (msg.status === 'scheduled') bubbleClass += ' scheduled';
-  if (msg.pinned && !msg.deleted) bubbleClass += ' pinned-msg';
-  if (senderIsAdmin && !msg.deleted) bubbleClass += ' admin-bubble';
-
-  // Format content with bold, italic, underline, lists and break lines safely
-  let content = '';
-  if (msg.deleted) {
-    content = '<em>mensagem apagada</em>';
-  } else {
-    content = formatarMensagemHTML(msg.content);
-  }
-
-  // Meta badges
-  let metaExtra = '';
-  if (msg.status === 'scheduled' && isAdmin) {
-    const dt = msg.scheduled_at ? new Date(msg.scheduled_at).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
-    metaExtra += `<span class="msg-scheduled-badge">🕒 agendada ${dt}</span>`;
-  }
-  if (msg.pinned && !msg.deleted) {
-    metaExtra += `<span class="msg-pinned-badge">📌</span>`;
-  }
-
-  // Action buttons
-  let actions = '';
-  if (!msg.deleted) {
-    const canDelete = isMine || isAdmin;
-    const canPin = isAdmin;
-    let btns = '';
-    if (canPin) {
-      if (msg.pinned) {
-        btns += `<button class="msg-action-btn" onclick="desafixarMsg('${msg.id}')">📌 Desafixar</button>`;
-      } else {
-        btns += `<button class="msg-action-btn" onclick="msgFixarBtn('${msg.id}')">📌 Fixar</button>`;
-      }
-    }
-    if (isMine || isAdmin) {
-      btns += `<button class="msg-action-btn" onclick="abrirModalEditar('${msg.id}')">✏️ Editar</button>`;
-    }
-    if (canDelete) {
-      btns += `<button class="msg-action-btn danger" onclick="abrirModalDelete('${msg.id}')">🗑</button>`;
-    }
-    if (btns) {
-      actions = `<div class="msg-actions">${btns}</div>`;
-    }
-  }
-
-  wrap.innerHTML = `${!isMine ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Usuário')}${adminBadge}</div>` : (senderIsAdmin ? `<div class="msg-sender">${escHtml(msg.sender_name || 'Você')}${adminBadge}</div>` : '')}<div class="${bubbleClass}" style="position:relative;">${actions}${content}</div><div class="msg-meta">${hora}${metaExtra}</div>`;
-
-  return wrap;
-}
-
-// ── Pin banner ─────────────────────────────────────────────────────────────
-function atualizarPinBanner() {
-  const banner = document.getElementById('pinBanner');
-  if (pinnedMsg && !pinnedMsg.deleted) {
-    document.getElementById('pinBannerText').textContent = pinnedMsg.content.slice(0, 120) + (pinnedMsg.content.length > 120 ? '…' : '');
-    banner.style.display = 'flex';
-    // Only admin sees the close (unpin) button
-    document.getElementById('btnDesafixar').style.display = isAdmin ? 'block' : 'none';
-  } else {
-    banner.style.display = 'none';
-  }
-}
-
-// Helper para formatar o texto substituindo negrito, itálico, sublinhado e quebras de linha
-function formatarMensagemHTML(rawText) {
-  let formatted = escHtml(rawText);
-  // Negrito: **texto**
-  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  // Itálico: _texto_
-  formatted = formatted.replace(/_(.*?)_/g, '<em>$1</em>');
-  // Sublinhado: ~texto~
-  formatted = formatted.replace(/~(.*?)~/g, '<u>$1</u>');
-  // Quebras de linha
-  formatted = formatted.replace(/\n/g, '<br>');
-  return formatted;
-}
-
-// ── Send message ───────────────────────────────────────────────────────────
-
+// ── Enviar ──────────────────────────────────────────────────────────────
 async function enviarMensagem() {
   const input = document.getElementById('chatInput');
-  const content = input.value.trim();
-  if (!content || !canalAtual) return;
+  const texto = (input.value || '').trim();
+  if ((!texto && !anexosPendentes.length) || !canalAtual) return;
+  if (enviandoAnexo) { showToast('Aguarde o anexo terminar de subir', 'err'); return; }
 
+  const anexos = anexosPendentes.slice();
   input.value = '';
   autoResizeInput(input);
+  limparAnexosPendentes();
 
   try {
-    await sbEnviarMensagem(canalAtual.id, content);
+    const msg = { text: texto };
+    if (anexos.length) msg.attachments = anexos;
+    await canalAtual.sendMessage(msg);
   } catch (e) {
-    showToast('Erro ao enviar: ' + e.message, 'err');
-    input.value = content;
+    console.error('[chat] erro ao enviar:', e);
+    showToast('Não foi possível enviar a mensagem', 'err');
+    input.value = texto;
     autoResizeInput(input);
+    anexosPendentes = anexos;
+    renderPreviewAnexos();
   }
 }
 
@@ -489,238 +507,66 @@ function onInputKeydown(e) {
   }
 }
 
-// ── Delete message ─────────────────────────────────────────────────────────
-function abrirModalDelete(msgId) {
-  mensagemParaDeletar = msgId;
-  const desc = document.getElementById('deleteMsgDesc');
-  if (desc) {
-    desc.textContent = isAdmin
-      ? 'Apagar esta mensagem permanentemente? Ela será removida do banco para todos.'
-      : 'Apagar esta mensagem? Ela ficará visível como "mensagem apagada".';
-  }
-  document.getElementById('deleteMsgModal').classList.add('show');
-}
-
-async function confirmarDeleteMsg() {
-  if (!mensagemParaDeletar) return;
-  fecharModais();
-  try {
-    if (isAdmin) {
-      // Admin: apaga o registro inteiro do banco (sem rastro)
-      await sbHardDeletarMensagem(mensagemParaDeletar);
-      // Remove da UI direto (não haverá evento DELETE via realtime se RLS bloquear retorno)
-      const el = document.getElementById('msg-' + mensagemParaDeletar);
-      if (el) el.remove();
-      mensagens = mensagens.filter(m => m.id !== mensagemParaDeletar);
-    } else {
-      // Usuário comum: soft-delete (fica "mensagem apagada")
-      await sbDeletarMensagemChat(mensagemParaDeletar);
-    }
-  } catch (e) {
-    showToast('Erro ao apagar: ' + e.message, 'err');
-  }
-  mensagemParaDeletar = null;
-}
-
-// ── Edit message ───────────────────────────────────────────────────────────
-let mensagemParaEditar = null;
-
-function abrirModalEditar(msgId) {
-  mensagemParaEditar = msgId;
-  const msg = mensagens.find(m => m.id === msgId);
-  if (!msg) return;
-  
-  document.getElementById('editMsgContent').value = msg.content || '';
-  document.getElementById('editMsgModal').classList.add('show');
-}
-
-async function confirmarEditarMsg() {
-  if (!mensagemParaEditar) return;
-  const content = document.getElementById('editMsgContent').value.trim();
-  if (!content) {
-    showToast('A mensagem não pode ficar vazia', 'err');
-    return;
-  }
-  
-  fecharModais();
-  try {
-    await sbEditarMensagem(mensagemParaEditar, content);
-    showToast('Mensagem atualizada!', 'ok');
-    
-    // Atualizar UI localmente também se necessário (a assinatura do realtime fará o mesmo)
-    const msg = mensagens.find(m => m.id === mensagemParaEditar);
-    if (msg) {
-      msg.content = content;
-      // Re-renderizar mensagem individual
-      const oldWrap = document.getElementById('msg-' + mensagemParaEditar);
-      if (oldWrap) {
-        const newWrap = criarBolha(msg);
-        oldWrap.replaceWith(newWrap);
-      }
-    }
-  } catch (e) {
-    showToast('Erro ao editar: ' + e.message, 'err');
-  }
-  mensagemParaEditar = null;
-}
-
-
-// ── Pin message ────────────────────────────────────────────────────────────
-function msgFixarBtn(msgId) {
-  mensagemParaFixar = msgId;
-  // Set default pin expiry to 7 days from now
-  const d = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  document.getElementById('pinUntilInput').value = local;
-  document.getElementById('pinModal').classList.add('show');
-}
-
-async function confirmarPin() {
-  if (!mensagemParaFixar) return;
-  const val = document.getElementById('pinUntilInput').value;
-  const pinUntil = val ? new Date(val).toISOString() : null;
-  fecharModais();
-  try {
-    await sbFixarMensagem(mensagemParaFixar, pinUntil);
-  } catch (e) {
-    showToast('Erro ao fixar: ' + e.message, 'err');
-  }
-  mensagemParaFixar = null;
-}
-
-async function desafixarMsg(msgId) {
-  const id = msgId || pinnedMsg?.id;
-  if (!id) return;
-  try {
-    await sbDesafixarMensagem(id);
-  } catch (e) {
-    showToast('Erro ao desafixar: ' + e.message, 'err');
-  }
-}
-
-function desafixarMsgEvent(event) {
-  if (event) event.stopPropagation();
-  desafixarMsg();
-}
-
-function irParaMensagemFixada(event) {
-  if (pinnedMsg) {
-    const el = document.getElementById('msg-' + pinnedMsg.id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const bubble = el.querySelector('.msg-bubble');
-      if (bubble) {
-        bubble.classList.add('highlight-announcement');
-        setTimeout(() => {
-          bubble.classList.remove('highlight-announcement');
-        }, 2000);
-      }
-    } else {
-      showToast('Aviso fixado antigo ou fora do limite visível.', 'info');
-    }
-  }
-}
-
-// ── Schedule message ───────────────────────────────────────────────────────
-function abrirModalAgendar() {
-  document.getElementById('scheduleContent').value = '';
-  // Default: 1 hour from now
-  const d = new Date(Date.now() + 60 * 60 * 1000);
-  const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  document.getElementById('scheduleAt').value = local;
-  document.getElementById('scheduleModal').classList.add('show');
-}
-
-async function confirmarAgendar() {
-  const content = document.getElementById('scheduleContent').value.trim();
-  const val = document.getElementById('scheduleAt').value;
-  if (!content) { showToast('Digite o conteúdo da mensagem', 'err'); return; }
-  if (!val) { showToast('Selecione a data e hora', 'err'); return; }
-  if (!canalAtual) return;
-
-  const scheduledAt = new Date(val).toISOString();
-  fecharModais();
-  try {
-    await sbAgendarMensagem(canalAtual.id, content, scheduledAt);
-    showToast('Mensagem agendada!', 'ok');
-  } catch (e) {
-    showToast('Erro ao agendar: ' + e.message, 'err');
-  }
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-function scrollToBottom() {
-  const container = document.getElementById('msgContainer');
-  container.scrollTop = container.scrollHeight;
-}
-
 function autoResizeInput(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 120) + 'px';
 }
 
-function formatarInputText(type) {
-  const input = document.getElementById('chatInput');
-  if (!input) return;
-
-  const start = input.selectionStart;
-  const end = input.selectionEnd;
-  const text = input.value;
-  const selectedText = text.substring(start, end);
-
-  let replacement = '';
-  switch(type) {
-    case 'bold':
-      replacement = `**${selectedText}**`;
-      break;
-    case 'italic':
-      replacement = `_${selectedText}_`;
-      break;
-    case 'underline':
-      replacement = `~${selectedText}~`;
-      break;
-    case 'linebreak':
-      replacement = selectedText ? `${selectedText}\n` : '\n';
-      break;
-    case 'bullet':
-      replacement = selectedText ? `• ${selectedText}` : '• ';
-      break;
-    case 'paragraph':
-      replacement = selectedText ? `${selectedText}\n\n` : '\n\n';
-      break;
-  }
-
-  input.value = text.substring(0, start) + replacement + text.substring(end);
-  input.focus();
-  
-  // Reposiciona o cursor
-  const newCursorPos = start + replacement.length;
-  input.setSelectionRange(newCursorPos, newCursorPos);
-  
-  autoResizeInput(input);
+// ── Mobile: voltar para a lista ─────────────────────────────────────────
+function voltarParaLista() {
+  document.getElementById('chatWrap').classList.remove('mobile-conv');
 }
 
-function fecharModais() {
-  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+// ── Badge de não lidas (nav) ────────────────────────────────────────────
+function atualizarBadgeTotal(total) {
+  const badge = document.getElementById('chatDmNavBadge');
+  if (badge) badge.style.display = total > 0 ? 'block' : 'none';
 }
 
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', e => { if (e.target === overlay) fecharModais(); });
-});
+// ── Erro de conexão ─────────────────────────────────────────────────────
+function mostrarErroConexao(msg) {
+  const skel = document.getElementById('dmListSkel');
+  if (skel) skel.remove();
+  document.getElementById('chatWrap')?.classList.add('mobile-conv');
+  document.getElementById('chatEmpty').style.display = 'none';
+  document.getElementById('chatConv').style.display = 'none';
+  const box = document.getElementById('chatConnError');
+  document.getElementById('chatConnErrorMsg').textContent = msg;
+  box.style.display = 'flex';
+}
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') fecharModais();
-});
-
-function showToast(msg, tipo = 'ok') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast ${tipo} show`;
-  setTimeout(() => t.classList.remove('show'), 4000);
+// ── Helpers ─────────────────────────────────────────────────────────────
+function iniciais(nome) {
+  const pts = String(nome || '').trim().split(/\s+/);
+  return ((pts[0]?.[0] || '') + (pts[1]?.[0] || '')).toUpperCase() || '?';
 }
 
 function escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function cssEsc(s) {
+  if (window.CSS && CSS.escape) return CSS.escape(s);
+  return String(s).replace(/["\\]/g, '\\$&');
+}
+
+function skeletonMensagens() {
+  return `
+    <div class="chat-skeleton">
+      <div class="chat-skel-row"><div class="chat-skel-avatar"></div><div class="chat-skel-lines"><div class="chat-skel-line" style="width:70%"></div><div class="chat-skel-line" style="width:45%"></div></div></div>
+      <div class="chat-skel-row"><div class="chat-skel-avatar"></div><div class="chat-skel-lines"><div class="chat-skel-line" style="width:85%"></div><div class="chat-skel-line" style="width:30%"></div></div></div>
+      <div class="chat-skel-row"><div class="chat-skel-avatar"></div><div class="chat-skel-lines"><div class="chat-skel-line" style="width:55%"></div></div></div>
+    </div>`;
+}
+
+function showToast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className = `toast ${tipo} show`;
+  setTimeout(() => t.classList.remove('show'), 4000);
 }
 
 function formatDate(d) {

@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle de Pagamentos – iGUi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-<link rel="stylesheet" href="styles.css?v=20260527">
+<script src="supabase-client.js?v=20260615d"></script>
+<meta name="theme-color" content="#00AEEF">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css?v=20260615e">
 <style>
   /* Custom styles for Payments Page */
   .pag-container {
@@ -97,8 +99,24 @@
     color: var(--text);
   }
   .badge-piscina { color: #2b6cb0; }
+  .badge-piscina + .badge-piscina { margin-left: 4px; }
   .badge-loja { color: #2f855a; }
   .badge-data { color: #b7791f; }
+  .row-editado {
+    font-size: 10.5px;
+    color: #92600a;
+    background: #fff8e1;
+    border: 1px solid #f5d87a;
+    border-radius: 8px;
+    padding: 2px 12px;
+    line-height: 1.35;
+  }
+  .row-editado b { color: #7a5c00; font-weight: 700; }
+  /* Projeto que tem o aviso de editado: sem divisória embaixo, pra grudar no container */
+  tr.tem-editado td { border-bottom: none !important; }
+  /* Container do aviso ocupa a linha inteira, com respiro nas laterais.
+     A divisória padrão da tabela fecha o bloco (projeto + aviso) embaixo do card. */
+  .row-editado-tr td { background: transparent; border: none; border-bottom: 1px solid var(--border) !important; padding: 0 12px 4px !important; }
   
   /* Summary Table styles */
   .summary-table {
@@ -272,22 +290,36 @@
     background: #219653;
   }
   .btn-mini {
-    padding: 4px 8px;
+    padding: 6px;
     font-size: 11px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
+    border-radius: 6px;
+    border: none;
     cursor: pointer;
-    background: #fff;
+    background: transparent;
+    color: #94a3b8;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    outline: none;
   }
   .btn-mini:hover {
-    background: var(--gray);
+    background: #f1f5f9;
+    color: var(--dark);
   }
   .btn-mini.danger {
-    color: #e74c3c;
-    border-color: #f5c6c2;
+    color: #94a3b8;
   }
   .btn-mini.danger:hover {
-    background: #fdf2f1;
+    background: #fee2e2;
+    color: #ef4444;
+  }
+  .btn-mini.info {
+    color: #94a3b8;
+  }
+  .btn-mini.info:hover {
+    background: #e0f2fe;
+    color: #0284c7;
   }
   
   .btn-minimal {
@@ -485,6 +517,20 @@
     color: #0369a1 !important;
     border-color: #38bdf8 !important;
   }
+  #btnFiltroDuplicados.has-duplicates {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #fca5a5;
+  }
+  #btnFiltroDuplicados.has-duplicates:hover {
+    background: #fecaca;
+    border-color: #f87171;
+  }
+  #btnFiltroDuplicados.active {
+    background: #fecaca !important;
+    color: #991b1b !important;
+    border-color: #ef4444 !important;
+  }
   #btnFiltroTipoAte2.active {
     background: #e0f2fe !important;
     color: #0369a1 !important;
@@ -535,6 +581,11 @@
     background-color: #d7eedd !important;
     transition: background-color 0.15s ease;
   }
+  .pag-table tr.hover-highlight-duplicate td {
+    background-color: #fff8e1 !important; /* Soft premium amber */
+    border-color: #f5d87a !important;
+    transition: background-color 0.15s ease;
+  }
 </style>
 </head>
 <body class="pg-pagamentos">
@@ -583,13 +634,20 @@
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Links</span>
         </a>
-        <a class="stp" href="chat.html" id="navChat">
+        <a class="stp" href="avisos.html" id="navChat">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
             <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
             <path d="M6 13a2 2 0 0 0 4 0"/>
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Avisos</span>
           <span class="chat-nav-badge" id="chatNavBadge"></span>
+        </a>
+        <a class="stp" href="chat.html" id="navChatDM">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
+          <span class="chat-nav-badge" id="chatDmNavBadge"></span>
         </a>
         <a class="stp active" href="pagamentos.html">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
@@ -662,9 +720,6 @@
         <div class="pag-card" style="padding: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h2 style="font-family: 'Inter Tight', sans-serif; font-size: 18px; font-weight: 700;">Lista de Projetos Enviados</h2>
-            <div style="display: flex; gap: 8px;">
-              <button class="btn-action success" onclick="adicionarLinha()">+ Add Linha</button>
-            </div>
           </div>
           <!-- Filtro de Mês e Ano para a Lista -->
           <div id="filtroMesAnoContainer" class="btn-print-hide" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: nowrap;">
@@ -718,6 +773,7 @@
                   <button id="btnFiltroConferidos" class="btn-filter" onclick="definirFiltro('conferidos')">Conferidos</button>
                   <button id="btnFiltroPendentes" class="btn-filter" onclick="definirFiltro('pendentes')">Pendentes</button>
                   <button id="btnFiltroAlterados" class="btn-filter" onclick="definirFiltro('alterados')">Alterações</button>
+                  <button id="btnFiltroDuplicados" class="btn-filter" onclick="definirFiltro('duplicados')">Duplicados (0)</button>
                 </div>
                 <button class="btn-action success" onclick="marcarVisiveisComoConferidos()" style="padding: 6px 12px; font-size: 11px; margin-left: auto; white-space: nowrap;">
                   ✓ Marcar Filtrados
@@ -744,17 +800,25 @@
                 <button id="btnFiltroTipoConceito" class="btn-filter" onclick="definirFiltroTipo('Conceito')">Conceito</button>
                 <button id="btnFiltroTipoAltGrandes" class="btn-filter" onclick="definirFiltroTipo('Alterações GRANDES')">Alt. Grandes</button>
               </div>
+
+              <!-- Projetista Filter (somente admin) -->
+              <div id="adminProjetistaWrap" style="display:none; gap: 6px; flex-wrap: wrap; align-items: center; border-top: 1px dashed var(--border); padding-top: 8px;">
+                <span style="font-weight: 700; color: var(--muted); margin-right: 4px; width: 50px;">Projetista:</span>
+                <select id="adminProjetistaSelect" class="month-select" onchange="trocarProjetista(this.value)" style="min-width: 220px;"></select>
+              </div>
             </div>
           </div>
           
           <!-- Bulk Import -->
           <div class="bulk-import-area">
             <h4 style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Importação em Lote</h4>
-            <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Cole vários nomes de arquivos/linhas contendo "_" (um por linha):</p>
-            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;809763_Atica M01_Novo Hamburg_04-05-2026 (1)&#10;Splash_Tradicional 7m_Abreu e Lima_25-05-2026 (1)&#10;_Marajoara_Foz do Iguaçu_06-05-2026 (2)" onkeydown="if(event.ctrlKey && event.key === 'Enter') { event.preventDefault(); processarLote(); }"></textarea>
-            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+            <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Cole vários nomes de arquivos/linhas no padrão <strong>[ID]_[Modelo]_[Loja]_[Data]</strong> (um por linha):</p>
+            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;814546_Mod047_Feira de Santana_01-06-2026 (3) - iGUi&#10;Splash_Navagio_Abreu e Lima_11-05-2026 (1) - Splash&#10;_Keramos_Espanha_31-05-2026 (2) - Internacional" onkeydown="if(event.ctrlKey && event.key === 'Enter') { event.preventDefault(); processarLote(); }" oninput="atualizarFeedbackLote()"></textarea>
+            <div id="bulkFeedback" style="display: none; padding: 2px 4px; margin-bottom: 8px;"></div>
+            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
+              <button class="btn-action" onclick="exportarExcel()" title="Baixar planilha .xlsx com os projetos do mês selecionado" style="background:#16a34a;">⬇ Excel</button>
+              <button class="btn-action" onclick="abrirModalManual()" style="background:#8b5cf6;">+ Projeto Manual</button>
               <button class="btn-action" onclick="processarLote()">Processar Lote</button>
-              <button class="btn-action success" onclick="abrirModalManual()">+ Projeto Manual</button>
             </div>
           </div>
 
@@ -779,6 +843,24 @@
         
         <!-- PAINEL DIREITO: Tabela de Resumo Financeiro -->
         <div id="painelDireitoResumo">
+          <!-- Mini-gráfico: evolução mensal -->
+          <div class="pag-card btn-print-hide" style="padding: 12px 16px 10px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text);">Evolução Mensal</span>
+              <span id="evoAno" style="font-size: 10px; font-weight: 600; color: var(--muted);"></span>
+            </div>
+            <div id="evoChart" class="evo-chart"></div>
+          </div>
+
+          <!-- Mini-gráfico: projetos do mês por tipo -->
+          <div class="pag-card btn-print-hide" style="padding: 12px 16px 10px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px;">
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text);">Projetos do Mês</span>
+              <span id="tipoMesLabel" style="font-size: 10px; font-weight: 600; color: var(--muted);"></span>
+            </div>
+            <div id="tipoChart" class="evo-chart"></div>
+          </div>
+
           <div class="pag-card" style="overflow: hidden;">
             <div class="summary-title-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
               <span>Relação de Projetos para Pagamento</span>
@@ -798,7 +880,7 @@
                 <input type="text" id="projetistaNome" class="designer-input" value="VICTOR LOURENÇO PEREIRA" oninput="salvarCabecalho()">
               </div>
               <div>
-                <select id="pagamentoMes" class="month-select" onchange="salvarCabecalho()">
+                <select id="pagamentoMes" class="month-select" onchange="salvarCabecalho(true)">
                   <option value="Janeiro">Janeiro</option>
                   <option value="Fevereiro">Fevereiro</option>
                   <option value="Março">Março</option>
@@ -812,7 +894,7 @@
                   <option value="Novembro">Novembro</option>
                   <option value="Dezembro">Dezembro</option>
                 </select>
-                <select id="pagamentoAno" class="month-select" onchange="salvarCabecalho()">
+                <select id="pagamentoAno" class="month-select" onchange="salvarCabecalho(true)">
                   <option value="2025">2025</option>
                   <option value="2026" selected>2026</option>
                   <option value="2027">2027</option>
@@ -914,7 +996,7 @@
 <!-- Modal Projeto Manual -->
 <div class="modal-overlay" id="manualModal" style="display:none; position:fixed; inset:0; background:rgba(18,30,42,.7); z-index:500; align-items:center; justify-content:center;">
   <div class="modal-box" style="background:#fff; border-radius:14px; padding:28px; width:100%; max-width:440px; box-shadow:0 8px 40px rgba(0,0,0,.15); box-sizing: border-box;">
-    <div class="modal-title" style="font-size:16px; font-weight:700; color:#1a2a3a; margin-bottom:20px; font-family:'Inter Tight',sans-serif;">Inserir Projeto Manual</div>
+    <div class="modal-title" id="manualModalTitle" style="font-size:16px; font-weight:700; color:#1a2a3a; margin-bottom:20px; font-family:'Inter Tight',sans-serif;">Inserir Projeto Manual</div>
     
     <div style="margin-bottom: 14px;">
       <div class="modal-field">
@@ -934,11 +1016,15 @@
       </div>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+    <div style="margin-bottom: 14px;">
       <div class="modal-field">
-        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Nome da Piscina</label>
-        <input type="text" id="manualPiscina" placeholder="Ex: Atica M01" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
+        <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Piscinas <span style="font-weight:500; color:var(--muted);">(1 a 5)</span></label>
+        <div id="manualPiscinasWrap" style="display:flex; flex-direction:column; gap:6px;"></div>
+        <button type="button" id="btnAddPiscina" onclick="adicionarCampoPiscina()" style="margin-top:7px; background:#eef4fb; border:1.5px dashed var(--blue); color:var(--blue); border-radius:7px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">+ Adicionar piscina</button>
       </div>
+    </div>
+
+    <div style="margin-bottom: 14px;">
       <div class="modal-field">
         <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Loja / Franquia</label>
         <input type="text" id="manualLoja" placeholder="Ex: Novo Hamburg" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;">
@@ -956,7 +1042,7 @@
           <option value="Projeto 360º">Projeto 360º</option>
           <option value="Projeto 360º (3 Modificações)">Projeto 360º (3 Modificações)</option>
           <option value="Conceito">Conceito</option>
-          <option value="Alterações GRANDES">Alterações GRANDES</option>
+          <option value="Alterações GRANDES">Alteração Grande</option>
         </select>
       </div>
       <div class="modal-field" style="margin-top: 18px;">
@@ -967,14 +1053,32 @@
       </div>
     </div>
 
-    <div class="modal-field" style="margin-bottom: 20px;">
+    <div class="modal-field" style="margin-bottom: 14px;">
       <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Observação</label>
       <textarea id="manualObs" placeholder="Observações..." style="width:100%; height:60px; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none; resize:none; box-sizing:border-box;"></textarea>
     </div>
 
+    <div class="modal-field" id="manualProjetistaWrap" style="margin-bottom: 20px;">
+      <label style="display:block; font-size:11px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin-bottom:5px;">Projetista</label>
+      <select id="manualProjetista" style="width:100%; padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; font-size:13px; outline:none;"></select>
+      <span id="manualProjetistaHint" style="display:none; font-size:10px; color:var(--muted); margin-top:4px;">Como admin, você pode mover este projeto para outro projetista.</span>
+    </div>
+
     <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
       <button class="btn-mini" onclick="fecharModalManual()" style="padding: 9px 20px; font-size: 13px; font-weight: 700; border-radius: 7px;">Cancelar</button>
-      <button class="btn-action" onclick="salvarProjetoManual()" style="padding: 9px 20px; font-size: 13px; font-weight: 700; border-radius: 7px;">Adicionar</button>
+      <button class="btn-action" id="btnManualSalvar" onclick="salvarProjetoManual()" style="padding: 9px 20px; font-size: 13px; font-weight: 700; border-radius: 7px;">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal confirmação genérico -->
+<div class="modal-overlay" id="confirmModal" style="display:none; position:fixed; inset:0; background:rgba(18,30,42,.7); z-index:500; align-items:center; justify-content:center;">
+  <div class="modal-box" style="background:#fff; border-radius:14px; padding:28px; width:100%; max-width:380px; box-shadow:0 8px 40px rgba(0,0,0,.15); box-sizing: border-box;">
+    <div class="modal-title" id="confirmTitle" style="font-size:16px; font-weight:700; color:#1a2a3a; margin-bottom:12px; font-family:'Inter Tight',sans-serif;">Confirmar</div>
+    <p style="font-size:13px; color:var(--text); line-height:1.5; margin:0 0 20px 0;" id="confirmMsg"></p>
+    <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end;">
+      <button class="btn-mini" id="btnConfirmCancelar" style="padding:9px 20px; font-size:13px; font-weight:700; border-radius:7px; cursor:pointer;">Cancelar</button>
+      <button class="btn-action" id="btnConfirmAcao" style="padding:9px 20px; font-size:13px; font-weight:700; border-radius:7px; cursor:pointer;">Confirmar</button>
     </div>
   </div>
 </div>
@@ -982,6 +1086,6 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<script src="pagamentos.js"></script>
+<script src="pagamentos.js?v=20260615f"></script>
 </body>
 </html>

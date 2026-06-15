@@ -6,8 +6,21 @@
 <title>Prancha Técnica iGUI – Gerador</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-<link rel="stylesheet" href="styles.css?v=20260527">
+<script src="supabase-client.js?v=20260615d"></script>
+<meta name="theme-color" content="#00AEEF">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css?v=20260615e">
+<style>
+  /* Abas de prancha extra (2ª página por seção) */
+  .prancha-tabs { display:flex; align-items:center; gap:6px; margin:6px 0 14px; flex-wrap:wrap; }
+  .ptab { background:#eef2f7; border:1.5px solid var(--border); border-bottom:none; border-radius:8px 8px 0 0; padding:7px 16px; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; transition:all .15s; }
+  .ptab:hover { color:var(--blue); }
+  .ptab.active { background:#fff; color:var(--blue); border-color:var(--blue); }
+  .ptab-add { background:#eef4fb; border:1.5px dashed var(--blue); color:var(--blue); border-radius:8px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; transition:background .15s; }
+  .ptab-add:hover { background:#e0edf9; }
+  .ptab-rm { background:#fff0ee; border:1.5px solid #f5c6c0; color:#e74c3c; border-radius:8px; padding:6px 12px; font-size:12px; font-weight:600; cursor:pointer; margin-left:auto; transition:background .15s; }
+  .ptab-rm:hover { background:#ffe3df; }
+</style>
 <script>
   if (window.innerWidth <= 768) {
     window.location.href = 'pagamentos.html';
@@ -53,6 +66,10 @@
     <!-- Ações na base da sidebar -->
     <div class="sidebar-actions">
       <!-- Configurações de Prancha (Ficam no topo da base) -->
+      <button class="sdb-btn" onclick="previewPrancha()" id="btnPreview" title="Ver como a prancha vai ficar, sem baixar nem salvar">
+        <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 8s2.5-4.5 7-4.5S15 8 15 8s-2.5 4.5-7 4.5S1 8 1 8z"/><circle cx="8" cy="8" r="2"/></svg>
+        <span>Pré-visualizar</span>
+      </button>
       <button class="sdb-btn sdb-gerar" onclick="gerarPDF()" id="btnGerar">
         <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M5 7l3 3 3-3"/><path d="M2 11v1a2 2 0 002 2h8a2 2 0 002-2v-1"/></svg>
         <span>Gerar PDF</span>
@@ -99,13 +116,20 @@
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Links</span>
         </a>
-        <a class="stp" href="chat.html" id="navChat">
+        <a class="stp" href="avisos.html" id="navChat">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
             <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
             <path d="M6 13a2 2 0 0 0 4 0"/>
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Avisos</span>
           <span class="chat-nav-badge" id="chatNavBadge"></span>
+        </a>
+        <a class="stp" href="chat.html" id="navChatDM">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
+          <span class="chat-nav-badge" id="chatDmNavBadge"></span>
         </a>
         <a class="stp" href="pagamentos.html">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
@@ -216,12 +240,14 @@
     <div class="card" id="s1">
       <div class="card-hd"><div class="card-ico">🏊</div><div><div class="card-title">PROJETO 3D</div><div class="card-sub">Renders e perspectivas — grade 2×2 na capa da prancha</div></div></div>
       <div class="card-bd">
-        <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Insira até <strong>4 vistas</strong> do projeto 3D e a <strong>imagem com medidas do deck</strong>. As imagens serão usadas automaticamente nas outras abas.</p>
-        <div class="img-grid g4">
-          <div class="slot-wrap"><div class="slot" id="sl-3d-0"><input type="file" accept="image/*" onchange="loadImg(this,'3d',0)"><div class="ph"><div class="i">🖼️</div><div class="t">Vista 1</div></div><button class="rm" onclick="rmImg('3d',0,event)">✕</button></div><div class="slot-lbl">Vista 1</div></div>
-          <div class="slot-wrap"><div class="slot" id="sl-3d-1"><input type="file" accept="image/*" onchange="loadImg(this,'3d',1)"><div class="ph"><div class="i">🖼️</div><div class="t">Vista 2</div></div><button class="rm" onclick="rmImg('3d',1,event)">✕</button></div><div class="slot-lbl">Vista 2</div></div>
-          <div class="slot-wrap"><div class="slot" id="sl-3d-2"><input type="file" accept="image/*" onchange="loadImg(this,'3d',2)"><div class="ph"><div class="i">🖼️</div><div class="t">Vista 3</div></div><button class="rm" onclick="rmImg('3d',2,event)">✕</button></div><div class="slot-lbl">Vista 3</div></div>
-          <div class="slot-wrap"><div class="slot" id="sl-3d-3"><input type="file" accept="image/*" onchange="loadImg(this,'3d',3)"><div class="ph"><div class="i">🖼️</div><div class="t">Vista Superior</div></div><button class="rm" onclick="rmImg('3d',3,event)">✕</button></div><div class="slot-lbl">Vista Superior</div></div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Insira as <strong>vistas do projeto 3D</strong> (mínimo de 4 recomendado) e a <strong>imagem com medidas do deck</strong>. As imagens serão usadas automaticamente nas outras abas.</p>
+        <div class="img-grid g4" id="grid-vistas-3d" style="margin-bottom:12px;">
+          <!-- Gerado dinamicamente via JS -->
+        </div>
+        <div style="margin-bottom:16px;">
+          <button type="button" onclick="adicionarVista3D()" style="background:#1a2a3a; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:700; cursor:pointer; font-size:11px; display:inline-flex; align-items:center; gap:6px; transition:background 0.2s;" onmouseover="this.style.background='var(--blue)'" onmouseout="this.style.background='#1a2a3a'">
+            ➕ Adicionar Vista 3D
+          </button>
         </div>
         <div class="div" style="margin-top:16px"><span>📐 Imagem com Medidas do Deck</span></div>
         <p style="font-size:11px;color:var(--muted);margin-bottom:8px;">Esta imagem será usada automaticamente na página de Descritivo Técnico.</p>
@@ -368,7 +394,7 @@
           <button class="btn-add" onclick="addItem('pai')">＋ Adicionar Planta / Elemento</button>
           <span class="item-count" id="item-count-pai">0 / 6</span>
         </div>
-        <div class="nav-acts"><button class="btn-nav" onclick="ir(4)">← Voltar</button><button class="btn-nav success" onclick="gerarPDF()">⬇ Gerar PDF Final</button></div>
+        <div class="nav-acts"><button class="btn-nav" onclick="ir(4)">← Voltar</button><button class="btn-nav" onclick="previewPrancha()">👁 Pré-visualizar</button><button class="btn-nav success" onclick="gerarPDF()">⬇ Gerar PDF Final</button></div>
       </div>
     </div>
 
@@ -500,6 +526,21 @@
   <option value="Spa – 3,00 × 2,50 m">
 </datalist>
 
-<script src="app.js?v=20260527"></script>
+<!-- Modal Pré-visualização da Prancha -->
+<div id="previewModal" class="overlay-preview" onclick="if(event.target===this)fecharPreviewPrancha()">
+  <div class="preview-box">
+    <div class="preview-bar">
+      <span>👁 Pré-visualização da Prancha</span>
+      <div style="display:flex;gap:8px;">
+        <button onclick="abrirPreviewNovaGuia()">Abrir em nova guia</button>
+        <button onclick="fecharPreviewPrancha()">✕ Fechar</button>
+        <button class="preview-confirm" onclick="confirmarPreview()">✓ Confirmar e Gerar PDF</button>
+      </div>
+    </div>
+    <iframe id="previewFrame" class="preview-frame" title="Pré-visualização da prancha"></iframe>
+  </div>
+</div>
+
+<script src="app.js?v=20260615c"></script>
 </body>
 </html>

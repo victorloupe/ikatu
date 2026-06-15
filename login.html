@@ -4,8 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Login — iGUi Pranchas</title>
+<meta name="theme-color" content="#00AEEF">
+<link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
+<script src="supabase-client.js?v=20260615d"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap');
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -50,9 +52,106 @@
   .remember-row{display:flex;align-items:center;gap:8px;margin-top:4px;margin-bottom:4px;}
   .remember-row input[type=checkbox]{width:15px;height:15px;accent-color:#00AEEF;cursor:pointer;flex-shrink:0;}
   .remember-row label{font-size:12px;color:#7f8c9a;cursor:pointer;user-select:none;font-weight:500;}
+
+  /* ── Tela de abertura (pós-login) ───────────────────────────── */
+  .splash{
+    position:fixed; inset:0; z-index:9999;
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:26px;
+    background:linear-gradient(165deg,#eef3f9 0%,#e2eaf3 60%,#d8e3f0 100%);
+    opacity:0; transition:opacity .4s ease;
+  }
+  .splash.show{ display:flex; opacity:1; }
+  .splash.fade-out{ opacity:0; }
+  .splash-logo{
+    height:140px; width:auto;
+    animation:splashLogo .75s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes splashLogo{
+    from{ opacity:0; transform:translateY(16px) scale(.95); }
+    to{   opacity:1; transform:translateY(0) scale(1); }
+  }
+  .splash-welcome{
+    font-family:'Inter Tight',sans-serif; font-weight:800; font-size:21px; color:#1a2a3a;
+    text-align:center; letter-spacing:.2px;
+    opacity:0; animation:splashFade .6s ease .28s both;
+  }
+  .splash-welcome span{ color:#00AEEF; }
+  .splash-sub{
+    font-size:12.5px; color:#7f8c9a; margin-top:-14px; font-weight:500;
+    opacity:0; animation:splashFade .6s ease .38s both;
+  }
+
+  /* Checklist de carregamento */
+  .splash-checklist{
+    display:flex; flex-direction:column; gap:13px;
+    width:280px; max-width:80vw;
+    opacity:0; animation:splashFade .6s ease .5s both;
+  }
+  .splash-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    width:100%;
+    font-family:'Inter',sans-serif; font-size:14px; font-weight:600; color:#9aa8b6;
+    transition:color .3s ease;
+  }
+  .splash-item.loading{ color:#5a6a78; }
+  .splash-item.done{ color:#1a2a3a; }
+  .splash-ic{ position:relative; width:22px; height:22px; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center; }
+  .splash-mini-spin{
+    width:18px; height:18px; border-radius:50%;
+    border:2.5px solid #dfe7f0; transition:opacity .25s ease;
+  }
+  .splash-item.loading .splash-mini-spin{
+    border-top-color:#00AEEF; animation:splashSpin .5s linear infinite;
+  }
+  .splash-check{
+    position:absolute; inset:0; margin:auto; width:22px; height:22px; color:#22c55e;
+    opacity:0; transform:scale(.4);
+    transition:opacity .25s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .splash-item.done .splash-mini-spin{ opacity:0; }
+  .splash-item.done .splash-check{ opacity:1; transform:scale(1); }
+
+  /* Barra de progresso */
+  .splash-progress-row{
+    display:flex; align-items:center; gap:10px;
+    width:280px; max-width:80vw; margin-top:4px;
+    opacity:0; animation:splashFade .6s ease .6s both;
+  }
+  .splash-progress{
+    flex:1; height:6px; border-radius:999px;
+    background:#dfe7f0; overflow:hidden;
+  }
+  .splash-progress-fill{
+    height:100%; width:0; border-radius:999px;
+    background:linear-gradient(90deg,#00AEEF,#0a7fb5);
+    /* animada quadro a quadro via JS (subida suave) */
+  }
+  .splash-percent{
+    font-family:'Inter',sans-serif; font-size:12px; font-weight:700;
+    color:#00AEEF; min-width:38px; text-align:right;
+  }
+
+  @keyframes splashFade{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes splashSpin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){
+    .splash-logo,.splash-welcome,.splash-sub,.splash-checklist{ animation:none; opacity:1; }
+    .splash-item.loading .splash-mini-spin{ animation:splashSpin 1.2s linear infinite; }
+  }
 </style>
 </head>
 <body>
+
+<!-- Tela de abertura (exibida após login bem-sucedido) -->
+<div class="splash" id="splashScreen" aria-hidden="true">
+  <img src="logo_site.png" alt="iGUi" class="splash-logo">
+  <div class="splash-welcome" id="splashWelcome">Bem-vindo!</div>
+  <div class="splash-sub">Preparando seu espaço...</div>
+  <div class="splash-checklist" id="splashChecklist"></div>
+  <div class="splash-progress-row">
+    <div class="splash-progress"><div class="splash-progress-fill" id="splashProgress"></div></div>
+    <span class="splash-percent" id="splashPercent">0%</span>
+  </div>
+</div>
 
 <div class="logo-wrap">
   <img src="logo_site.png" alt="iGUi Pranchas" style="height:150px;width:auto;">
@@ -170,7 +269,91 @@
       return;
     }
 
-    window.location.href = window.innerWidth <= 768 ? 'pagamentos.html' : 'index.html';
+    // Tela de abertura: checklist carregando o sistema e então redireciona
+    const nome = profile?.name || email.split('@')[0];
+    iniciarSplash(nome, profile?.role === 'admin', () => {
+      window.location.href = window.innerWidth <= 768 ? 'pagamentos.html' : 'index.html';
+    });
+  }
+
+  function iniciarSplash(nome, isAdmin, onDone) {
+    // Saudação com nome completo (montada via DOM/textContent — nunca interpretada como HTML)
+    const completo = (nome || '').trim();
+    const w = document.getElementById('splashWelcome');
+    if (w) {
+      w.textContent = '';
+      if (completo) {
+        w.append('Bem-vindo, ');
+        const s = document.createElement('span');
+        s.textContent = completo;
+        w.append(s, '!');
+      } else {
+        w.textContent = 'Bem-vindo!';
+      }
+    }
+
+    // Monta o checklist com as partes do menu
+    const itens = ['Gerador', 'Pranchas', 'Links', 'Avisos', 'Chat', 'Pagamentos'];
+    if (isAdmin) itens.push('Administração');
+
+    const cont = document.getElementById('splashChecklist');
+    const rows = [];
+    if (cont) {
+      cont.textContent = '';
+      itens.forEach(label => {
+        const row = document.createElement('div');
+        row.className = 'splash-item';
+        row.innerHTML =
+          '<span class="splash-item-lbl"></span>' +
+          '<span class="splash-ic">' +
+            '<span class="splash-mini-spin"></span>' +
+            '<svg class="splash-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>' +
+          '</span>';
+        row.querySelector('.splash-item-lbl').textContent = label;
+        cont.appendChild(row);
+        rows.push(row);
+      });
+    }
+
+    // Exibe a tela
+    const splash = document.getElementById('splashScreen');
+    if (splash) {
+      splash.setAttribute('aria-hidden', 'false');
+      splash.classList.add('show');
+    }
+
+    // Carrega cada parte em sequência: gira (loading) e então marca ✓ + avança a barra
+    const fill = document.getElementById('splashProgress');
+    const pctEl = document.getElementById('splashPercent');
+    const INICIO = 700;   // espera o checklist aparecer
+    const PASSO  = 620;   // intervalo entre cada item
+    const CARGA  = 550;   // tempo girando antes do ✓ (≥ uma volta do círculo, que leva .5s)
+    rows.forEach((row, i) => {
+      setTimeout(() => {
+        row.classList.add('loading');
+        setTimeout(() => {
+          row.classList.remove('loading');
+          row.classList.add('done');
+        }, CARGA);
+      }, INICIO + i * PASSO);
+    });
+
+    // Barra/percentual sobem de forma contínua (número a número), não em saltos
+    const durProg = (rows.length - 1) * PASSO + CARGA;
+    const agoraFn = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    const t0 = agoraFn() + INICIO;
+    (function tick() {
+      let p = (agoraFn() - t0) / durProg;
+      if (p < 0) p = 0;
+      if (p > 1) p = 1;
+      const pct = Math.round(p * 100);
+      if (fill) fill.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (p < 1) requestAnimationFrame(tick);
+    })();
+
+    const total = INICIO + rows.length * PASSO + 550;
+    setTimeout(() => { if (typeof onDone === 'function') onDone(); }, total);
   }
 
   async function handleReset(e) {

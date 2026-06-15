@@ -68,9 +68,17 @@ let toastTimer;
 function showToast(msg, tipo = 'ok') {
   const t = document.getElementById('toast');
   clearTimeout(toastTimer);
-  t.textContent = msg;
+  t.textContent = msg; // texto puro: evita HTML injetado (ex.: mensagens de erro)
   t.className = `toast ${tipo} show`;
-  toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+}
+// Variante para toasts com HTML confiável (ex.: link "Desfazer")
+function showToastHTML(msg, tipo = 'ok') {
+  const t = document.getElementById('toast');
+  clearTimeout(toastTimer);
+  t.innerHTML = msg;
+  t.className = `toast ${tipo} show`;
+  toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
 }
 
 // ── Renderização ──────────────────────────────────────────────────
@@ -79,6 +87,7 @@ let _filtroUsuario = '';     // '' = todos
 let _todasPranchas = [];    // cache da última busca ao banco
 let _pagAtual = 1;
 const PRANCHAS_POR_PAGINA = 8;
+let animarLista = false;     // próxima renderização entra com animação em cascata
 
 /** Gera as pills de filtro por usuário */
 function renderUserFilters(lista) {
@@ -100,7 +109,7 @@ function renderUserFilters(lista) {
   const todos = document.createElement('button');
   todos.className = 'proj-filter-pill' + (_filtroUsuario === '' ? ' active' : '');
   todos.innerHTML = `<span class="pf-dot"></span>Todos`;
-  todos.onclick = () => { _filtroUsuario = ''; _pagAtual = 1; renderUserFilters(_todasPranchas); renderListaPranchas(); };
+  todos.onclick = () => { _filtroUsuario = ''; _pagAtual = 1; animarLista = true; renderUserFilters(_todasPranchas); renderListaPranchas(); };
   bar.appendChild(todos);
 
   // Uma pill por usuário
@@ -108,7 +117,7 @@ function renderUserFilters(lista) {
     const pill = document.createElement('button');
     pill.className = 'proj-filter-pill' + (_filtroUsuario === user ? ' active' : '');
     pill.innerHTML = `<span class="pf-dot"></span>${escapeHtml(user)}`;
-    pill.onclick = () => { _filtroUsuario = user; _pagAtual = 1; renderUserFilters(_todasPranchas); renderListaPranchas(); };
+    pill.onclick = () => { _filtroUsuario = user; _pagAtual = 1; animarLista = true; renderUserFilters(_todasPranchas); renderListaPranchas(); };
     bar.appendChild(pill);
   });
 }
@@ -124,6 +133,7 @@ function _paginationRange(current, total) {
 /** Navega para uma página e re-renderiza */
 function irParaPagina(n) {
   _pagAtual = n;
+  animarLista = true;
   renderListaPranchas();
   const lista = document.getElementById('projetosLista');
   if (lista) lista.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -131,6 +141,8 @@ function irParaPagina(n) {
 
 /** Filtra e renderiza os cards (não vai ao banco) */
 function renderListaPranchas() {
+  const animar = animarLista;
+  animarLista = false;
   const q = _busca.trim().toUpperCase();
   let filtrados = _todasPranchas;
 
@@ -179,7 +191,7 @@ function renderListaPranchas() {
     return;
   }
 
-  paginados.forEach(p => {
+  paginados.forEach((p, i) => {
     const data      = p.proj_date || new Date(p.updated_at).toLocaleDateString('pt-BR');
     const thumbHtml = p.thumbnail_url
       ? `<img src="${p.thumbnail_url}" class="proj-thumb" alt="Thumbnail">`
@@ -187,6 +199,10 @@ function renderListaPranchas() {
 
     const card = document.createElement('div');
     card.className = 'proj-card';
+    if (animar) {
+      card.classList.add('row-entrada');
+      card.style.animationDelay = `${Math.min(i * 70, 1000)}ms`;
+    }
     card.innerHTML = `
       ${thumbHtml}
       <div class="proj-info">
@@ -254,11 +270,26 @@ function renderListaPranchas() {
   }
 }
 
+// Cards-fantasma enquanto as pranchas carregam do Supabase
+function mostrarSkeletonPranchas() {
+  const container = document.getElementById('projetosLista');
+  if (!container) return;
+  container.innerHTML = [[70, 45], [85, 55], [60, 40], [75, 50]].map(ws => `
+    <div class="proj-skel-card">
+      <div class="skel-bar proj-skel-thumb"></div>
+      <div class="proj-skel-lines">
+        <div class="skel-bar" style="width:${ws[0] * 2}px;height:13px;"></div>
+        <div class="skel-bar" style="width:${ws[1] * 3}px;height:10px;"></div>
+      </div>
+    </div>`).join('');
+}
+
 async function renderProjetos() {
   try {
     const lista = await sbListarProjetos();
     _todasPranchas = lista;
     renderUserFilters(lista);
+    animarLista = true; // entrada em cascata ao carregar do banco
     renderListaPranchas();
   } catch (e) {
     console.error('Erro ao renderizar pranchas:', e);
@@ -277,6 +308,7 @@ async function renderProjetos() {
 
 
 function buscarProjetos(q) {
+  if (_modoLixeira) return; // busca não se aplica à lixeira
   _busca    = q;
   _pagAtual = 1; // volta à primeira página ao buscar
   const btn = document.getElementById('btnLimparBusca');
@@ -333,18 +365,135 @@ async function editarProjeto(id) {
   }
 }
 
-// ── Deletar ───────────────────────────────────────────────────────
+// ── Deletar (mover para a Lixeira) ────────────────────────────────
 let _idParaDeletar = null;
 
 function confirmarDeletar(id) {
   _idParaDeletar = id;
-  document.getElementById('btnConfirmDel').onclick = async () => {
+  document.getElementById('delModalTitle').textContent = 'Mover para a Lixeira';
+  document.getElementById('delModalMsg').innerHTML =
+    'A prancha vai para a <strong>Lixeira</strong>, onde pode ser restaurada por até <strong>30 dias</strong>. Depois disso é excluída definitivamente.<br><strong>O PDF já gerado não é afetado.</strong>';
+  const btn = document.getElementById('btnConfirmDel');
+  btn.textContent = 'Mover para Lixeira';
+  btn.onclick = async () => {
     const idAlvo = _idParaDeletar; // salva local ANTES de fechar (fechar zera a var)
     fecharModalDel();
     if (!idAlvo) return;
-    await sbDeletarProjeto(idAlvo);
+    try {
+      await sbMoverParaLixeira(idAlvo);
+      renderProjetos();
+      showToastHTML(`🗑 Prancha movida para a Lixeira. <a href="javascript:void(0)" onclick="desfazerLixeira('${escapeHtml(idAlvo)}')" style="color:#60a5fa;font-weight:700;text-decoration:underline;margin-left:8px;">Desfazer</a>`, 'ok');
+    } catch (e) {
+      showToast('❌ Erro: ' + e.message, 'err');
+    }
+  };
+  document.getElementById('delModal').classList.add('show');
+}
+
+async function desfazerLixeira(id) {
+  try {
+    await sbRestaurarProjeto(id);
+    showToast('↩ Prancha restaurada!', 'ok');
     renderProjetos();
-    showToast('🗑 Prancha removida do histórico.', 'ok');
+  } catch (e) {
+    showToast('❌ Erro ao restaurar: ' + e.message, 'err');
+  }
+}
+
+// ── Lixeira ───────────────────────────────────────────────────────
+let _modoLixeira = false;
+
+async function toggleLixeira() {
+  _modoLixeira = !_modoLixeira;
+  const btn = document.getElementById('btnLixeira');
+  const filtros = document.getElementById('userFilterBar');
+  if (_modoLixeira) {
+    btn?.classList.add('active');
+    if (filtros) filtros.style.display = 'none';
+    await renderLixeira();
+  } else {
+    btn?.classList.remove('active');
+    renderProjetos();
+  }
+}
+
+async function renderLixeira() {
+  const container = document.getElementById('projetosLista');
+  const countEl   = document.getElementById('projetosCount');
+  mostrarSkeletonPranchas();
+
+  let lista = [];
+  try {
+    lista = await sbListarLixeira();
+  } catch (e) {
+    container.innerHTML = `<div class="proj-empty">⚠️ Erro ao carregar a lixeira: ${escapeHtml(e.message)}</div>`;
+    return;
+  }
+
+  countEl.textContent = lista.length
+    ? `${lista.length} prancha${lista.length > 1 ? 's' : ''} na lixeira`
+    : 'Lixeira vazia';
+
+  container.innerHTML = '';
+  if (!lista.length) {
+    container.innerHTML = `<div class="proj-empty">🗑 A lixeira está vazia.</div>`;
+    return;
+  }
+
+  lista.forEach((p, i) => {
+    const dias = Math.max(0, 30 - Math.floor((Date.now() - new Date(p.deleted_at).getTime()) / 86400000));
+    const thumbHtml = p.thumbnail_url
+      ? `<img src="${p.thumbnail_url}" class="proj-thumb" alt="Thumbnail">`
+      : '<div class="proj-thumb proj-thumb-empty">🏊</div>';
+
+    const card = document.createElement('div');
+    card.className = 'proj-card row-entrada';
+    card.style.animationDelay = `${Math.min(i * 70, 1000)}ms`;
+    card.innerHTML = `
+      ${thumbHtml}
+      <div class="proj-info">
+        <div class="proj-id">${escapeHtml(p.project_code || '—')}</div>
+        <div class="proj-cliente">${escapeHtml(p.client_name || '—')}</div>
+        <div class="proj-meta">
+          <span class="proj-tag">🏢 ${escapeHtml(p.store || '—')}</span>
+          <span class="proj-tag">🏊 ${escapeHtml(p.model || '—')}</span>
+          <span class="proj-tag" style="color:#b91c1c" title="Será excluída definitivamente após 30 dias na lixeira">⏳ ${dias} dia${dias === 1 ? '' : 's'} restante${dias === 1 ? '' : 's'}</span>
+        </div>
+      </div>
+      <div class="proj-actions">
+        <button class="proj-btn proj-btn-load" onclick="restaurarDaLixeira('${escapeHtml(p.id)}')" title="Devolver ao histórico">↩ Restaurar</button>
+        <button class="proj-btn proj-btn-del" onclick="confirmarDeletarDefinitivo('${escapeHtml(p.id)}','${escapeHtml(p.user_id)}')" title="Excluir para sempre">🗑</button>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+async function restaurarDaLixeira(id) {
+  try {
+    await sbRestaurarProjeto(id);
+    showToast('↩ Prancha restaurada!', 'ok');
+    renderLixeira();
+  } catch (e) {
+    showToast('❌ Erro ao restaurar: ' + e.message, 'err');
+  }
+}
+
+function confirmarDeletarDefinitivo(id, userId) {
+  document.getElementById('delModalTitle').textContent = 'Excluir Definitivamente';
+  document.getElementById('delModalMsg').innerHTML =
+    'A prancha e suas imagens serão apagadas <strong>para sempre</strong>. Esta ação <strong>não pode ser desfeita</strong>.';
+  const btn = document.getElementById('btnConfirmDel');
+  btn.textContent = 'Excluir para sempre';
+  btn.onclick = async () => {
+    fecharModalDel();
+    try {
+      await sbDeletarProjetoAdmin(id, userId);
+      showToast('🗑 Prancha excluída definitivamente.', 'ok');
+    } catch (e) {
+      showToast('❌ Erro: ' + e.message, 'err');
+    }
+    renderLixeira();
   };
   document.getElementById('delModal').classList.add('show');
 }
@@ -410,6 +559,8 @@ function ocultarLoadOverlay() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  mostrarSkeletonPranchas();
+
   // Auth check (usa cache local — não vai à rede)
   const session = await sbRequireAuth();
   if (!session) return;
@@ -442,4 +593,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const badge = document.getElementById('chatNavBadge');
     if (badge) badge.style.display = temNova ? 'block' : 'none';
   }).catch(() => {});
+
+  // Purga em segundo plano: itens na lixeira há mais de 30 dias
+  sbPurgarLixeiraAntiga().catch(() => {});
 });

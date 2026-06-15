@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — iGUi Pranchas</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
-<link rel="stylesheet" href="styles.css?v=20260527">
+<script src="supabase-client.js?v=20260615d"></script>
+<meta name="theme-color" content="#00AEEF">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css?v=20260615e">
 <style>
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
   .tab{padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
@@ -16,22 +18,38 @@
 
   /* Users table */
   .users-table{width:100%;border-collapse:collapse;font-size:13px;}
-  .users-table th{background:#f0f4f8;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
-  .users-table td{padding:10px 12px;border-bottom:1px solid var(--border);}
+  .users-table th{background:#f0f4f8;padding:8px 6px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
+  .users-table td{padding:8px 6px;border-bottom:1px solid var(--border);}
   .users-table tr:last-child td{border-bottom:none;}
   .users-table tr:hover td{background:#f8fafc;}
   .role-badge{padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;}
   .role-badge.admin{background:#edf7fd;color:var(--blue);}
   .role-badge.user{background:#f0f4f8;color:var(--muted);}
+  .users-group-row td{background:#eef3f9 !important;font-size:10px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#5a6a78;padding:7px 8px !important;}
+  .users-group-row td .grp-count{color:#9aa8b6;font-weight:700;margin-left:4px;}
   .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;}
   .status-dot.on{background:#27ae60;}
   .status-dot.off{background:#e74c3c;}
 
-  .btn-sm{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:all .15s;}
-  .btn-sm:hover{border-color:var(--blue);color:var(--blue);}
-  .btn-sm.danger:hover{border-color:#e74c3c;color:#e74c3c;}
-  .btn-sm.primary{background:#1a2a3a;color:#fff;border-color:#1a2a3a;}
-  .btn-sm.primary:hover{background:var(--blue);border-color:var(--blue);}
+  .btn-sm{padding:4px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;line-height:1.2;}
+  .btn-sm:hover{border-color:#cbd5e1;background:#f1f5f9;color:#0f172a;}
+  .btn-sm.primary{padding:8px 14px;border-radius:6px;font-size:12px;background:#1a2a3a;color:#fff;border-color:#1a2a3a;}
+  .btn-sm.primary:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
+  
+  /* Minimal styled state buttons for User Actions */
+  .btn-sm.btn-role{background:#f0f7ff;color:#0284c7;border-color:#e0f2fe;}
+  .btn-sm.btn-role:hover{background:#e0f2fe;border-color:#bae6fd;color:#0369a1;}
+  .btn-sm.btn-reset{background:#fffbeb;color:#d97706;border-color:#fef3c7;}
+  .btn-sm.btn-reset:hover{background:#fef3c7;border-color:#fde68a;color:#b45309;}
+  .btn-sm.btn-deactivate{background:#fef2f2;color:#ef4444;border-color:#fee2e2;}
+  .btn-sm.btn-deactivate:hover{background:#fee2e2;border-color:#fecaca;color:#dc2626;}
+  .btn-sm.btn-activate{background:#f0fdf4;color:#16a34a;border-color:#dcfce7;}
+  .btn-sm.btn-activate:hover{background:#dcfce7;border-color:#bbf7d0;color:#15803d;}
+  
+  .users-table .btn-sm {
+    width: 90px;
+    box-sizing: border-box;
+  }
 
   .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .section-hd h3{font-size:14px;font-weight:700;color:#1a2a3a;}
@@ -109,13 +127,20 @@
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Links</span>
         </a>
-        <a class="stp" href="chat.html" id="navChat">
+        <a class="stp" href="avisos.html" id="navChat">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
             <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
             <path d="M6 13a2 2 0 0 0 4 0"/>
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Avisos</span>
           <span class="chat-nav-badge" id="chatNavBadge"></span>
+        </a>
+        <a class="stp" href="chat.html" id="navChatDM">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/>
+          </svg>
+          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
+          <span class="chat-nav-badge" id="chatDmNavBadge"></span>
         </a>
         <a class="stp" href="pagamentos.html">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
@@ -216,12 +241,12 @@
           <table class="users-table">
             <thead>
               <tr>
-                <th>Nome</th>
+                <th style="width: 140px; padding-left: 8px;">Nome</th>
                 <th>E-mail</th>
-                <th>Função</th>
-                <th>Status</th>
-                <th>Desde</th>
-                <th></th>
+                <th style="width: 70px; text-align: center;">Função</th>
+                <th style="width: 80px; text-align: center;">Status</th>
+                <th style="width: 90px; text-align: center;">Desde</th>
+                <th style="width: 290px; text-align: right; padding-right: 8px;">Ações</th>
               </tr>
             </thead>
             <tbody id="usersBody">
@@ -448,27 +473,59 @@ function renderUsuarios() {
     return;
   }
   tbody.innerHTML = '';
-  usuarios.forEach(u => {
+
+  // Separa administradores dos usuários comuns
+  const admins = usuarios.filter(u => u.role === 'admin');
+  const comuns = usuarios.filter(u => u.role !== 'admin');
+
+  const addGrupo = (titulo, lista) => {
+    if (!lista.length) return;
+    const trH = document.createElement('tr');
+    trH.className = 'users-group-row';
+    trH.innerHTML = `<td colspan="6">${titulo}<span class="grp-count">(${lista.length})</span></td>`;
+    tbody.appendChild(trH);
+    lista.forEach(u => tbody.appendChild(linhaUsuario(u)));
+  };
+
+  addGrupo('Administradores', admins);
+  addGrupo('Usuários', comuns);
+}
+
+function linhaUsuario(u) {
     const isMe = u.id === meId;
     const data = new Date(u.created_at).toLocaleDateString('pt-BR');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${escHtml(u.name||'—')}</strong>${isMe ? ' <span style="font-size:10px;color:var(--muted)">(você)</span>' : ''}</td>
+      <td style="padding-left: 8px;"><strong>${escHtml(u.name||'—')}</strong>${isMe ? ' <span style="font-size:10px;color:var(--muted)">(você)</span>' : ''}</td>
       <td style="color:var(--muted);font-size:12px">${escHtml(u.email)}</td>
-      <td><span class="role-badge ${u.role}">${u.role}</span></td>
-      <td><span class="status-dot ${u.active!==false?'on':'off'}"></span>${u.active!==false?'Ativo':'Inativo'}</td>
-      <td style="color:var(--muted);font-size:12px">${data}</td>
-      <td>
+      <td style="text-align: center;"><span class="role-badge ${u.role}">${u.role}</span></td>
+      <td style="white-space:nowrap; text-align: center;"><span class="status-dot ${u.active!==false?'on':'off'}"></span>${u.active!==false?'Ativo':'Inativo'}</td>
+      <td style="color:var(--muted);font-size:12px; text-align: center;">${data}</td>
+      <td style="text-align:right; padding-right: 8px;">
         ${!isMe ? `
-          <div style="display:flex;gap:6px">
-            <button class="btn-sm" onclick="trocarRole('${u.id}','${u.role}')">${u.role==='admin'?'→ User':'→ Admin'}</button>
-            <button class="btn-sm danger" onclick="toggleAtivo('${u.id}',${u.active!==false})">${u.active!==false?'Desativar':'Ativar'}</button>
+          <div style="display:inline-flex;gap:6px;justify-content:flex-end;">
+            <button class="btn-sm btn-role" onclick="trocarRole('${u.id}','${u.role}')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
+              ${u.role==='admin'?'Tornar User':'Tornar Admin'}
+            </button>
+            <button class="btn-sm btn-reset" onclick="resetarSenhaUsuario('${u.id}', '${escHtml(u.name || '')}', '${escHtml(u.email || '')}')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+              Resetar
+            </button>
+            <button class="btn-sm ${u.active!==false ? 'btn-deactivate' : 'btn-activate'}" onclick="toggleAtivo('${u.id}',${u.active!==false})">
+              ${u.active!==false ? `
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
+                Desativar
+              ` : `
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                Ativar
+              `}
+            </button>
           </div>
         ` : '<span style="font-size:11px;color:var(--muted)">—</span>'}
       </td>
     `;
-    tbody.appendChild(tr);
-  });
+    return tr;
 }
 
 async function convidar() {
@@ -515,6 +572,25 @@ function toggleAtivo(id, ativo) {
       await sbAlterarAtivo(id, !ativo);
       await carregarUsuarios();
       showToast('✅ Status alterado', 'ok');
+    }
+  );
+}
+
+function resetarSenhaUsuario(id, name, email) {
+  let base = '';
+  if (name && name.trim()) {
+    base = name.trim().split(/\s+/)[0];
+  } else if (email) {
+    base = email.split('@')[0];
+  }
+  const senhaPadrao = base.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") + '123';
+  
+  confirmar(
+    'Resetar Senha',
+    `Deseja mesmo redefinir a senha do usuário para o padrão "${senhaPadrao}"?`,
+    async () => {
+      await sbResetarSenhaAdmin(id, senhaPadrao);
+      showToast('🔑 Senha resetada com sucesso!', 'ok');
     }
   );
 }
@@ -760,4 +836,4 @@ async function iniciarBackupELimpeza() {
 }
 </script>
 </body>
-</html>
+</html>

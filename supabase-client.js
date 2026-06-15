@@ -12,6 +12,15 @@ function setLogoImages() {
 
 // Inicializador de sessão e UI para evitar piscadas
 document.addEventListener('DOMContentLoaded', () => {
+  // Injeta campos ocultos para interceptar o preenchimento automático de login do navegador
+  const fakeAutofillContainer = document.createElement('div');
+  fakeAutofillContainer.style.cssText = "position: absolute; left: -9999px; top: -9999px; opacity: 0; width: 0; height: 0; overflow: hidden;";
+  fakeAutofillContainer.innerHTML = `
+    <input type="text" name="fake_username_autofill" autocomplete="username">
+    <input type="password" name="fake_password_autofill" autocomplete="new-password">
+  `;
+  document.body.prepend(fakeAutofillContainer);
+
   setLogoImages();
 
   // Aplica o usuário e estado admin cacheado imediatamente
@@ -53,6 +62,7 @@ function sbInjetarModalSenha() {
     <div style="display:flex; border-bottom:1.5px solid #edf2f6; gap:16px; margin-bottom:4px;">
       <button class="settings-tab-btn active" id="tabBtnSenha" onclick="abrirAbaModal('senha')" style="background:none; border:none; border-bottom:3px solid var(--blue); padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; color:var(--blue); cursor:pointer; transition:all 0.15s; outline:none;">⚙️ Senha</button>
       <button class="settings-tab-btn" id="tabBtnSugestao" onclick="abrirAbaModal('sugestao')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none;">💡 Sugerir Melhorias</button>
+      <button class="settings-tab-btn" id="tabBtnSobre" onclick="abrirAbaModal('sobre')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none; margin-left:auto;">✨ Sobre</button>
     </div>
 
     <!-- Aba 1: Senha -->
@@ -90,6 +100,36 @@ function sbInjetarModalSenha() {
       </div>
     </div>
 
+    <!-- Aba 3: Sobre -->
+    <div id="abaConfigSobre" style="display:none; flex-direction:column; gap:12px;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <img src="logo_prancha_nobg.png" style="height:42px; width:auto;" alt="iGUi Space" onerror="this.style.display='none'">
+        <div>
+          <div style="font-family:'Inter Tight',sans-serif; font-size:16px; font-weight:800; color:#1a2a3a;">iGUi Space</div>
+          <div style="font-size:11px; color:#8a9aaa; font-weight:600;">Sistema interno de projetos · PWA</div>
+        </div>
+      </div>
+
+      <p style="font-size:12px; color:#6a8090; margin:0; line-height:1.6;">
+        Plataforma da equipe de projetos iGUi: gera pranchas técnicas de piscinas em PDF,
+        controla os pagamentos dos projetistas e centraliza a comunicação do time — tudo na nuvem.
+      </p>
+
+      <div style="font-size:12px; color:#2c3e50; line-height:2; background:#f8fafc; border:1.5px solid #edf2f6; border-radius:8px; padding:10px 14px;">
+        📐 Gerador de pranchas com pré-visualização<br>
+        🗂 Histórico na nuvem + lixeira de 30 dias<br>
+        💰 Controle de pagamentos com gráficos e Excel<br>
+        📢 Mural de avisos e DMs com notificações nativas<br>
+        🔗 Biblioteca de links organizada em pastas<br>
+        📱 Instalável como aplicativo (PWA)
+      </div>
+
+      <div style="border-top:1.5px solid #edf2f6; padding-top:10px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
+        <div style="font-size:11px; color:#8a9aaa;">Criado por <strong style="color:#2c3e50;">Victor Lourenço</strong> &amp; <strong style="color:#2c3e50;">Claude (Anthropic)</strong></div>
+        <div style="font-size:10px; color:#b8c4cc; font-weight:700;">© 2026</div>
+      </div>
+    </div>
+
   </div>
 </div>`;
   
@@ -102,38 +142,22 @@ function sbInjetarModalSenha() {
 }
 
 function abrirAbaModal(tab) {
-  const btnSenha = document.getElementById('tabBtnSenha');
-  const btnSug = document.getElementById('tabBtnSugestao');
-  const abaSenha = document.getElementById('abaConfigSenha');
-  const abaSug = document.getElementById('abaConfigSugestao');
-
-  if (tab === 'senha') {
-    btnSenha.classList.add('active');
-    btnSenha.style.color = 'var(--blue)';
-    btnSenha.style.borderColor = 'var(--blue)';
-    btnSenha.style.fontWeight = '700';
-
-    btnSug.classList.remove('active');
-    btnSug.style.color = '#7f8c8d';
-    btnSug.style.borderColor = 'transparent';
-    btnSug.style.fontWeight = '600';
-
-    abaSenha.style.display = 'flex';
-    abaSug.style.display = 'none';
-  } else {
-    btnSug.classList.add('active');
-    btnSug.style.color = 'var(--blue)';
-    btnSug.style.borderColor = 'var(--blue)';
-    btnSug.style.fontWeight = '700';
-
-    btnSenha.classList.remove('active');
-    btnSenha.style.color = '#7f8c8d';
-    btnSenha.style.borderColor = 'transparent';
-    btnSenha.style.fontWeight = '600';
-
-    abaSenha.style.display = 'none';
-    abaSug.style.display = 'flex';
-  }
+  const abas = {
+    senha:    { btn: 'tabBtnSenha',    painel: 'abaConfigSenha'    },
+    sugestao: { btn: 'tabBtnSugestao', painel: 'abaConfigSugestao' },
+    sobre:    { btn: 'tabBtnSobre',    painel: 'abaConfigSobre'    },
+  };
+  Object.entries(abas).forEach(([key, ids]) => {
+    const btn = document.getElementById(ids.btn);
+    const painel = document.getElementById(ids.painel);
+    if (!btn || !painel) return;
+    const ativo = key === tab;
+    btn.classList.toggle('active', ativo);
+    btn.style.color = ativo ? 'var(--blue)' : '#7f8c8d';
+    btn.style.borderColor = ativo ? 'var(--blue)' : 'transparent';
+    btn.style.fontWeight = ativo ? '700' : '600';
+    painel.style.display = ativo ? 'flex' : 'none';
+  });
 }
 
 function abrirModalSenha() {
@@ -224,13 +248,214 @@ window.confirmarEnviarSugestao = confirmarEnviarSugestao;
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// ── PWA: registrar service worker + aviso de nova versão ──────────
+function mostrarAvisoAtualizacao(reg) {
+  if (document.getElementById('updateBanner')) return;
+  const b = document.createElement('div');
+  b.id = 'updateBanner';
+  b.style.cssText = 'position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1a2a3a;color:#fff;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.3);z-index:1000;display:flex;align-items:center;gap:12px;font-family:Inter,sans-serif;border-left:4px solid #00AEEF;max-width:92vw;';
+  b.innerHTML = `🔄 Nova versão disponível!
+    <button style="background:#00AEEF;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;">Atualizar</button>
+    <button style="background:transparent;color:#8a9aaa;border:none;font-size:14px;cursor:pointer;padding:2px;" title="Depois">✕</button>`;
+  const [btnUpd, btnClose] = b.querySelectorAll('button');
+  btnUpd.onclick = () => { reg.waiting?.postMessage('SKIP_WAITING'); };
+  btnClose.onclick = () => b.remove();
+  document.body.appendChild(b);
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+
+      // Já existe versão nova aguardando (aba ficou aberta entre deploys)
+      if (reg.waiting && navigator.serviceWorker.controller) mostrarAvisoAtualizacao(reg);
+
+      // Versão nova chegou enquanto a aba está aberta
+      reg.addEventListener('updatefound', () => {
+        const novo = reg.installing;
+        if (!novo) return;
+        novo.addEventListener('statechange', () => {
+          if (novo.state === 'installed' && navigator.serviceWorker.controller) {
+            mostrarAvisoAtualizacao(reg);
+          }
+        });
+      });
+
+      // Recarrega a página quando o novo SW assumir (após clicar em Atualizar)
+      let recarregou = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (recarregou) return;
+        recarregou = true;
+        location.reload();
+      });
+
+      // Abas que ficam abertas por dias: checa atualização a cada hora
+      setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
+    } catch (e) { /* SW é opcional */ }
+  });
+}
+
+// ── Notificações nativas: novos avisos no Mural (#geral) ──────────
+// Funciona em qualquer página do sistema enquanto houver uma aba aberta.
+function notifTextoPlano(html) {
+  const d = document.createElement('div');
+  d.innerHTML = html || '';
+  return (d.textContent || '').trim();
+}
+
+async function iniciarNotificacoesGerais() {
+  try {
+    if (!('Notification' in window)) return;
+    const session = await sbGetSession();
+    if (!session) return;
+
+    // Pedir permissão no primeiro clique (navegadores exigem gesto do usuário)
+    if (Notification.permission === 'default') {
+      const pedirUmaVez = () => {
+        Notification.requestPermission().catch(() => {});
+        document.removeEventListener('click', pedirUmaVez);
+      };
+      document.addEventListener('click', pedirUmaVez);
+    }
+
+    // Na página de Avisos, o próprio avisos.js já escuta o canal #geral em realtime
+    // (incluindo a notificação nativa quando a aba está em segundo plano).
+    // Bailar aqui evita uma segunda subscrição realtime no mesmo canal.
+    if (location.pathname.toLowerCase().includes('avisos')) return;
+
+    const canais = await sbListarCanais().catch(() => []);
+    const geral = canais.find(c => c.type === 'public');
+    if (!geral) return;
+
+    sbEscutarNovaMensagemDM(geral.id, payload => {
+      const nova = payload.new;
+      if (!nova || nova.sender_id === session.user.id || nova.status !== 'sent') return;
+      if (Notification.permission !== 'granted') return;
+
+      // Se está com a tela de Avisos aberta e visível, ela própria já mostra
+      const noAvisos = location.pathname.toLowerCase().includes('avisos');
+      if (noAvisos && document.visibilityState === 'visible') return;
+
+      const corpo = notifTextoPlano(nova.content).slice(0, 120);
+      const n = new Notification(`📢 ${nova.sender_name || 'Novo aviso'} — Mural de Avisos`, {
+        body: corpo,
+        icon: 'icon-192.png',
+        tag: 'igui-aviso',
+      });
+      n.onclick = () => {
+        window.focus();
+        if (!noAvisos) location.href = 'avisos.html';
+        n.close();
+      };
+    });
+  } catch (e) { /* notificações são opcionais — nunca quebrar a página */ }
+}
+
+window.addEventListener('load', () => { iniciarNotificacoesGerais(); });
+
+// ── Chat (GetStream): badge de não lidas em TODA página ───────────
+// Mostra o indicador no menu "Chat" assim que o sistema abre e em tempo real,
+// sem precisar entrar na página do Chat. Na própria página do Chat, o chat.js
+// já cuida disso — então aqui a gente bail pra não conectar duas vezes.
+let _streamGlobalClient = null;
+
+function carregarStreamSDK() {
+  return new Promise(res => {
+    if (typeof StreamChat !== 'undefined') return res(true);
+    const existente = document.getElementById('streamSdkGlobal');
+    if (existente) {
+      const ini = Date.now();
+      const chk = setInterval(() => {
+        if (typeof StreamChat !== 'undefined') { clearInterval(chk); res(true); }
+        else if (Date.now() - ini > 8000) { clearInterval(chk); res(false); }
+      }, 100);
+      return;
+    }
+    const s = document.createElement('script');
+    s.id = 'streamSdkGlobal';
+    s.src = 'https://cdn.jsdelivr.net/npm/stream-chat@8/dist/browser.full-bundle.min.js';
+    s.onload = () => res(true);
+    s.onerror = () => res(false);
+    document.head.appendChild(s);
+  });
+}
+
+async function obterStreamTokenGlobal(session) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/stream-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': SUPABASE_ANON_KEY,
+      },
+    });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch (_) { return null; }
+}
+
+function _setChatBadge(n) {
+  const b = document.getElementById('chatDmNavBadge');
+  if (b) b.style.display = (n > 0) ? 'block' : 'none';
+}
+
+function _notificarNovaMensagemChat(ev, session) {
+  try {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const msg = ev.message;
+    if (!msg || msg.user?.id === session.user.id) return;
+    if (document.visibilityState === 'visible') return; // já está olhando o sistema
+    const corpo = (msg.text || 'Enviou um anexo').slice(0, 120);
+    const n = new Notification(`💬 ${msg.user?.name || 'Nova mensagem'}`, {
+      body: corpo, icon: 'icon-192.png', tag: 'igui-chat',
+    });
+    n.onclick = () => { window.focus(); location.href = 'chat.html'; n.close(); };
+  } catch (_) {}
+}
+
+async function iniciarChatNaoLidas() {
+  try {
+    // Na página do Chat o chat.js já mantém o badge e a conexão
+    if (location.pathname.toLowerCase().includes('chat')) return;
+    const session = await sbGetSession();
+    if (!session) return;
+
+    const ok = await carregarStreamSDK();
+    if (!ok || typeof StreamChat === 'undefined') return;
+
+    const creds = await obterStreamTokenGlobal(session);
+    if (!creds) return;
+
+    const c = StreamChat.getInstance(creds.apiKey);
+    _streamGlobalClient = c;
+    if (!c.userID) {
+      await c.connectUser(
+        { id: creds.userId, name: localStorage.getItem('igui_user_name') || 'Você' },
+        creds.token
+      );
+    }
+
+    _setChatBadge(c.user?.total_unread_count || 0);
+    c.on(ev => {
+      if (typeof ev.total_unread_count === 'number') _setChatBadge(ev.total_unread_count);
+      if (ev.type === 'notification.message_new') _notificarNovaMensagemChat(ev, session);
+    });
+  } catch (e) { /* chat é opcional — nunca quebrar a página */ }
+}
+
+window.addEventListener('load', () => { iniciarChatNaoLidas(); });
+
 // ── Auth ──────────────────────────────────────────────
 
 async function sbGetSession()  { const { data: { session } } = await sb.auth.getSession(); return session; }
 async function sbGetUser()     { const { data: { user } }    = await sb.auth.getUser();    return user; }
 
 async function sbGetProfile(userId) {
-  const user = await sbGetUser();
+  // Usa a sessão local (sem ida à rede) — getUser() faria uma chamada ao servidor de auth
+  const session = await sbGetSession();
+  const user = session?.user || null;
   const uid = userId || user?.id;
   if (!uid) return null;
 
@@ -322,7 +547,8 @@ async function sbSignOut() {
 
 const BUCKET = 'igui-files';
 
-function compressBase64(base64, maxWidth = 1024, quality = 0.6) {
+// 1600px / 82%: equilíbrio entre qualidade no PDF e consumo de storage/egress
+function compressBase64(base64, maxWidth = 1600, quality = 0.82) {
   return new Promise((resolve) => {
     const img = new Image();
     const cleanBase64 = base64.replace(/^data:image\/\w+;base64,/, '');
@@ -338,6 +564,9 @@ function compressBase64(base64, maxWidth = 1024, quality = 0.6) {
       canvas.width = width;
       canvas.height = height;
       const ctx = canvas.getContext('2d');
+      // Fundo branco: evita que PNGs transparentes fiquem com fundo preto no JPEG
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       canvas.toBlob((blob) => {
         resolve(blob);
@@ -398,9 +627,11 @@ async function sbSerializeSessionData(S, userId, projectId) {
     form: null, // preenchido pelo chamador
     imgs: { '3d': [], cer: [], rev: [], mob: [], pai: [], deck: [] },
     acc: JSON.parse(JSON.stringify(S.acc || {})),
-    itens: { rev: [], mob: [], pai: [] },
+    itens: { rev: [], mob: [], pai: [], rev2: [], mob2: [], pai2: [] },
     selectedImgs: S.selectedImgs,
     secAtiva: S.secAtiva,
+    pranchaExtra: S.pranchaExtra || {},
+    exibirCapa3d: S.exibirCapa3d || {},
     obsPadrao: null,
     step: null,
   };
@@ -424,7 +655,8 @@ async function sbSerializeSessionData(S, userId, projectId) {
   };
 
   // 3D images
-  for (let i = 0; i < 5; i++) {
+  const total3d = S.imgs?.['3d']?.length || 5;
+  for (let i = 0; i < total3d; i++) {
     addUploadTask(data.imgs['3d'], i, S.imgs?.['3d']?.[i], `${prefix}/3d_${i}.jpg`);
   }
 
@@ -436,9 +668,10 @@ async function sbSerializeSessionData(S, userId, projectId) {
     addUploadTask(data.acc[key], 'img', data.acc[key].img, `${prefix}/acc_${key}.jpg`);
   }
 
-  // Item images (rev, mob, pai)
-  for (const tipo of ['rev', 'mob', 'pai']) {
+  // Item images (rev, mob, pai + pranchas extras rev2/mob2/pai2)
+  for (const tipo of ['rev', 'mob', 'pai', 'rev2', 'mob2', 'pai2']) {
     const items = S.itens?.[tipo] || [];
+    if (!data.itens[tipo]) data.itens[tipo] = [];
     for (let i = 0; i < items.length; i++) {
       const item = { ...items[i] };
       data.itens[tipo].push(item);
@@ -477,7 +710,8 @@ async function sbResolveImagesForPDF(S) {
 
   // 3D images
   if (S.imgs?.['3d']) {
-    for (let i = 0; i < 5; i++) addTask(S.imgs['3d'], i, S.imgs['3d'][i]);
+    const total3d = S.imgs['3d'].length;
+    for (let i = 0; i < total3d; i++) addTask(S.imgs['3d'], i, S.imgs['3d'][i]);
   }
 
   // Ceramic
@@ -488,8 +722,8 @@ async function sbResolveImagesForPDF(S) {
     if (S.acc[key]) addTask(S.acc[key], 'img', S.acc[key].img);
   }
 
-  // Item images (rev, mob, pai)
-  for (const tipo of ['rev', 'mob', 'pai']) {
+  // Item images (rev, mob, pai + pranchas extras rev2/mob2/pai2)
+  for (const tipo of ['rev', 'mob', 'pai', 'rev2', 'mob2', 'pai2']) {
     const items = S.itens?.[tipo] || [];
     for (let i = 0; i < items.length; i++) {
       addTask(items[i], 'imagem', items[i].imagem);
@@ -545,13 +779,57 @@ async function sbSalvarProjeto(payload, existingId = null) {
   return projectId;
 }
 
-/** Lista projetos do usuário logado, ordenados por data de atualização. */
+/** Lista projetos do usuário logado (fora da lixeira), ordenados por data de atualização. */
 async function sbListarProjetos() {
   const { data, error } = await sb.from('projects')
     .select('id, client_name, project_code, city, store, model, proj_date, thumbnail_url, created_by, created_at, updated_at')
+    .is('deleted_at', null)
     .order('updated_at', { ascending: false });
   if (error) throw error;
   return data || [];
+}
+
+// ── Lixeira de pranchas (soft delete) ──────────────────
+
+/** Move um projeto para a lixeira (não apaga nada — restaurável por 30 dias). */
+async function sbMoverParaLixeira(id) {
+  const { error } = await sb.from('projects')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+/** Restaura um projeto da lixeira. */
+async function sbRestaurarProjeto(id) {
+  const { error } = await sb.from('projects')
+    .update({ deleted_at: null })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+/** Lista projetos na lixeira. */
+async function sbListarLixeira() {
+  const { data, error } = await sb.from('projects')
+    .select('id, user_id, client_name, project_code, store, model, proj_date, thumbnail_url, created_by, deleted_at, updated_at')
+    .not('deleted_at', 'is', null)
+    .order('deleted_at', { ascending: false });
+  if (error) throw error;
+  return data || [];
+}
+
+/** Purga definitivamente itens na lixeira há mais de 30 dias (storage + registro). */
+async function sbPurgarLixeiraAntiga() {
+  try {
+    const limite = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await sb.from('projects')
+      .select('id, user_id')
+      .not('deleted_at', 'is', null)
+      .lt('deleted_at', limite);
+    for (const p of (data || [])) {
+      await sbDeletarProjetoAdmin(p.id, p.user_id).catch(() => {});
+    }
+    return (data || []).length;
+  } catch { return 0; }
 }
 
 /** Carrega um projeto completo (com session_data) pelo ID. */
@@ -683,6 +961,15 @@ async function sbAlterarRole(userId, role) {
 async function sbAlterarAtivo(userId, active) {
   const { error } = await sb.from('profiles').update({ active }).eq('id', userId);
   if (error) throw error;
+}
+
+async function sbResetarSenhaAdmin(userId, novaSenha) {
+  const { data, error } = await sb.rpc('reset_user_password_admin', {
+    u_id: userId,
+    new_pass: novaSenha
+  });
+  if (error) throw error;
+  return data;
 }
 
 /**
@@ -901,7 +1188,8 @@ async function sbHardDeletarMensagem(msgId) {
  * Retorna mapa: userId → { channelId, hasUnread }
  */
 async function sbCarregarStatusDMs() {
-  const me = await sbGetUser();
+  const me = (await sbGetSession())?.user;
+  if (!me) return {};
 
   const { data: myMemberships } = await sb.from('chat_members')
     .select('channel_id').eq('user_id', me.id);
