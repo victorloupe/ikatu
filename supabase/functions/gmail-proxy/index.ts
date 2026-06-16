@@ -111,10 +111,19 @@ serve(async (req: Request) => {
 
     // ── listMessages ───────────────────────────────────────────────
     if (action === "listMessages") {
-      const qp = new URLSearchParams({ labelIds: "INBOX", maxResults: "30" });
+      const labelId = params.labelId ? String(params.labelId) : "INBOX";
+      const qp = new URLSearchParams({ maxResults: "30" });
+      if (labelId) qp.set("labelIds", labelId);
       if (params.pageToken) qp.set("pageToken", String(params.pageToken));
       if (params.q) qp.set("q", String(params.q));
       const r = await gmailFetch(accessToken, `/gmail/v1/users/me/messages?${qp}`);
+      const data = await r.json();
+      return json(data, r.status);
+    }
+
+    // ── listLabels ─────────────────────────────────────────────────
+    if (action === "listLabels") {
+      const r = await gmailFetch(accessToken, `/gmail/v1/users/me/labels`);
       const data = await r.json();
       return json(data, r.status);
     }
@@ -173,17 +182,4 @@ serve(async (req: Request) => {
     // ── checkConnection ────────────────────────────────────────────
     if (action === "checkConnection") {
       const { data: tokenRow } = await supabase
-        .from("user_gmail_tokens")
-        .select("gmail_email")
-        .eq("user_id", user.id)
-        .single();
-      return json({ connected: !!tokenRow, email: tokenRow?.gmail_email || null });
-    }
-
-    return json({ error: `Ação desconhecida: ${action}` }, 400);
-  } catch (e) {
-    const msg = String((e as Error)?.message || e);
-    const status = msg.includes("Reconecte") || msg.includes("não conectado") ? 401 : 500;
-    return json({ error: msg }, status);
-  }
-});
+        .from("user_g

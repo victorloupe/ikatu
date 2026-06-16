@@ -7,7 +7,7 @@
 
 // ⚠️ AO FAZER DEPLOY com mudanças: incremente a versão abaixo (v2 → v3 → ...).
 // É isso que dispara o aviso "Nova versão disponível" nas abas abertas.
-const CACHE = 'igui-space-v29';
+const CACHE = 'igui-space-v31';
 
 // Arquivos básicos do app shell (pré-cacheados na instalação)
 const SHELL = [
@@ -18,6 +18,7 @@ const SHELL = [
   'pagamentos.html',
   'avisos.html',
   'chat.html',
+  'email.html',
   'links.html',
   'styles.css',
   'app.js',
@@ -26,6 +27,7 @@ const SHELL = [
   'pagamentos.js',
   'avisos.js',
   'chat.js',
+  'email.js',
   'logo_site.png',
   'favicon.ico',
   'icon-192.png',
@@ -66,6 +68,4 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
         return res;
       })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }))
-  );
-});
+      .catch(() => caches.match(e.request, { ig

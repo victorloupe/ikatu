@@ -12,6 +12,21 @@ let nextPageToken = null;
 let carregandoLista = false;
 let anexosCompose = [];       // { name, mimeType, base64 }[]
 let anexosResposta = [];      // { name, mimeType, base64 }[]
+let currentLabelId = localStorage.getItem('igui_email_label') || 'INBOX'; // marcador atual (lembrado)
+let labelsCache = [];         // marcadores do Gmail
+
+// Nomes amigáveis dos marcadores de sistema
+const LABELS_SISTEMA = {
+  INBOX: 'Caixa de entrada',
+  STARRED: 'Com estrela',
+  IMPORTANT: 'Importantes',
+  SENT: 'Enviados',
+  DRAFT: 'Rascunhos',
+  SPAM: 'Spam',
+  TRASH: 'Lixeira',
+  UNREAD: 'Não lidos',
+};
+const ORDEM_SISTEMA = ['INBOX', 'STARRED', 'IMPORTANT', 'SENT', 'DRAFT', 'SPAM', 'TRASH'];
 
 window.addEventListener('DOMContentLoaded', init);
 
@@ -45,6 +60,9 @@ async function init() {
 
     // Escuta postMessage do popup OAuth
     window.addEventListener('message', onOAuthMessage);
+
+    // Arrastar-e-soltar arquivos no compor e no responder
+    configurarDragDropEmail();
   } catch (e) {
     console.error('[email] init error:', e);
     showToast('Erro ao carregar. ' + (e?.message || ''), 'err');
@@ -110,6 +128,65 @@ function mostrarInterfaceConectada() {
     emailSpan.textContent = gmailAddress || '';
     badge.style.display = 'inline-flex';
   }
+  carregarLabels();
+}
+
+// ── Marcadores (labels) ──────────────────────────────────────────
+
+async function carregarLabels() {
+  try {
+    const res = await sbGmailProxy('listLabels');
+    labelsCache = res.labels || [];
+    renderLabelSelect();
+  } catch (e) {
+    // silencioso — sem marcadores, o seletor só mostra a Caixa de entrada
+  }
+}
+
+function renderLabelSelect() {
+  const sel = document.getElementById('emailLabelSelect');
+  if (!sel) return;
+
+  const byId = {};
+  labelsCache.forEach(l => { byId[l.id] = l; });
+
+  // Se o marcador lembrado não existe mais, volta pra Caixa de entrada
+  if (currentLabelId !== 'INBOX' && !byId[currentLabelId]) {
+    currentLabelId = 'INBOX';
+    localStorage.setItem('igui_email_label', 'INBOX');
+  }
+
+  const sistema = ORDEM_SISTEMA
+    .filter(id => byId[id])
+    .map(id => ({ id, name: LABELS_SISTEMA[id] || byId[id].name }));
+
+  const usuario = labelsCache
+    .filter(l => l.type === 'user')
+    .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
+    .map(l => ({ id: l.id, name: l.name }));
+
+  let html = '<optgroup label="Sistema">';
+  html += sistema.map(o =>
+    `<option value="${escHtml(o.id)}"${o.id === currentLabelId ? ' selected' : ''}>${escHtml(o.name)}</option>`
+  ).join('');
+  html += '</optgroup>';
+
+  if (usuario.length) {
+    html += '<optgroup label="Meus marcadores">';
+    html += usuario.map(o =>
+      `<option value="${escHtml(o.id)}"${o.id === currentLabelId ? ' selected' : ''}>${escHtml(o.name)}</option>`
+    ).join('');
+    html += '</optgroup>';
+  }
+
+  sel.innerHTML = html;
+}
+
+function trocarLabel(labelId) {
+  if (!labelId || labelId === currentLabelId) return;
+  currentLabelId = labelId;
+  localStorage.setItem('igui_email_label', labelId);
+  carregarInbox(true);
 }
 
 // ── Carregar inbox ───────────────────────────────────────────────
@@ -133,6 +210,7 @@ async function carregarInbox(reset = false) {
   try {
     const listResult = await sbGmailProxy('listMessages', {
       pageToken: nextPageToken || undefined,
+      labelId: currentLabelId,
     });
 
     const ids = (listResult.messages || []).map(m => m.id);
@@ -556,7 +634,11 @@ function anexarArquivosResposta(input) {
 async function processarAnexos(input, arr, previewId) {
   const files = Array.from(input.files || []);
   input.value = '';
+  await adicionarAnexos(files, arr, previewId);
+}
 
+// Núcleo compartilhado entre o clipe (input) e o arrastar-e-soltar.
+async function adicionarAnexos(files, arr, previewId) {
   for (const file of files) {
     if (file.size > 7 * 1024 * 1024) {
       showToast(`"${file.name}" excede 7 MB.`, 'err');
@@ -571,6 +653,54 @@ async function processarAnexos(input, arr, previewId) {
     arr.push({ name: file.name, mimeType: file.type || 'application/octet-stream', base64 });
   }
   renderAnexosPreview(arr, previewId);
+}
+
+// ── Arrastar-e-soltar arquivos externos ──────────────────────────
+
+function configurarDragDropEmail() {
+  configurarZonaDrop(
+    document.getElementById('emailCompose'),
+    document.getElementById('composeDropOverlay'),
+    () => anexosCompose,
+    'composeAttachPreview'
+  );
+  configurarZonaDrop(
+    document.getElementById('emailReplyWrap'),
+    document.getElementById('replyDropOverlay'),
+    () => anexosResposta,
+    'emailReplyAttachPreview'
+  );
+}
+
+function configurarZonaDrop(zona, overlay, getArr, previewId) {
+  if (!zona) return;
+  let depth = 0;
+  const temArquivos = e =>
+    Array.from(e.dataTransfer?.types || []).includes('Files');
+
+  zona.addEventListener('dragenter', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault();
+    depth++;
+    overlay?.classList.add('ativo');
+  });
+  zona.addEventListener('dragover', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault();
+  });
+  zona.addEventListener('dragleave', e => {
+    if (!temArquivos(e)) return;
+    depth--;
+    if (depth <= 0) { depth = 0; overlay?.classList.remove('ativo'); }
+  });
+  zona.addEventListener('drop', e => {
+    if (!temArquivos(e)) return;
+    e.preventDefault();
+    depth = 0;
+    overlay?.classList.remove('ativo');
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length) adicionarAnexos(files, getArr(), previewId);
+  });
 }
 
 function renderAnexosPreview(arr, containerId) {
@@ -615,125 +745,4 @@ function buildRawEmail({ to, subject, body, replyToMsgId, replyToRefs, attachmen
   }
 
   let bodyStr;
-  if (!hasAttachments) {
-    headers.push('Content-Type: text/plain; charset=UTF-8');
-    headers.push('Content-Transfer-Encoding: base64');
-    bodyStr = btoa(unescape(encodeURIComponent(body)));
-  } else {
-    headers.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
-
-    const textPart = [
-      `--${boundary}`,
-      'Content-Type: text/plain; charset=UTF-8',
-      'Content-Transfer-Encoding: base64',
-      '',
-      btoa(unescape(encodeURIComponent(body))),
-    ].join('\r\n');
-
-    const attachParts = attachments.map(a => [
-      `--${boundary}`,
-      `Content-Type: ${a.mimeType}; name="${a.name}"`,
-      'Content-Transfer-Encoding: base64',
-      `Content-Disposition: attachment; filename="${a.name}"`,
-      '',
-      a.base64,
-    ].join('\r\n')).join('\r\n');
-
-    bodyStr = [textPart, attachParts, `--${boundary}--`].join('\r\n');
-  }
-
-  const raw = [...headers, '', bodyStr].join('\r\n');
-  // Codifica em base64url
-  return btoa(unescape(encodeURIComponent(raw)))
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-// ── Utilitários ──────────────────────────────────────────────────
-
-function getHeader(msg, name) {
-  const headers = msg?.payload?.headers || [];
-  return headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
-}
-
-function parseFromName(from) {
-  if (!from) return '—';
-  const match = from.match(/^"?([^"<]+)"?\s*</);
-  if (match) return match[1].trim();
-  return from.replace(/<[^>]+>/, '').trim() || from;
-}
-
-function parseReplyTo(from) {
-  if (!from) return '';
-  const match = from.match(/<([^>]+)>/);
-  if (match) return match[1];
-  return from.trim();
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  try {
-    const d = new Date(dateStr);
-    const now = new Date();
-    const isToday = d.toDateString() === now.toDateString();
-    if (isToday) {
-      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
-    const isThisYear = d.getFullYear() === now.getFullYear();
-    if (isThisYear) {
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
-    }
-    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-  } catch {
-    return dateStr;
-  }
-}
-
-function formatBytes(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-}
-
-function escHtml(str) {
-  return String(str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-// ── Toast ────────────────────────────────────────────────────────
-
-let toastTimer;
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  if (!t) return;
-  clearTimeout(toastTimer);
-  t.textContent = msg;
-  t.className = 'toast show' + (type ? ' ' + type : '');
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-// ── Modais ───────────────────────────────────────────────────────
-
-function fecharModais() {
-  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
-}
-
-function abrirModalSenha() {
-  document.getElementById('modalSenha').classList.add('show');
-  setTimeout(() => document.getElementById('novaSenha').focus(), 50);
-}
-
-async function salvarNovaSenha() {
-  const nova = document.getElementById('novaSenha').value.trim();
-  if (nova.length < 6) { showToast('Mínimo 6 caracteres.', 'err'); return; }
-  try {
-    const { error } = await sb.auth.updateUser({ password: nova });
-    if (error) throw error;
-    fecharModais();
-    showToast('Senha alterada com sucesso!', 'ok');
-  } catch (e) {
-    showToast('Erro: ' + (e?.message || ''), 'err');
-  }
-}
+  if (!hasAttachment

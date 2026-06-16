@@ -1474,6 +1474,38 @@ body.pg-projetos { background: #e2eaf3; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Seletor de marcadores ── */
+.email-label-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-bottom: 1.5px solid var(--border);
+  flex-shrink: 0;
+}
+.email-label-ico { color: var(--blue); flex-shrink: 0; }
+#emailLabelSelect {
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #f0f4f8 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 16 16' fill='none' stroke='%237f8c8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6l5 5 5-5'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 28px 6px 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink, #2c3e50);
+  cursor: pointer;
+  transition: border-color .15s;
+}
+#emailLabelSelect:hover { border-color: var(--blue); }
+#emailLabelSelect:focus { outline: none; border-color: var(--blue); }
+
+/* Overlay de drop reaproveita .chat-drop-overlay/.chat-drop-box;
+   só precisa ancorar nos contêineres de email */
+.email-compose-wrap, .email-reply-wrap { position: relative; }
+
 /* ── Lista de emails ── */
 .email-list-scroll { flex: 1; overflow-y: auto; }
 
@@ -1874,55 +1906,4 @@ body.pg-projetos { background: #e2eaf3; }
   color: var(--muted);
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all .15s;
-}
-.btn-attach-email:hover { border-color: var(--blue); color: var(--blue); }
-.email-attach-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 6px 0 0;
-}
-.email-attach-preview-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  background: #e8f5fd;
-  border: 1px solid #b3dff0;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #0080bb;
-}
-.email-attach-preview-chip button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #0080bb;
-  font-size: 13px;
-  line-height: 1;
-  padding: 0;
-  opacity: .7;
-  transition: opacity .15s;
-}
-.email-attach-preview-chip button:hover { opacity: 1; }
-
-/* ── Skeleton da lista de emails ── */
-.email-skel-item {
-  padding: 11px 14px 11px 28px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.email-skel-line {
-  height: 10px;
-  background: linear-gradient(90deg, #e8edf2 25%, #f5f8fa 50%, #e8edf2 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-  border-radius: 5px;
-}
-@keyframes shimmer { to { background-position: -200% 0; } }
+  justify-conten
