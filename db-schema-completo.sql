@@ -554,3 +554,32 @@ END $$;
 -- Cancelar limpeza:   SELECT cron.unschedule('igui-limpar-msgs-geral');
 -- Promover admin:     UPDATE profiles SET role = 'admin' WHERE email = 'seu@email.com';
 -- Conferir índices:   SELECT indexname FROM pg_indexes WHERE tablename IN ('projects','profiles','chat_messages');
+
+
+-- ══════════════════════════════════════════════════════════════════
+-- 10. GMAIL TOKENS — armazena OAuth tokens por usuário
+--     Tokens são acessados SOMENTE pelas Edge Functions via service role.
+--     O cliente (browser) nunca lê os tokens diretamente.
+-- ══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS public.user_gmail_tokens (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  access_token  TEXT NOT NULL,
+  refresh_token TEXT,
+  token_expiry  TIMESTAMPTZ NOT NULL,
+  gmail_email   TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT user_gmail_tokens_user_id_unique UNIQUE (user_id)
+);
+
+ALTER TABLE public.user_gmail_tokens ENABLE ROW LEVEL SECURITY;
+
+-- Usuários podem ver apenas o próprio registro (e-mail conectado)
+CREATE POLICY "gmail_tokens_own_select" ON public.user_gmail_tokens
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- Escrita feita somente pelas Edge Functions via service role (bypassa RLS)
+CREATE INDEX IF NOT EXISTS idx_gmail_tokens_user_id
+  ON public.user_gmail_tokens(user_id);

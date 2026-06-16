@@ -1368,3 +1368,78 @@ async function sbDeletarSugestao(id) {
   const { error } = await sb.from('suggestions').delete().eq('id', id);
   if (error) throw error;
 }
+
+// ── Gmail ──────────────────────────────────────────────────────────
+
+/** Verifica se o usuário atual tem Gmail conectado. */
+async function sbGmailStatus() {
+  try {
+    const session = await sbGetSession();
+    if (!session) return { connected: false };
+    const { data } = await sb.from('user_gmail_tokens')
+      .select('gmail_email')
+      .eq('user_id', session.user.id)
+      .single();
+    return data ? { connected: true, email: data.gmail_email } : { connected: false };
+  } catch {
+    return { connected: false };
+  }
+}
+
+/** Inicia o fluxo OAuth do Gmail — retorna a URL de autorização do Google. */
+async function sbGmailOAuthStart() {
+  const session = await sbGetSession();
+  if (!session) throw new Error('Não autenticado');
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/gmail-oauth-start`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+  });
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e.error || 'Falha ao iniciar OAuth');
+  }
+  return resp.json(); // { url }
+}
+
+/** Chama uma ação na Gmail API via proxy seguro. */
+async function sbGmailProxy(action, params = {}) {
+  const session = await sbGetSession();
+  if (!session) throw new Error('Não autenticado');
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/gmail-proxy`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ action, params }),
+  });
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e.error || `Erro Gmail ${resp.status}`);
+  }
+  return resp.json();
+}
+
+/** Desconecta o Gmail: revoga tokens e remove o registro do banco. */
+async function sbGmailDisconnect() {
+  const session = await sbGetSession();
+  if (!session) throw new Error('Não autenticado');
+  const resp = await fetch(`${SUPABASE_URL}/functions/v1/gmail-disconnect`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+  });
+  if (!resp.ok) {
+    const e = await resp.json().catch(() => ({}));
+    throw new Error(e.error || 'Falha ao desconectar Gmail');
+  }
+  return resp.json();
+}
