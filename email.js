@@ -745,4 +745,125 @@ function buildRawEmail({ to, subject, body, replyToMsgId, replyToRefs, attachmen
   }
 
   let bodyStr;
-  if (!hasAttachment
+  if (!hasAttachments) {
+    headers.push('Content-Type: text/plain; charset=UTF-8');
+    headers.push('Content-Transfer-Encoding: base64');
+    bodyStr = btoa(unescape(encodeURIComponent(body)));
+  } else {
+    headers.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+
+    const textPart = [
+      `--${boundary}`,
+      'Content-Type: text/plain; charset=UTF-8',
+      'Content-Transfer-Encoding: base64',
+      '',
+      btoa(unescape(encodeURIComponent(body))),
+    ].join('\r\n');
+
+    const attachParts = attachments.map(a => [
+      `--${boundary}`,
+      `Content-Type: ${a.mimeType}; name="${a.name}"`,
+      'Content-Transfer-Encoding: base64',
+      `Content-Disposition: attachment; filename="${a.name}"`,
+      '',
+      a.base64,
+    ].join('\r\n')).join('\r\n');
+
+    bodyStr = [textPart, attachParts, `--${boundary}--`].join('\r\n');
+  }
+
+  const raw = [...headers, '', bodyStr].join('\r\n');
+  // Codifica em base64url
+  return btoa(unescape(encodeURIComponent(raw)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// ── Utilitários ──────────────────────────────────────────────────
+
+function getHeader(msg, name) {
+  const headers = msg?.payload?.headers || [];
+  return headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
+}
+
+function parseFromName(from) {
+  if (!from) return '—';
+  const match = from.match(/^"?([^"<]+)"?\s*</);
+  if (match) return match[1].trim();
+  return from.replace(/<[^>]+>/, '').trim() || from;
+}
+
+function parseReplyTo(from) {
+  if (!from) return '';
+  const match = from.match(/<([^>]+)>/);
+  if (match) return match[1];
+  return from.trim();
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const isToday = d.toDateString() === now.toDateString();
+    if (isToday) {
+      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    }
+    const isThisYear = d.getFullYear() === now.getFullYear();
+    if (isThisYear) {
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+    }
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ── Toast ────────────────────────────────────────────────────────
+
+let toastTimer;
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  clearTimeout(toastTimer);
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' ' + type : '');
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── Modais ───────────────────────────────────────────────────────
+
+function fecharModais() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+}
+
+function abrirModalSenha() {
+  document.getElementById('modalSenha').classList.add('show');
+  setTimeout(() => document.getElementById('novaSenha').focus(), 50);
+}
+
+async function salvarNovaSenha() {
+  const nova = document.getElementById('novaSenha').value.trim();
+  if (nova.length < 6) { showToast('Mínimo 6 caracteres.', 'err'); return; }
+  try {
+    const { error } = await sb.auth.updateUser({ password: nova });
+    if (error) throw error;
+    fecharModais();
+    showToast('Senha alterada com sucesso!', 'ok');
+  } catch (e) {
+    showToast('Erro: ' + (e?.message || ''), 'err');
+  }
+}
