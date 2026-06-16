@@ -285,4 +285,36 @@
 
 </div>
 
-<!-- To
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Modal: alterar senha -->
+<div class="modal-overlay" id="modalSenha">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-title">Alterar senha</div>
+    <div class="modal-field">
+      <label>Nova senha</label>
+      <input type="password" id="novaSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
+      <button class="btn-modal confirm" onclick="salvarNovaSenha()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: confirmar desconectar Gmail -->
+<div class="modal-overlay" id="modalDesconectar">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-title">Desconectar Gmail</div>
+    <p style="font-size:14px;color:var(--muted);margin:10px 0 20px;line-height:1.6">Tem certeza? Você precisará autorizar novamente para usar o Gmail no app.</p>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
+      <button class="btn-modal confirm" style="background:#e74c3c;" onclick="desconectarGmail()">Desconectar</button>
+    </div>
+  </div>
+</div>
+
+<script src="email.js?v=20260616c"></script>
+</body>
+</html>
