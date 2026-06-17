@@ -50,11 +50,8 @@
   <!-- SIDEBAR DE Espaço iGUi -->
   <aside class="sidebar">
     <div class="sidebar-label">ETAPAS <span class="sidebar-step-count" id="sidebarStepCount">1 / 6</span></div>
-    <!-- Barra de progresso horizontal -->
-    <div class="sidebar-prog-wrap">
-      <div class="sidebar-prog-fill" id="pFill" style="width:16.6%"></div>
-    </div>
-    <nav class="steps">
+    <nav class="steps" id="stepsGenerator">
+      <div class="water-drop" id="waterDrop"></div>
       <button class="stp active" onclick="ir(0)"><span class="stp-n">1</span><span class="stp-txt">Identificação</span><span class="stp-check" id="chk-0"></span></button>
       <button class="stp" onclick="ir(1)"><span class="stp-n">2</span><span class="stp-txt">Projeto 3D</span><span class="stp-check" id="chk-1"></span></button>
       <button class="stp" onclick="ir(2)"><span class="stp-n">3</span><span class="stp-txt">Descritivo</span><span class="stp-check" id="chk-2"></span></button>
@@ -62,6 +59,10 @@
       <button class="stp" onclick="ir(4)"><span class="stp-n">5</span><span class="stp-txt">Mobiliário<span class="stp-cnt" id="cnt-4"></span></span><span class="stp-check" id="chk-4"></span></button>
       <button class="stp" onclick="ir(5)"><span class="stp-n">6</span><span class="stp-txt">Paisagismo<span class="stp-cnt" id="cnt-5"></span></span><span class="stp-check" id="chk-5"></span></button>
     </nav>
+    <!-- Barra de progresso horizontal -->
+    <div class="sidebar-prog-wrap">
+      <div class="sidebar-prog-fill" id="pFill" style="width:16.6%"></div>
+    </div>
 
     <!-- Ações na base da sidebar -->
     <div class="sidebar-actions">
@@ -131,6 +132,7 @@
           <span class="stp-txt" style="font-weight:inherit;">Chat</span>
           <span class="chat-nav-badge" id="chatDmNavBadge"></span>
         </a>
+        <!--
         <a class="stp" href="email.html" id="navEmail">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
             <rect x="1" y="3" width="14" height="10" rx="1.5"/>
@@ -138,6 +140,7 @@
           </svg>
           <span class="stp-txt" style="font-weight:inherit;">Gmail</span>
         </a>
+        -->
         <a class="stp" href="pagamentos.html">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
             <rect x="1" y="3" width="14" height="10" rx="2"/>

@@ -56,7 +56,7 @@ header h1 span{color:var(--blue);}
 /* Barra de progresso horizontal */
 .sidebar-prog-wrap{
   width:100%;height:3px;background:#e0e8f0;
-  border-radius:2px;margin-bottom:18px;overflow:hidden;flex-shrink:0;
+  border-radius:2px;margin-top:12px;margin-bottom:12px;overflow:hidden;flex-shrink:0;
 }
 .sidebar-prog-fill{
   height:100%;background:var(--blue);border-radius:2px;
@@ -83,7 +83,7 @@ header h1 span{color:var(--blue);}
 }
 .stp:hover{background:var(--gray);color:var(--text);}
 .stp.active{background:#edf7fd;color:var(--blue);font-weight:600;}
-.stp.active::before{
+.sidebar-actions nav.steps .stp.active::before{
   content:'';position:absolute;left:0;top:18%;bottom:18%;
   width:3px;border-radius:0 2px 2px 0;background:var(--blue);
 }
@@ -93,9 +93,46 @@ header h1 span{color:var(--blue);}
 .stp-n{
   font-size:11px;font-weight:700;color:inherit;
   width:16px;text-align:center;flex-shrink:0;opacity:.55;
+  position: relative;
+  z-index: 2;
+  transition: color 0.2s ease;
 }
-.stp.active .stp-n{opacity:1;}
+.stp.active .stp-n{opacity:1; color: #fff;}
 .stp.done .stp-n{opacity:.4;}
+
+/* Gota de água iGUi */
+#stepsGenerator {
+  position: relative;
+}
+#stepsGenerator .water-drop {
+  position: absolute;
+  top: -80px;
+  left: 16px;
+  width: 22px;
+  height: 22px;
+  border-radius: 0 50% 50% 50%;
+  background: linear-gradient(135deg, #009cde, #004d9c);
+  transform: translate3d(-50%, -50%, 0) rotate(45deg);
+  pointer-events: none;
+  z-index: 1;
+  box-shadow: 0 2px 4px rgba(0, 77, 156, 0.4);
+  transition: top 0.45s cubic-bezier(0.6, -0.28, 0.735, 0.045), 
+              left 0.45s ease, 
+              transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Efeito de esticar ao cair (animação fluida de gota) */
+#stepsGenerator .water-drop.falling {
+  transform: translate3d(-50%, -50%, 0) scaleY(1.4) scaleX(0.7) rotate(45deg);
+  transition: top 0.45s cubic-bezier(0.55, 0.055, 0.675, 0.19), 
+              transform 0.2s ease-in-out;
+}
+
+/* Efeito de achatamento ao pousar (impacto da gota) */
+#stepsGenerator .water-drop.landing {
+  transform: translate3d(-50%, -50%, 0) scaleY(0.7) scaleX(1.3) rotate(45deg);
+  transition: transform 0.12s ease-in-out;
+}
 
 .stp-txt{flex:1;line-height:1.35;}
 .stp-cnt{font-size:10px;font-weight:600;opacity:.65;margin-left:1px;}
@@ -1906,4 +1943,55 @@ body.pg-projetos { background: #e2eaf3; }
   color: var(--muted);
   display: flex;
   align-items: center;
-  justify-conten
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.btn-attach-email:hover { border-color: var(--blue); color: var(--blue); }
+.email-attach-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 0 0;
+}
+.email-attach-preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: #e8f5fd;
+  border: 1px solid #b3dff0;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0080bb;
+}
+.email-attach-preview-chip button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0080bb;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+  opacity: .7;
+  transition: opacity .15s;
+}
+.email-attach-preview-chip button:hover { opacity: 1; }
+
+/* ── Skeleton da lista de emails ── */
+.email-skel-item {
+  padding: 11px 14px 11px 28px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.email-skel-line {
+  height: 10px;
+  background: linear-gradient(90deg, #e8edf2 25%, #f5f8fa 50%, #e8edf2 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 5px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }

@@ -182,4 +182,17 @@ serve(async (req: Request) => {
     // ── checkConnection ────────────────────────────────────────────
     if (action === "checkConnection") {
       const { data: tokenRow } = await supabase
-        .from("user_g
+        .from("user_gmail_tokens")
+        .select("gmail_email")
+        .eq("user_id", user.id)
+        .single();
+      return json({ connected: !!tokenRow, email: tokenRow?.gmail_email || null });
+    }
+
+    return json({ error: `Ação desconhecida: ${action}` }, 400);
+  } catch (e) {
+    const msg = String((e as Error)?.message || e);
+    const status = msg.includes("Reconecte") || msg.includes("não conectado") ? 401 : 500;
+    return json({ error: msg }, status);
+  }
+});

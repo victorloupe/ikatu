@@ -33,6 +33,10 @@ const S = {
   _editandoId: null,
 };
 let cur = 0;
+let _pdfPendente = false;
+let _previewPendente = false;
+let _salvarPendente = false;
+let _skipOverwriteCheck = false;
 let saveTimer = null;
 const SAVE_KEY = 'prancha_igui_autosave';
 
@@ -496,6 +500,63 @@ function ir(step) {
   const sc = document.getElementById('sidebarStepCount');
   if (sc) sc.textContent = (step+1)+' / 6';
   window.scrollTo({top:0, behavior:'smooth'});
+  posicionarGotinha(step);
+}
+
+function posicionarGotinha(step, animate = true) {
+  const gotinha = document.getElementById('waterDrop');
+  if (!gotinha) return;
+
+  const btn = document.querySelectorAll('#stepsGenerator .stp')[step];
+  if (!btn) return;
+
+  const stpN = btn.querySelector('.stp-n');
+  if (!stpN) return;
+
+  const stepsContainer = document.getElementById('stepsGenerator');
+  if (!stepsContainer) return;
+  
+  const containerRect = stepsContainer.getBoundingClientRect();
+  const stpNRect = stpN.getBoundingClientRect();
+
+  const targetTop = (stpNRect.top + stpNRect.height / 2) - containerRect.top;
+  const targetLeft = (stpNRect.left + stpNRect.width / 2) - containerRect.left;
+
+  // Evita posicionamento incorreto se o layout ainda não estiver totalmente pronto
+  if (targetTop === 0 && targetLeft === 0) return;
+
+  let currentTop = parseFloat(gotinha.style.top);
+  if (isNaN(currentTop)) {
+    currentTop = -80; // Posição inicial padrão (escondida atrás do cabeçalho)
+  }
+
+  if (animate && Math.abs(targetTop - currentTop) > 5) {
+    gotinha.classList.remove('landing');
+    gotinha.classList.add('falling');
+
+    gotinha.style.top = targetTop + 'px';
+    gotinha.style.left = targetLeft + 'px';
+
+    setTimeout(() => {
+      gotinha.classList.remove('falling');
+      gotinha.classList.add('landing');
+
+      setTimeout(() => {
+        gotinha.classList.remove('landing');
+      }, 120);
+    }, 400);
+  } else {
+    // Desativa temporariamente a transição para posicionamento instantâneo
+    const originalTransition = gotinha.style.transition;
+    gotinha.style.transition = 'none';
+    
+    gotinha.style.top = targetTop + 'px';
+    gotinha.style.left = targetLeft + 'px';
+    
+    // Força reflow e restaura a transição
+    gotinha.offsetHeight;
+    gotinha.style.transition = originalTransition;
+  }
 }
 
 // ═══════════════════════════════════════════════════
@@ -1782,6 +1843,9 @@ function fecharModal() {
   document.getElementById('overwriteModal').classList.remove('show');
   const rmModal = document.getElementById('rmPranchaModal');
   if (rmModal) rmModal.classList.remove('show');
+  _pdfPendente = false;
+  _previewPendente = false;
+  _salvarPendente = false;
 }
 
 // Verifica preenchimento e retorna lista de itens
@@ -1862,9 +1926,6 @@ function updateEditBadge() {
     badge.classList.remove('show');
   }
 }
-
-let _pdfPendente = false;
-
 function novaPrancha() {
   document.getElementById('novaModal').classList.add('show');
 }
@@ -1964,10 +2025,18 @@ async function gerarPDF() {
 }
 
 function confirmarGerarPDF() {
+  const isPdf = _pdfPendente;
+  const isPreview = _previewPendente;
+  const isSalvar = _salvarPendente;
+
   fecharModal();
-  if (_pdfPendente) {
-    _pdfPendente = false;
+
+  if (isPdf) {
     _executarGerarPDF();
+  } else if (isPreview) {
+    _executarGerarPDF(true);
+  } else if (isSalvar) {
+    _executarSalvarSessao();
   }
 }
 
@@ -1979,6 +2048,41 @@ function confirmarOverwrite() {
 
 // ── Salvar Sessão (sem gerar PDF) ─────────────────────────────────
 async function salvarSessao() {
+  const validItems = validarCampos();
+  const temErro  = validItems.some(i => i.cls === 'err');
+  const temWarn  = validItems.some(i => i.cls === 'warn');
+
+  if (temErro || temWarn) {
+    const container = document.getElementById('validItems');
+    clearNode(container);
+    validItems.forEach(i => {
+      const item = document.createElement('div');
+      item.className = `modal-item ${i.cls}`;
+
+      const icon = document.createElement('span');
+      icon.className = 'mi-icon';
+      icon.textContent = i.icon;
+
+      const text = document.createTextNode(i.txt);
+      item.append(icon, text);
+      container.appendChild(item);
+    });
+
+    const btnConfirm = document.getElementById('btnConfirmPDF');
+    btnConfirm.textContent = temErro ? 'Salvar mesmo assim ⚠️' : 'Salvar Sessão ✓';
+    btnConfirm.style.background = temErro ? '#e74c3c' : 'var(--dark)';
+
+    _salvarPendente = true;
+    _pdfPendente = false;
+    _previewPendente = false;
+    document.getElementById('validModal').classList.add('show');
+    return;
+  }
+
+  await _executarSalvarSessao();
+}
+
+async function _executarSalvarSessao() {
   const btn = document.getElementById('btnSalvarSessao');
   const ov  = document.getElementById('overlay');
   if (btn) btn.disabled = true;
@@ -2012,8 +2116,6 @@ async function salvarSessao() {
     ov.classList.remove('show');
   }
 }
-
-let _skipOverwriteCheck = false;
 
 async function _executarGerarPDF(preview = false) {
   // Se editando um projeto existente, pedir confirmação antes de sobrescrever
@@ -2528,6 +2630,37 @@ async function _executarGerarPDF(preview = false) {
 
 // ── Pré-visualização da prancha ─────────────────────────────────────
 async function previewPrancha() {
+  const validItems = validarCampos();
+  const temErro  = validItems.some(i => i.cls === 'err');
+  const temWarn  = validItems.some(i => i.cls === 'warn');
+
+  if (temErro || temWarn) {
+    const container = document.getElementById('validItems');
+    clearNode(container);
+    validItems.forEach(i => {
+      const item = document.createElement('div');
+      item.className = `modal-item ${i.cls}`;
+
+      const icon = document.createElement('span');
+      icon.className = 'mi-icon';
+      icon.textContent = i.icon;
+
+      const text = document.createTextNode(i.txt);
+      item.append(icon, text);
+      container.appendChild(item);
+    });
+
+    const btnConfirm = document.getElementById('btnConfirmPDF');
+    btnConfirm.textContent = temErro ? 'Visualizar mesmo assim ⚠️' : 'Pré-visualizar ✓';
+    btnConfirm.style.background = temErro ? '#e74c3c' : 'var(--dark)';
+
+    _previewPendente = true;
+    _pdfPendente = false;
+    _salvarPendente = false;
+    document.getElementById('validModal').classList.add('show');
+    return;
+  }
+
   await _executarGerarPDF(true);
 }
 
@@ -2718,6 +2851,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Auto-save on all input changes (form fields already have oninput)
   document.addEventListener('change', () => autoSave());
+});
+
+// Inicializar a gotinha de etapas logo na abertura para cair sem delay de rede
+document.addEventListener('DOMContentLoaded', () => {
+  const stepsContainer = document.getElementById('stepsGenerator');
+  if (stepsContainer) {
+    setTimeout(() => {
+      posicionarGotinha(cur, false);
+    }, 150);
+  }
+
+  // Atualizar a posição da gotinha ao redimensionar a janela
+  window.addEventListener('resize', () => {
+    posicionarGotinha(cur, false);
+  });
 });
 
 function renderVistas3D() {

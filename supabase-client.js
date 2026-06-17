@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Prepara modal global de senha
   sbInjetarModalSenha();
+
 });
 
 function sbInjetarModalSenha() {
