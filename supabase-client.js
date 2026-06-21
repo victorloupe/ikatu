@@ -47,6 +47,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }).catch(() => {});
   }
 
+  // Banner: assinatura expirando em ≤15 dias
+  (async () => {
+    try {
+      const profile = await sbGetProfile();
+      if (!profile || profile.role === 'admin' || !profile.assinatura_expira_em) return;
+      const dias = Math.ceil((new Date(profile.assinatura_expira_em) - new Date()) / (1000*60*60*24));
+      if (dias > 15 || dias < 0) return;
+      const chaveHoje = 'igui_banner_ass_' + new Date().toISOString().slice(0, 10);
+      if (localStorage.getItem(chaveHoje)) return;
+      const banner = document.createElement('div');
+      banner.id = 'igui-ass-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#fffbe6;border-bottom:2px solid #f5d87a;padding:9px 20px;display:flex;align-items:center;gap:12px;font-family:Inter,sans-serif;font-size:13px;color:#7a5c00;box-shadow:0 2px 8px rgba(0,0,0,.1);';
+      banner.innerHTML = `<span style="font-size:16px;flex-shrink:0;">⚠️</span><span style="flex:1"><strong>Assinatura expira em ${dias} dia${dias===1?'':'s'}!</strong> Entre em contato com o administrador para renovar.</span><button onclick="localStorage.setItem('${chaveHoje}','1');document.getElementById('igui-ass-banner').remove();" style="background:none;border:none;cursor:pointer;font-size:20px;line-height:1;color:#7a5c00;padding:0 4px;" title="Fechar">×</button>`;
+      document.body.prepend(banner);
+    } catch(_) {}
+  })();
+
+  // Contador de não-lidos no título da aba
+  sbAtualizarTituloAba();
+  setInterval(sbAtualizarTituloAba, 60000);
+
   // Prepara modal global de senha
   sbInjetarModalSenha();
 
@@ -67,27 +88,44 @@ function sbInjetarModalSenha() {
     </div>
 
     <!-- Aba 1: Senha -->
-    <div id="abaConfigSenha" style="display:flex; flex-direction:column; gap:14px;">
-      <p style="font-size:12px; color:#6a8090; margin:0 0 4px;">Digite e confirme sua nova senha de acesso.</p>
-      
+    <div id="abaConfigSenha" style="display:flex; flex-direction:column; gap:8px; min-height:390px;">
+      <p style="font-size:12px; color:#6a8090; margin:0 0 2px;">Digite e confirme sua nova senha de acesso.</p>
+
       <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
         <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Nova Senha</label>
         <input type="password" id="inputNovaSenha" placeholder="Mínimo 6 caracteres" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
       </div>
-      
-      <div class="modal-field" style="display:flex; flex-direction:column; gap:5px; margin-top:5px;">
+
+      <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
         <label style="font-size:11px; font-weight:700; color:#6a8090; letter-spacing:.3px;">Confirmar Nova Senha</label>
         <input type="password" id="inputConfirmarNovaSenha" placeholder="Repita a nova senha" style="width:100%; padding:9px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
       </div>
-      
-      <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:14px;">
+
+      <div class="modal-footer" style="display:flex; gap:10px; justify-content:flex-end; margin-top:6px;">
         <button class="btn-modal cancel" onclick="fecharModalSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#f0f4f8; color:#6a8090;">Cancelar</button>
         <button class="btn-modal confirm" onclick="confirmarAlterarSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:var(--blue); color:#fff;">Alterar Senha</button>
+      </div>
+
+      <div style="background:#fffbe6; border:1.5px solid #f5d87a; border-radius:8px; padding:10px 13px; margin-top:auto; display:flex; gap:10px; align-items:flex-start;">
+        <span style="font-size:15px; flex-shrink:0; margin-top:1px;">⚠️</span>
+        <div style="font-size:11.5px; color:#7a5c00; line-height:1.55;">
+          <strong>Primeiro acesso?</strong> Troque a senha para sua segurança.<br>
+          Caso não lembre da nova senha, entre em contato com o administrador.
+        </div>
+      </div>
+
+      <div style="border-top:1.5px solid #edf2f6; padding-top:14px; display:flex; align-items:center; gap:12px;">
+        <div id="senhaModalAvatar" style="width:38px; height:38px; border-radius:50%; background:var(--blue); color:#fff; font-family:'Inter Tight',sans-serif; font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">?</div>
+        <div style="min-width:0; flex:1;">
+          <div id="senhaModalNome" style="font-size:13px; font-weight:700; color:#1a2a3a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
+          <div id="senhaModalEmail" style="font-size:11px; color:#8a9aaa; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">—</div>
+        </div>
+        <div id="senhaModalAssinatura" style="text-align:right; flex-shrink:0;"></div>
       </div>
     </div>
 
     <!-- Aba 2: Sugestão de Melhorias -->
-    <div id="abaConfigSugestao" style="display:none; flex-direction:column; gap:14px;">
+    <div id="abaConfigSugestao" style="display:none; flex-direction:column; gap:14px; min-height:390px;">
       <p style="font-size:12px; color:#6a8090; margin:0 0 4px;">Envie sua opinião ou sugestões de melhorias para o sistema iGUi Space.</p>
       
       <div class="modal-field" style="display:flex; flex-direction:column; gap:5px;">
@@ -109,15 +147,7 @@ function sbInjetarModalSenha() {
     </div>
 
     <!-- Aba 3: Sobre -->
-    <div id="abaConfigSobre" style="display:none; flex-direction:column; gap:12px;">
-      <div style="display:flex; align-items:center; gap:12px;">
-        <img src="logo_prancha_nobg.png" style="height:42px; width:auto;" alt="iGUi Space" onerror="this.style.display='none'">
-        <div>
-          <div style="font-family:'Inter Tight',sans-serif; font-size:16px; font-weight:800; color:#1a2a3a;">iGUi Space</div>
-          <div style="font-size:11px; color:#8a9aaa; font-weight:600;">Sistema interno de projetos · PWA</div>
-        </div>
-      </div>
-
+    <div id="abaConfigSobre" style="display:none; flex-direction:column; gap:12px; min-height:390px;">
       <p style="font-size:12px; color:#6a8090; margin:0; line-height:1.6;">
         Plataforma da equipe de projetos iGUi: gera pranchas técnicas de piscinas em PDF,
         controla os pagamentos dos projetistas e centraliza a comunicação do time — tudo na nuvem.
@@ -128,13 +158,26 @@ function sbInjetarModalSenha() {
         🗂 Histórico na nuvem + lixeira de 30 dias<br>
         💰 Controle de pagamentos com gráficos e Excel<br>
         📢 Mural de avisos e DMs com notificações nativas<br>
+        💬 Chat em tempo real entre a equipe<br>
         🔗 Biblioteca de links organizada em pastas<br>
         📱 Instalável como aplicativo (PWA)
       </div>
 
-      <div style="border-top:1.5px solid #edf2f6; padding-top:10px; display:flex; justify-content:space-between; align-items:center; gap:8px;">
-        <div style="font-size:11px; color:#8a9aaa;">Criado por <strong style="color:#2c3e50;">Victor Lourenço</strong> &amp; <strong style="color:#2c3e50;">Claude (Anthropic)</strong></div>
-        <div style="font-size:10px; color:#b8c4cc; font-weight:700;">© 2026</div>
+      <a href="https://wa.me/5517996371743" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:8px;padding:10px 14px;text-decoration:none;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#15803d;">Suporte via WhatsApp</div>
+          <div style="font-size:11px;color:#6a8090;">(17) 99637-1743</div>
+        </div>
+      </a>
+
+      <div style="border-top:1.5px solid #edf2f6; padding-top:14px; margin-top:auto; display:flex; align-items:center; gap:12px;">
+        <img src="logo_prancha_nobg.png" style="height:38px; width:auto;" alt="iGUi Space" onerror="this.style.display='none'">
+        <div style="flex:1; min-width:0;">
+          <div style="font-family:'Inter Tight',sans-serif; font-size:15px; font-weight:800; color:#1a2a3a;">iGUi Space</div>
+          <div style="font-size:11px; color:#8a9aaa; font-weight:600;">Sistema interno de projetos · PWA</div>
+        </div>
+        <div style="font-size:10px; color:#b8c4cc; font-weight:700; flex-shrink:0;">© 2026</div>
       </div>
     </div>
 
@@ -177,7 +220,48 @@ function abrirModalSenha() {
   document.getElementById('inputConfirmarNovaSenha').value = '';
   const textSug = document.getElementById('inputSugestaoTexto');
   if (textSug) textSug.value = '';
-  
+
+  // Preenche nome/email do usuário logado na aba Senha
+  (async () => {
+    try {
+      const session = await sbGetSession();
+      const nome  = localStorage.getItem('igui_user_name') || session?.user?.email?.split('@')[0] || '—';
+      const email = session?.user?.email || '—';
+      const elNome  = document.getElementById('senhaModalNome');
+      const elEmail = document.getElementById('senhaModalEmail');
+      const elAv    = document.getElementById('senhaModalAvatar');
+      const elAss   = document.getElementById('senhaModalAssinatura');
+      if (elNome)  elNome.textContent  = nome;
+      if (elEmail) elEmail.textContent = email;
+      if (elAv) {
+        const pts = nome.trim().split(/\s+/);
+        elAv.textContent = ((pts[0]?.[0] || '') + (pts[1]?.[0] || '')).toUpperCase() || '?';
+      }
+      if (elAss) {
+        try {
+          const profile = await sbGetProfile();
+          const isAdmin = profile?.role === 'admin';
+          if (isAdmin) {
+            elAss.innerHTML = `<span style="font-size:10px;font-weight:700;color:#7c3aed;background:#f3e8ff;border:1px solid #ddd6fe;border-radius:20px;padding:3px 9px;">Admin</span>`;
+          } else if (!profile?.assinatura_expira_em) {
+            elAss.innerHTML = `<span style="font-size:10px;font-weight:700;color:#7c3aed;background:#f3e8ff;border:1px solid #ddd6fe;border-radius:20px;padding:3px 9px;">♾️ Vitalício</span>`;
+          } else {
+            const exp = new Date(profile.assinatura_expira_em);
+            const dias = Math.ceil((exp - new Date()) / (1000*60*60*24));
+            const dataStr = exp.toLocaleDateString('pt-BR');
+            if (dias < 0) {
+              elAss.innerHTML = `<span style="font-size:10px;font-weight:700;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:20px;padding:3px 9px;">⛔ Expirada</span>`;
+            } else if (dias <= 15) {
+              elAss.innerHTML = `<span style="font-size:10px;font-weight:700;color:#d97706;background:#fffbeb;border:1px solid #fde68a;border-radius:20px;padding:3px 9px;">⚠️ Expira em ${dias}d</span><div style="font-size:10px;color:#8a9aaa;margin-top:2px;text-align:right;">${dataStr}</div>`;
+            } else {
+              elAss.innerHTML = `<span style="font-size:10px;font-weight:700;color:#16a34a;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:20px;padding:3px 9px;">✔ Ativa</span><div style="font-size:10px;color:#8a9aaa;margin-top:2px;text-align:right;">até ${dataStr}</div>`;
+            }
+          }
+        } catch(_) {}
+      }
+    } catch (_) {}
+  })();
+
   abrirAbaModal('senha');
   document.getElementById('modalSenhaGlobal').style.display = 'flex';
 }
@@ -583,10 +667,25 @@ async function sbIsAdmin() {
   return p?.role === 'admin';
 }
 
-/** Redireciona para login.html se não houver sessão. Retorna session ou null. */
+/** Redireciona para login.html se não houver sessão ou assinatura expirada. Retorna session ou null. */
 async function sbRequireAuth() {
   const session = await sbGetSession();
   if (!session) { window.location.href = 'login.html'; return null; }
+  // Verifica expiração de assinatura (admins nunca expiram)
+  try {
+    const profile = await sbGetProfile();
+    if (profile && profile.role !== 'admin' && profile.assinatura_expira_em) {
+      if (new Date(profile.assinatura_expira_em) < new Date()) {
+        localStorage.removeItem('igui_user_name');
+        localStorage.removeItem('igui_is_admin');
+        await sb.auth.signOut();
+        window.location.href = 'login.html?msg=expirado';
+        return null;
+      }
+    }
+  } catch(e) {
+    console.warn('sbRequireAuth: erro ao verificar assinatura', e);
+  }
   return session;
 }
 
@@ -1029,6 +1128,58 @@ async function sbAlterarRole(userId, role) {
 async function sbAlterarAtivo(userId, active) {
   const { error } = await sb.from('profiles').update({ active }).eq('id', userId);
   if (error) throw error;
+}
+
+async function sbAtualizarTituloAba() {
+  try {
+    const user = await sbGetUser();
+    if (!user) return;
+    const base = document.title.replace(/^\(\d+\)\s*/, '');
+    const { count } = await sb.from('chat_messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'sent').eq('deleted', false)
+      .neq('sender_id', user.id)
+      .gt('created_at', localStorage.getItem('igui_chat_last_seen') || '1970-01-01T00:00:00Z');
+    const total = count || 0;
+    document.title = total > 0 ? `(${total}) ${base}` : base;
+  } catch(_) {}
+}
+
+async function sbDefinirAssinatura(userId, meses) {
+  // meses === null → vitalício (sem limite)
+  let expira;
+  if (meses === null) {
+    expira = null;
+  } else {
+    // Sistema de crédito: acumula sobre a data de expiração atual (se ainda vigente)
+    const { data: profile } = await sb.from('profiles').select('assinatura_expira_em').eq('id', userId).single();
+    const atual = profile?.assinatura_expira_em ? new Date(profile.assinatura_expira_em) : null;
+    const base = (atual && atual > new Date()) ? atual : new Date();
+    expira = new Date(base.getTime() + meses * 30 * 24 * 60 * 60 * 1000).toISOString();
+  }
+  const { error } = await sb.from('profiles').update({ assinatura_expira_em: expira }).eq('id', userId);
+  if (error) throw error;
+  // Registra no histórico (falha silenciosa para não bloquear)
+  try {
+    const me = await sbGetUser();
+    await sb.from('subscription_history').insert({
+      user_id: userId,
+      meses: meses,
+      expira_em: expira,
+      set_by: me?.id || null
+    });
+  } catch(_) {}
+  return expira;
+}
+
+async function sbListarHistoricoAssinatura(userId) {
+  const { data, error } = await sb.from('subscription_history')
+    .select('id, user_id, meses, expira_em, set_by, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  return data || [];
 }
 
 async function sbResetarSenhaAdmin(userId, novaSenha) {

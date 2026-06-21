@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260615d"></script>
+<script src="supabase-client.js?v=20260621m"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/sirxemic/jquery.ripples/dist/jquery.ripples-min.js"></script>
 <style>
@@ -215,10 +215,28 @@
   <img src="logo_site.png" alt="iGUi" class="splash-logo">
   <div class="splash-welcome" id="splashWelcome">Bem-vindo!</div>
   <div class="splash-sub">Preparando seu espaço...</div>
+  <div id="splashAssinatura" style="position:absolute;bottom:20px;right:24px;opacity:0;animation:splashFade .6s ease .3s both;font-size:10px;font-weight:500;text-align:right;"></div>
   <div class="splash-checklist" id="splashChecklist"></div>
   <div class="splash-progress-row">
     <div class="splash-progress"><div class="splash-progress-fill" id="splashProgress"></div></div>
     <span class="splash-percent" id="splashPercent">0%</span>
+  </div>
+</div>
+
+<!-- Modal: Assinatura Expirada -->
+<div id="modalAssExpirada" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:32px 28px 24px;width:360px;max-width:92vw;box-shadow:0 12px 40px rgba(0,0,0,.22);text-align:center;">
+    <div style="font-size:44px;margin-bottom:10px;">⛔</div>
+    <div style="font-family:'Inter Tight',sans-serif;font-size:18px;font-weight:800;color:#1a2a3a;margin-bottom:8px;">Assinatura Expirada</div>
+    <div style="font-size:13px;color:#7f8c9a;margin-bottom:24px;line-height:1.5;">Seu acesso ao iGUi Space está suspenso.<br>Entre em contato com o administrador para renovar.</div>
+    <a href="https://wa.me/5517996371743" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:12px 16px;text-decoration:none;margin-bottom:16px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      <div style="text-align:left;">
+        <div style="font-size:13px;font-weight:700;color:#15803d;">Falar com o Administrador</div>
+        <div style="font-size:11px;color:#6a8090;">(17) 99637-1743 · WhatsApp</div>
+      </div>
+    </a>
+    <button onclick="sbSignOut();document.getElementById('modalAssExpirada').style.display='none';" style="background:#f0f0f0;border:none;border-radius:8px;padding:9px 24px;font-size:13px;font-weight:600;color:#555;cursor:pointer;">Fechar</button>
   </div>
 </div>
 
@@ -287,6 +305,18 @@
     }
   })();
 
+  // Mensagem de assinatura expirada
+  (function() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('msg') === 'expirado') {
+      const el = document.getElementById('loginError');
+      if (el) {
+        el.textContent = '⛔ Sua assinatura expirou. Entre em contato com o administrador para renová-la.';
+        el.classList.add('show');
+      }
+    }
+  })();
+
   // Lembrar-me: preenche o campo se salvo
   (function() {
     const saved = localStorage.getItem('igui_remember_email');
@@ -340,14 +370,26 @@
       return;
     }
 
+    // Verificar assinatura (não-admin)
+    if (profile && profile.role !== 'admin' && profile.assinatura_expira_em) {
+      if (new Date(profile.assinatura_expira_em) < new Date()) {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+        // Mostra modal — signOut é feito apenas quando o usuário clicar em Fechar
+        const modal = document.getElementById('modalAssExpirada');
+        if (modal) { modal.style.display = 'flex'; }
+        return;
+      }
+    }
+
     // Tela de abertura: checklist carregando o sistema e então redireciona
     const nome = profile?.name || email.split('@')[0];
-    iniciarSplash(nome, profile?.role === 'admin', () => {
+    iniciarSplash(nome, profile?.role === 'admin', profile?.assinatura_expira_em, () => {
       window.location.href = window.innerWidth <= 768 ? 'pagamentos.html' : 'index.html';
     });
   }
 
-  function iniciarSplash(nome, isAdmin, onDone) {
+  function iniciarSplash(nome, isAdmin, assinaturaExpiraEm, onDone) {
     // Saudação com nome completo (montada via DOM/textContent — nunca interpretada como HTML)
     const completo = (nome || '').trim();
     const w = document.getElementById('splashWelcome');
@@ -360,6 +402,22 @@
         w.append(s, ' !');
       } else {
         w.textContent = 'Bem-vindo!';
+      }
+    }
+
+    // Badge de assinatura
+    const assEl = document.getElementById('splashAssinatura');
+    if (assEl) {
+      if (isAdmin) {
+        assEl.innerHTML = '<span style="color:#a78bfa;letter-spacing:.2px;">Administrador</span>';
+      } else if (!assinaturaExpiraEm) {
+        assEl.innerHTML = '<span style="color:#a78bfa;letter-spacing:.2px;">♾️ Vitalício</span>';
+      } else {
+        const exp = new Date(assinaturaExpiraEm);
+        const dias = Math.ceil((exp - new Date()) / (1000 * 60 * 60 * 24));
+        const dataStr = exp.toLocaleDateString('pt-BR');
+        const cor = dias <= 15 ? '#fb923c' : '#6ee7b7';
+        assEl.innerHTML = `<span style="color:${cor};letter-spacing:.2px;">Assinatura · ${dias}d restantes</span><br><span style="color:rgba(255,255,255,.45);font-size:9px;">expira em ${dataStr}</span>`;
       }
     }
 

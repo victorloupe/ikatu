@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — iGUi Pranchas</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260615d"></script>
+<script src="supabase-client.js?v=20260621p"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=20260615e">
+<link rel="stylesheet" href="styles.css?v=20260621b">
 <style>
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
   .tab{padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
@@ -50,6 +50,16 @@
     width: 90px;
     box-sizing: border-box;
   }
+  .btn-icon{width:28px;height:28px;padding:0;border-radius:6px;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .btn-icon:hover{border-color:#cbd5e1;background:#f1f5f9;color:#0f172a;}
+  .btn-icon.btn-role{background:#f0f7ff;color:#0284c7;border-color:#e0f2fe;}
+  .btn-icon.btn-role:hover{background:#e0f2fe;border-color:#bae6fd;color:#0369a1;}
+  .btn-icon.btn-reset{background:#fffbeb;color:#d97706;border-color:#fef3c7;}
+  .btn-icon.btn-reset:hover{background:#fef3c7;border-color:#fde68a;color:#b45309;}
+  .btn-icon.btn-deactivate{background:#fef2f2;color:#ef4444;border-color:#fee2e2;}
+  .btn-icon.btn-deactivate:hover{background:#fee2e2;border-color:#fecaca;color:#dc2626;}
+  .btn-icon.btn-activate{background:#f0fdf4;color:#16a34a;border-color:#dcfce7;}
+  .btn-icon.btn-activate:hover{background:#dcfce7;border-color:#bbf7d0;color:#15803d;}
 
   .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .section-hd h3{font-size:14px;font-weight:700;color:#1a2a3a;}
@@ -255,11 +265,12 @@
                 <th style="width: 70px; text-align: center;">Função</th>
                 <th style="width: 80px; text-align: center;">Status</th>
                 <th style="width: 90px; text-align: center;">Desde</th>
+                <th id="thAssinatura" style="width: 110px; text-align: center; cursor:pointer; user-select:none;" onclick="toggleSortAss()" title="Ordenar por expiração">Assinatura <span id="sortAssIcon" style="font-size:10px;color:var(--muted)"></span></th>
                 <th style="width: 290px; text-align: right; padding-right: 8px;">Ações</th>
               </tr>
             </thead>
             <tbody id="usersBody">
-              <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
+              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
             </tbody>
           </table>
         </div>
@@ -470,6 +481,13 @@ let todosLinks = [];
 let todasSugestoes = [];
 let editandoLinkId = null;
 let meId = null;
+let _assModal = null; // referência direta ao overlay de assinatura
+let _sortAss = false; // false = alfabética, true = por expiração
+
+function _fecharModalAss() {
+  if (_assModal) { _assModal.remove(); _assModal = null; }
+  document.getElementById('modalAssinaturaOverlay')?.remove(); // belt-and-suspenders
+}
 
 function showToast(msg, tipo='ok') {
   const t = document.getElementById('toast');
@@ -538,29 +556,44 @@ async function carregarUsuarios() {
     showToast('Erro: '+e.message,'err');
     const tbody = document.getElementById('usersBody');
     if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#e74c3c;padding:30px;font-weight:600;">⚠️ Erro ao carregar usuários: ${escHtml(e.message)}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e74c3c;padding:30px;font-weight:600;">⚠️ Erro ao carregar usuários: ${escHtml(e.message)}</td></tr>`;
     }
   }
+}
+
+function toggleSortAss() {
+  _sortAss = !_sortAss;
+  const icon = document.getElementById('sortAssIcon');
+  if (icon) icon.textContent = _sortAss ? '↑' : '';
+  renderUsuarios();
 }
 
 function renderUsuarios() {
   const tbody = document.getElementById('usersBody');
   document.getElementById('userCount').textContent = `${usuarios.length} usuário(s)`;
   if (!usuarios.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Nenhum usuário</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Nenhum usuário</td></tr>';
     return;
   }
   tbody.innerHTML = '';
 
-  // Separa administradores dos usuários comuns
   const admins = usuarios.filter(u => u.role === 'admin');
-  const comuns = usuarios.filter(u => u.role !== 'admin');
+  let comuns = usuarios.filter(u => u.role !== 'admin');
+
+  if (_sortAss) {
+    // Expirados primeiro → por data asc → Vitalício por último
+    comuns = [...comuns].sort((a, b) => {
+      const aExp = a.assinatura_expira_em ? new Date(a.assinatura_expira_em).getTime() : Infinity;
+      const bExp = b.assinatura_expira_em ? new Date(b.assinatura_expira_em).getTime() : Infinity;
+      return aExp - bExp;
+    });
+  }
 
   const addGrupo = (titulo, lista) => {
     if (!lista.length) return;
     const trH = document.createElement('tr');
     trH.className = 'users-group-row';
-    trH.innerHTML = `<td colspan="6">${titulo}<span class="grp-count">(${lista.length})</span></td>`;
+    trH.innerHTML = `<td colspan="7">${titulo}<span class="grp-count">(${lista.length})</span></td>`;
     tbody.appendChild(trH);
     lista.forEach(u => tbody.appendChild(linhaUsuario(u)));
   };
@@ -579,31 +612,188 @@ function linhaUsuario(u) {
       <td style="text-align: center;"><span class="role-badge ${u.role}">${u.role}</span></td>
       <td style="white-space:nowrap; text-align: center;"><span class="status-dot ${u.active!==false?'on':'off'}"></span>${u.active!==false?'Ativo':'Inativo'}</td>
       <td style="color:var(--muted);font-size:12px; text-align: center;">${data}</td>
+      <td style="text-align: center; white-space:nowrap;">${renderAssinatura(u)}</td>
       <td style="text-align:right; padding-right: 8px;">
         ${!isMe ? `
-          <div style="display:inline-flex;gap:6px;justify-content:flex-end;">
-            <button class="btn-sm btn-role" onclick="trocarRole('${u.id}','${u.role}')">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
-              ${u.role==='admin'?'Tornar User':'Tornar Admin'}
+          <div style="display:inline-flex;gap:5px;justify-content:flex-end;">
+            <button class="btn-icon btn-role" title="${u.role==='admin'?'Tornar User':'Tornar Admin'}" onclick="trocarRole('${u.id}','${u.role}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
             </button>
-            <button class="btn-sm btn-reset" onclick="resetarSenhaUsuario('${u.id}', '${escHtml(u.name || '')}', '${escHtml(u.email || '')}')">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-              Resetar
+            <button class="btn-icon btn-reset" title="Resetar senha" onclick="resetarSenhaUsuario('${u.id}', '${escHtml(u.name || '')}', '${escHtml(u.email || '')}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
             </button>
-            <button class="btn-sm ${u.active!==false ? 'btn-deactivate' : 'btn-activate'}" onclick="toggleAtivo('${u.id}',${u.active!==false})">
-              ${u.active!==false ? `
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>
-                Desativar
-              ` : `
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                Ativar
-              `}
+            <button class="btn-icon ${u.active!==false ? 'btn-deactivate' : 'btn-activate'}" title="${u.active!==false?'Desativar':'Ativar'}" onclick="toggleAtivo('${u.id}',${u.active!==false})">
+              ${u.active!==false
+                ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>`
+                : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`
+              }
+            </button>
+            <button class="btn-icon btn-reset" title="Assinatura" onclick="abrirModalAssinatura('${u.id}','${escHtml(u.name||u.email||'')}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             </button>
           </div>
         ` : '<span style="font-size:11px;color:var(--muted)">—</span>'}
       </td>
     `;
     return tr;
+}
+
+function renderAssinatura(u) {
+  if (u.role === 'admin') return '<span style="font-size:11px;color:var(--muted)">Admin</span>';
+  if (!u.assinatura_expira_em) return '<span style="font-size:11px;color:#7c3aed;font-weight:600;">♾️ Vitalício</span>';
+  const exp = new Date(u.assinatura_expira_em);
+  const hoje = new Date();
+  const dias = Math.ceil((exp - hoje) / (1000 * 60 * 60 * 24));
+  const dataStr = exp.toLocaleDateString('pt-BR');
+  if (dias < 0) {
+    return `<span style="font-size:11px;font-weight:700;color:#e74c3c;">⛔ Expirado<br><span style="font-weight:400;font-size:10px;">${dataStr}</span></span>`;
+  }
+  if (dias <= 15) {
+    return `<span style="font-size:11px;font-weight:700;color:#e67e22;">⚠️ ${dias}d restante${dias===1?'':'s'}<br><span style="font-weight:400;font-size:10px;">expira ${dataStr}</span></span>`;
+  }
+  return `<span style="font-size:11px;color:#27ae60;font-weight:600;">✔ ${dias}d restantes<br><span style="font-weight:400;font-size:10px;color:var(--muted);">expira ${dataStr}</span></span>`;
+}
+
+function _calcPreviewExpira(u, meses) {
+  if (meses === null) return null;
+  const atual = u?.assinatura_expira_em ? new Date(u.assinatura_expira_em) : null;
+  const base = (atual && atual > new Date()) ? atual : new Date();
+  return new Date(base.getTime() + meses * 30 * 24 * 60 * 60 * 1000);
+}
+
+function abrirModalAssinatura(userId, nome) {
+  const u = usuarios.find(u => u.id === userId);
+  const overlay = document.createElement('div');
+  overlay.id = 'modalAssinaturaOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px 24px 20px;width:370px;max-width:94vw;height:560px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+      <div style="font-weight:700;font-size:15px;margin-bottom:10px;">📅 Assinatura — ${escHtml(nome)}</div>
+      <div id="modalAssStatus">${_renderStatusHtml(u?.assinatura_expira_em)}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-bottom:8px;">ADICIONAR CRÉDITO (acumula ao saldo atual)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <button class="btn-sm btn-role" style="padding:9px 0;font-size:12px;" onclick="confirmarAssinatura('${userId}', 1)">+1 mês</button>
+        <button class="btn-sm btn-role" style="padding:9px 0;font-size:12px;" onclick="confirmarAssinatura('${userId}', 3)">+3 meses</button>
+        <button class="btn-sm btn-role" style="padding:9px 0;font-size:12px;" onclick="confirmarAssinatura('${userId}', 6)">+6 meses</button>
+        <button class="btn-sm btn-role" style="padding:9px 0;font-size:12px;" onclick="confirmarAssinatura('${userId}', 12)">+12 meses</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <input type="number" id="assinaturaMesesCustom" min="1" max="120" placeholder="Qtd. de meses" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+        <button class="btn-sm btn-role" style="padding:8px 12px;font-size:12px;white-space:nowrap;" onclick="confirmarAssinaturaCostum('${userId}')">+ Adicionar</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-sm btn-activate" style="flex:1;padding:9px 0;font-size:13px;font-weight:700;border-radius:7px;" onclick="confirmarAssinatura('${userId}', null)">♾️ Vitalício</button>
+        <button class="btn-sm btn-deactivate" style="flex:1;padding:9px 0;font-size:13px;font-weight:700;border-radius:7px;" onclick="zerarAssinatura('${userId}')">⛔ Zerar</button>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:14px 0 8px;"></div>
+      <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.3px;margin-bottom:6px;">HISTÓRICO</div>
+      <div id="historicoAssinaturaLista" style="font-size:11px;color:var(--muted);flex:1;"></div>
+      <div id="historicoAssinaturaPag" style="display:none;justify-content:space-between;align-items:center;padding-top:6px;"></div>
+      <div style="padding-top:10px;display:flex;justify-content:flex-end;">
+        <button class="btn-sm" style="font-size:12px;background:#f0f0f0;color:#555;" onclick="_fecharModalAss()">Fechar</button>
+      </div>
+    </div>`;
+  _assModal = overlay;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) _fecharModalAss(); });
+
+  _carregarHistoricoModal(userId);
+}
+
+function _renderStatusHtml(expiraEm) {
+  if (!expiraEm) return `<div style="background:#f3f0ff;border-radius:8px;padding:10px 12px;font-size:12px;color:#7c3aed;font-weight:600;">♾️ Vitalício — sem data de expiração</div>`;
+  const exp = new Date(expiraEm);
+  const dias = Math.ceil((exp - new Date()) / (1000 * 60 * 60 * 24));
+  const dataStr = exp.toLocaleDateString('pt-BR');
+  if (dias < 0) return `<div style="background:#fff0f0;border-radius:8px;padding:10px 12px;font-size:12px;"><span style="color:#e74c3c;font-weight:700;">⛔ Expirado em ${dataStr}</span></div>`;
+  const cor = dias <= 15 ? '#e67e22' : '#27ae60';
+  return `<div style="background:#f0fdf4;border-radius:8px;padding:10px 12px;font-size:12px;"><span style="color:${cor};font-weight:700;">${dias} dia${dias===1?'':'s'} restante${dias===1?'':'s'}</span><span style="color:var(--muted);"> · expira em <strong>${dataStr}</strong></span></div>`;
+}
+
+function _carregarHistoricoModal(userId) {
+  const el = document.getElementById('historicoAssinaturaLista');
+  const pagEl = document.getElementById('historicoAssinaturaPag');
+  if (!el) return;
+  el.textContent = '…';
+  sbListarHistoricoAssinatura(userId).then(hist => {
+    if (!document.getElementById('historicoAssinaturaLista')) return; // modal fechado
+    if (!hist.length) { el.textContent = 'Nenhum registro ainda.'; return; }
+
+    const POR_PAG = 5;
+    let pagina = 0;
+    const totalPags = Math.ceil(hist.length / POR_PAG);
+
+    function renderPag() {
+      const fatia = hist.slice(pagina * POR_PAG, pagina * POR_PAG + POR_PAG);
+      el.innerHTML = fatia.map(h => {
+        const data = new Date(h.created_at).toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+        const acao = h.meses === null ? '♾️ Vitalício' : h.meses === 0 ? '⛔ Zerado' : `+${h.meses} mês${h.meses===1?'':'es'}`;
+        const expStr = h.expira_em ? ` → ${new Date(h.expira_em).toLocaleDateString('pt-BR')}` : '';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #f0f0f0;gap:8px;"><span style="font-weight:600;color:#1a2a3a;">${acao}${expStr}</span><span style="color:#9aa8b6;white-space:nowrap;font-size:10px;">${data}</span></div>`;
+      }).join('');
+      if (totalPags > 1 && pagEl) {
+        pagEl.style.display = 'flex';
+        pagEl.innerHTML = `
+          <button onclick="window._histPagAss(-1)" style="border:none;background:none;cursor:pointer;font-size:15px;color:${pagina===0?'#ccc':'#1a2a3a'};padding:0 4px;" ${pagina===0?'disabled':''}>‹</button>
+          <span style="font-size:10px;color:var(--muted);">${pagina+1} / ${totalPags}</span>
+          <button onclick="window._histPagAss(1)" style="border:none;background:none;cursor:pointer;font-size:15px;color:${pagina===totalPags-1?'#ccc':'#1a2a3a'};padding:0 4px;" ${pagina===totalPags-1?'disabled':''}>›</button>`;
+      }
+    }
+    window._histPagAss = dir => { pagina = Math.max(0, Math.min(totalPags - 1, pagina + dir)); renderPag(); };
+    renderPag();
+  }).catch(() => { if (el) el.textContent = 'Erro ao carregar histórico.'; });
+}
+
+// Adiciona crédito SEM fechar o modal — atualiza status e histórico dentro dele
+async function confirmarAssinatura(userId, meses) {
+  // Desabilita botões durante o save
+  _assModal?.querySelectorAll('button').forEach(b => b.disabled = true);
+  try {
+    const novaExpira = await sbDefinirAssinatura(userId, meses);
+    // Atualiza o status no topo do modal
+    const statusEl = document.getElementById('modalAssStatus');
+    if (statusEl) statusEl.innerHTML = _renderStatusHtml(novaExpira);
+    // Recarrega o histórico
+    _carregarHistoricoModal(userId);
+    // Atualiza a tabela em background
+    carregarUsuarios();
+    if (meses === null) {
+      showToast('✅ Assinatura definida como Vitalício', 'ok');
+    } else {
+      const dataFmt = novaExpira ? new Date(novaExpira).toLocaleDateString('pt-BR') : '—';
+      showToast(`✅ +${meses} mês${meses===1?'':'es'} adicionado${meses===1?'':'s'} · expira ${dataFmt}`, 'ok');
+    }
+  } catch(e) {
+    showToast('Erro: ' + e.message, 'err');
+  } finally {
+    _assModal?.querySelectorAll('button').forEach(b => b.disabled = false);
+  }
+}
+
+function confirmarAssinaturaCostum(userId) {
+  const val = parseInt(document.getElementById('assinaturaMesesCustom')?.value);
+  if (!val || val < 1) { showToast('Informe um número de meses válido', 'err'); return; }
+  confirmarAssinatura(userId, val);
+}
+
+async function zerarAssinatura(userId) {
+  _fecharModalAss();
+  // Define expiração para ontem → bloqueia no próximo acesso
+  const ontem = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  try {
+    const { error } = await sb.from('profiles').update({ assinatura_expira_em: ontem }).eq('id', userId);
+    if (error) throw error;
+    try {
+      const me = await sbGetUser();
+      await sb.from('subscription_history').insert({
+        user_id: userId, meses: 0, expira_em: ontem, set_by: me?.id || null
+      });
+    } catch(_) {}
+    await carregarUsuarios();
+    showToast('⛔ Assinatura zerada — acesso bloqueado', 'err');
+  } catch(e) {
+    showToast('Erro: ' + e.message, 'err');
+  }
 }
 
 async function convidar() {
@@ -957,20 +1147,18 @@ async function iniciarBackupELimpeza() {
   try {
     btn.disabled = true;
     btn.textContent = 'Buscando pranchas antigas...';
-    
-    // Busca pranchas com mais de X meses
+
     const antigas = await sbListarProjetosAntigosComDados(meses);
-    
+
     if (!antigas || antigas.length === 0) {
       showToast(`Nenhuma prancha com mais de ${meses} meses encontrada para backup.`, 'ok');
       btn.disabled = false;
       btn.textContent = originalTxt;
       return;
     }
-    
+
     btn.textContent = `Preparando ZIP de ${antigas.length} pranchas...`;
-    
-    // Carrega JSZip dinamicamente se não estiver carregado
+
     if (!window.JSZip) {
       await new Promise((res, rej) => {
         const s = document.createElement('script');
@@ -979,7 +1167,7 @@ async function iniciarBackupELimpeza() {
         document.head.appendChild(s);
       }).catch(() => { throw new Error('Erro ao carregar biblioteca JSZip.'); });
     }
-    
+
     const zip = new JSZip();
     antigas.forEach(p => {
       let sessao;
@@ -988,27 +1176,27 @@ async function iniciarBackupELimpeza() {
       } catch(e) {
         sessao = p.session_data || {};
       }
-      
+
       const sessaoSalvar = {
         version: '1.0',
         app: 'PranchaIGUI',
         ts: new Date(p.created_at).getTime(),
         ...sessao
       };
-      
+
       const nome = [
         p.project_code || 'SEM_CODIGO',
         p.client_name || 'SEM_CLIENTE',
         new Date(p.created_at).toLocaleDateString('pt-BR').replace(/\//g, '-')
       ].join('_').replace(/\s+/g, '_') + '.igui';
-      
+
       zip.file(nome, JSON.stringify(sessaoSalvar));
     });
-    
+
     btn.textContent = 'Gerando arquivo de download...';
     const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.href = url;
     a.download = `Backup_iGUi_Space_Antigos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
@@ -1016,10 +1204,9 @@ async function iniciarBackupELimpeza() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     showToast('📦 Backup baixado com sucesso!', 'ok');
-    
-    // Confirma exclusão após o download
+
     setTimeout(() => {
       confirmar(
         'Liberar Espaço no Supabase',
@@ -1033,7 +1220,6 @@ async function iniciarBackupELimpeza() {
           showToast(`🗑️ ${antigas.length} pranchas antigas removidas com sucesso!`, 'ok');
           btn.disabled = false;
           btn.textContent = originalTxt;
-          // Ocultar avisos de backup pois a limpeza foi concluída
           const badge = document.getElementById('adminNavBadge');
           if (badge) badge.style.display = 'none';
           const tabBadge = document.getElementById('tabBackupBadge');
@@ -1041,7 +1227,7 @@ async function iniciarBackupELimpeza() {
         }
       );
     }, 1000);
-    
+
   } catch(e) {
     console.error(e);
     showToast('Erro no processo: ' + e.message, 'err');
@@ -1051,4 +1237,4 @@ async function iniciarBackupELimpeza() {
 }
 </script>
 </body>
-</html>
+</html>
