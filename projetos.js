@@ -547,7 +547,7 @@ async function exportarTodos() {
   a.href     = url;
   
   const periodStr = meses === 'all' ? 'Completo' : `${meses}m`;
-  a.download = `iGUi_Pranchas_${periodStr}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.zip`;
+  a.download = `Ikatu_Pranchas_${periodStr}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}.zip`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

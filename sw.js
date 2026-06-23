@@ -1,5 +1,5 @@
 // ══════════════════════════════════════════════════════
-// iGUi Space — Service Worker (PWA)
+// Ikatu — Service Worker (PWA)
 // Estratégia: network-first com fallback ao cache.
 // Assim o app sempre usa a versão mais nova quando online,
 // e ainda abre o básico se a rede falhar.
@@ -7,7 +7,7 @@
 
 // ⚠️ AO FAZER DEPLOY com mudanças: incremente a versão abaixo (v2 → v3 → ...).
 // É isso que dispara o aviso "Nova versão disponível" nas abas abertas.
-const CACHE = 'igui-space-v54';
+const CACHE = 'ikatu-v3';
 
 // Arquivos básicos do app shell (pré-cacheados na instalação)
 const SHELL = [

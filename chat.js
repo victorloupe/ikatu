@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════════════════
-//  Chat — iGUi Space  ·  GetStream Chat
+//  Chat — Ikatu  ·  GetStream Chat
 //  Canal "Geral" da equipe + Mensagens Diretas 1:1 + envio de arquivos.
 //  Token gerado pela Edge Function `stream-token` (API Secret fica no servidor).
 // ════════════════════════════════════════════════════════════════════════

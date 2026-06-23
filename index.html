@@ -6,10 +6,10 @@
 <title>Prancha Técnica iGUI – Gerador</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260615d"></script>
+<script src="supabase-client.js?v=20260621x"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=20260615e">
+<link rel="stylesheet" href="styles.css?v=20260622a">
 <style>
   /* Abas de prancha extra (2ª página por seção) */
   .prancha-tabs { display:flex; align-items:center; gap:6px; margin:6px 0 14px; flex-wrap:wrap; }
@@ -30,10 +30,9 @@
 <body>
 
 <header>
-  <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
   <div>
     <h1>PRANCHA <span>TÉCNICA</span></h1>
-    <div class="hdr-sub">Gerador iGUi &nbsp;·&nbsp; By: Victor L.</div>
+    <div class="hdr-sub">Gerador Ikatu</div>
   </div>
   <div class="hdr-right">
     <div class="save-indicator">
@@ -47,8 +46,9 @@
 <!-- Layout principal: sidebar + conteúdo -->
 <div class="layout">
 
-  <!-- SIDEBAR DE Espaço iGUi -->
+  <!-- SIDEBAR DE Espaço Ikatu -->
   <aside class="sidebar">
+    <img src="logo_site.png" style="width:160px;display:block;margin:4px auto 18px;" alt="iGUI">
     <div class="sidebar-label">ETAPAS <span class="sidebar-step-count" id="sidebarStepCount">1 / 6</span></div>
     <nav class="steps" id="stepsGenerator">
       <div class="water-drop" id="waterDrop"></div>
@@ -92,7 +92,7 @@
       <div class="sdb-divider"></div>
       
       <!-- Navegação de Páginas (Mais minimalista, com ícones SVG iguais) -->
-      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço iGUi</div>
+      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço Ikatu</div>
       <nav class="steps" style="margin-bottom:6px;">
         <a class="stp active" href="index.html">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
@@ -565,6 +565,6 @@
   </div>
 </div>
 
-<script src="app.js?v=20260615c"></script>
+<script src="app.js?v=20260622i"></script>
 </body>
 </html>

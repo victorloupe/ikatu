@@ -8,7 +8,8 @@
 body{font-family:'Inter',sans-serif;background:#e2eaf3;color:var(--text);min-height:100vh;}
 
 /* HEADER */
-header{background:var(--dark);padding:0 28px;display:flex;align-items:center;gap:18px;height:64px;position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(0,0,0,.35);}
+header{background:var(--dark);padding:0 28px 0 220px;display:flex;align-items:center;gap:18px;height:64px;position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(0,0,0,.35);}
+header > div:first-of-type{margin-left:0;}
 
 header h1{font-family:'Inter Tight',sans-serif;font-size:20px;font-weight:700;color:#fff;letter-spacing:1px;}
 header h1 span{color:var(--blue);}
@@ -32,15 +33,15 @@ header h1 span{color:var(--blue);}
 .btn-gerar:disabled{background:#4a6a7a;cursor:not-allowed;transform:none;}
 
 /* LAYOUT SIDEBAR */
-.layout{display:flex;min-height:calc(100vh - 64px);}
+.layout{display:flex;min-height:calc(100vh - 64px);padding-left:210px;}
 
 .sidebar{
   width:210px;flex-shrink:0;
-  position:sticky;top:64px;height:calc(100vh - 64px);
+  position:fixed;top:0;left:0;height:100vh;
   background:#fff;border-right:1.5px solid var(--border);
   padding:20px 12px 24px;
   display:flex;flex-direction:column;gap:0;
-  overflow-y:auto;z-index:100;
+  overflow-y:auto;z-index:300;
 }
 .sidebar-label{
   font-size:9px;font-weight:800;color:var(--muted);
@@ -116,6 +117,7 @@ header h1 span{color:var(--blue);}
   pointer-events: none;
   z-index: 1;
   box-shadow: 0 2px 4px rgba(0, 77, 156, 0.4);
+  opacity: 0;
   transition: top 0.45s cubic-bezier(0.6, -0.28, 0.735, 0.045), 
               left 0.45s ease, 
               transform 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -558,6 +560,15 @@ body.pg-projetos { background: #e2eaf3; }
 .proj-thumb {
   width: 80px; height: 56px; object-fit: cover;
   border-radius: 6px; border: 1px solid var(--border); flex-shrink: 0;
+  transition: transform .22s ease, box-shadow .22s ease;
+  cursor: zoom-in;
+  position: relative; z-index: 1;
+}
+.proj-thumb:hover {
+  transform: scale(3);
+  box-shadow: 0 6px 24px rgba(0,0,0,.28);
+  z-index: 50;
+  border-radius: 4px;
 }
 .proj-thumb-empty {
   width: 80px; height: 56px; background: var(--gray);
@@ -1337,6 +1348,9 @@ body.pg-projetos { background: #e2eaf3; }
   .btn-menu-toggle {
     display: flex !important;
   }
+
+  /* Remove padding do layout no mobile (sidebar é overlay) */
+  .layout { padding-left: 0 !important; }
 
   /* Comportamento da barra lateral no mobile */
   .sidebar {

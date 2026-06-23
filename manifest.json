@@ -1,7 +1,7 @@
 {
-  "name": "iGUi Space",
-  "short_name": "iGUi Space",
-  "description": "Gerador de pranchas técnicas, pagamentos e avisos da equipe iGUi",
+  "name": "Ikatu",
+  "short_name": "Ikatu",
+  "description": "Gestão de Projetos — sistema interno da equipe",
   "start_url": "index.html",
   "scope": "./",
   "display": "standalone",

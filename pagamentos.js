@@ -807,7 +807,9 @@ function renderTabela() {
     }
   }
 
-  rowsData.forEach((row, index) => {
+  const visibleNumSpans = []; // trs visíveis em ordem de exibição, para numerar depois
+  const rowsReversed = rowsData.map((row, i) => ({ row, index: i })).reverse();
+  rowsReversed.forEach(({ row, index }) => {
     // Apenas renderizar linhas pertencentes ao mês ativo (separado por data de recebimento)
     if (!rowPertenceAoMesAno(row, mesSelecionado, anoSelecionado.toString())) {
       return;
@@ -893,6 +895,7 @@ function renderTabela() {
     if (matchesQuery && matchesFilter && matchesPeriodo && matchesLoja && matchesTipo) {
       visibleTotal++;
       if (row.conf) visibleConferidos++;
+      visibleNumSpans.push(tr);
       tr.style.display = '';
       if (animar) {
         tr.classList.add('row-entrada');
@@ -934,7 +937,7 @@ function renderTabela() {
     tr.innerHTML = `
       <td style="text-align: center; vertical-align: middle; cursor: pointer;" onclick="toggleRowCheckboxFromCell(event, ${index})">
         <div style="display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;">
-          <span style="font-weight: bold; color: var(--muted); font-size: 13px; user-select: none;">${index + 1}</span>
+          <span class="row-num" style="font-weight: bold; color: var(--muted); font-size: 13px; user-select: none;">0</span>
           <input type="checkbox" id="check-${index}" ${row.conf ? 'checked' : ''} onchange="atualizarCampo(${index}, 'conf', this.checked); toggleRowHighlight(this, ${index})" style="vertical-align: middle;" onclick="event.stopPropagation()">
         </div>
         ${warningHtml}
@@ -1036,6 +1039,13 @@ function renderTabela() {
     `;
     tbody.appendChild(trEmpty);
   }
+
+  // Numera as linhas visíveis: #N no topo (mais novo), #1 embaixo (mais antigo)
+  const totalVis = visibleNumSpans.length;
+  visibleNumSpans.forEach((trVis, i) => {
+    const s = trVis.querySelector('.row-num');
+    if (s) s.textContent = totalVis - i;
+  });
 
   // Atualiza os painéis de resumo rápido com base nos registros visíveis após os filtros
   const statTotalGeral = document.getElementById('statTotalGeral');

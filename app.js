@@ -155,7 +155,7 @@ function clearNode(el) {
 
 function setLogoImages() {
   document.querySelectorAll('[data-logo="igui"]').forEach(img => {
-    img.src = 'logo_site.png';
+    img.src = 'logo_site_sobe.png';
   });
 }
 
@@ -523,7 +523,8 @@ function posicionarGotinha(step, animate = true) {
   const targetLeft = (stpNRect.left + stpNRect.width / 2) - containerRect.left;
 
   // Evita posicionamento incorreto se o layout ainda não estiver totalmente pronto
-  if (targetTop === 0 && targetLeft === 0) return;
+  // targetTop deve ser positivo (step 1 está abaixo do topo do container)
+  if (targetTop <= 0 || targetLeft <= 0 || stpNRect.width === 0) return;
 
   let currentTop = parseFloat(gotinha.style.top);
   if (isNaN(currentTop)) {
@@ -531,6 +532,7 @@ function posicionarGotinha(step, animate = true) {
   }
 
   if (animate && Math.abs(targetTop - currentTop) > 5) {
+    gotinha.style.opacity = '1';
     gotinha.classList.remove('landing');
     gotinha.classList.add('falling');
 
@@ -546,16 +548,14 @@ function posicionarGotinha(step, animate = true) {
       }, 120);
     }, 400);
   } else {
-    // Desativa temporariamente a transição para posicionamento instantâneo
-    const originalTransition = gotinha.style.transition;
+    // Desativa transição para posicionamento instantâneo
     gotinha.style.transition = 'none';
-    
     gotinha.style.top = targetTop + 'px';
     gotinha.style.left = targetLeft + 'px';
-    
-    // Força reflow e restaura a transição
+    // Força reflow, restaura transição e torna visível
     gotinha.offsetHeight;
-    gotinha.style.transition = originalTransition;
+    gotinha.style.transition = '';
+    gotinha.style.opacity = '1';
   }
 }
 
@@ -2853,20 +2853,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.addEventListener('change', () => autoSave());
 });
 
-// Inicializar a gotinha de etapas logo na abertura para cair sem delay de rede
-document.addEventListener('DOMContentLoaded', () => {
-  const stepsContainer = document.getElementById('stepsGenerator');
-  if (stepsContainer) {
-    setTimeout(() => {
-      posicionarGotinha(cur, false);
-    }, 150);
-  }
+// Inicializar a gotinha: aguarda o logo carregar (ele empurra o layout da sidebar)
+// depois posiciona no step 0. Reforça também no window.load como fallback.
+(function() {
+  function _colocarGotaNoStep0() { posicionarGotinha(0, false); }
 
-  // Atualizar a posição da gotinha ao redimensionar a janela
-  window.addEventListener('resize', () => {
-    posicionarGotinha(cur, false);
+  document.addEventListener('DOMContentLoaded', () => {
+    const logoImg = document.querySelector('.sidebar img[src*="logo_site"]');
+    if (logoImg && !logoImg.complete) {
+      logoImg.addEventListener('load', _colocarGotaNoStep0, { once: true });
+      logoImg.addEventListener('error', _colocarGotaNoStep0, { once: true });
+    } else {
+      // Logo já carregado (cache) — espera 1 rAF para o reflow do layout fixo
+      requestAnimationFrame(() => requestAnimationFrame(_colocarGotaNoStep0));
+    }
+
+    window.addEventListener('resize', () => posicionarGotinha(cur, false));
   });
-});
+
+  // Fallback: garante posição correta após tudo carregar
+  window.addEventListener('load', _colocarGotaNoStep0);
+})();
 
 function renderVistas3D() {
   const grid = document.getElementById('grid-vistas-3d');

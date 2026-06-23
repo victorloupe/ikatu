@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — iGUi Pranchas</title>
+<title>Admin — Ikatu</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260621p"></script>
+<script src="supabase-client.js?v=20260621x"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=20260621b">
+<link rel="stylesheet" href="styles.css?v=20260622a">
 <style>
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
   .tab{padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
@@ -50,15 +50,16 @@
     width: 90px;
     box-sizing: border-box;
   }
-  .btn-icon{width:28px;height:28px;padding:0;border-radius:6px;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .btn-icon:hover{border-color:#cbd5e1;background:#f1f5f9;color:#0f172a;}
-  .btn-icon.btn-role{background:#f0f7ff;color:#0284c7;border-color:#e0f2fe;}
-  .btn-icon.btn-role:hover{background:#e0f2fe;border-color:#bae6fd;color:#0369a1;}
-  .btn-icon.btn-reset{background:#fffbeb;color:#d97706;border-color:#fef3c7;}
+  .btn-icon{width:28px;height:28px;padding:0;border-radius:6px;cursor:pointer;border:1px solid transparent;background:transparent;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .btn-icon.btn-role-to-user{color:#7c3aed;}
+  .btn-icon.btn-role-to-user:hover{background:#ede9fe;border-color:#ddd6fe;color:#6d28d9;}
+  .btn-icon.btn-role-to-admin{color:#16a34a;}
+  .btn-icon.btn-role-to-admin:hover{background:#dcfce7;border-color:#bbf7d0;color:#15803d;}
+  .btn-icon.btn-reset{color:#d97706;}
   .btn-icon.btn-reset:hover{background:#fef3c7;border-color:#fde68a;color:#b45309;}
-  .btn-icon.btn-deactivate{background:#fef2f2;color:#ef4444;border-color:#fee2e2;}
+  .btn-icon.btn-deactivate{color:#ef4444;}
   .btn-icon.btn-deactivate:hover{background:#fee2e2;border-color:#fecaca;color:#dc2626;}
-  .btn-icon.btn-activate{background:#f0fdf4;color:#16a34a;border-color:#dcfce7;}
+  .btn-icon.btn-activate{color:#16a34a;}
   .btn-icon.btn-activate:hover{background:#dcfce7;border-color:#bbf7d0;color:#15803d;}
 
   .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -101,18 +102,19 @@
   <button id="btnMenuToggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" class="btn-menu-toggle" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; display:none; align-items:center; justify-content:center; padding: 0 12px 0 0; outline:none;">
     ☰
   </button>
-  <img id="headerLogo" data-logo="igui" src="logo_site.png" style="height:58px;width:auto;display:block" alt="iGUI">
+  
   <div>
     <h1>ADMIN <span>PAINEL</span></h1>
-    <div class="hdr-sub">iGUi Pranchas &nbsp;·&nbsp; By: Victor L.</div>
+    <div class="hdr-sub">Ikatu</div>
   </div>
 </header>
 
 <div class="layout">
   <aside class="sidebar">
+    <img src="logo_site.png" style="width:160px;display:block;margin:4px auto 18px;" alt="iGUI">
     <div class="sidebar-actions" style="margin-top:auto;">
       <!-- Navegação de Páginas (Mais minimalista, com ícones SVG iguais) -->
-      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço iGUi</div>
+      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço Ikatu</div>
       <nav class="steps" style="margin-bottom:6px;">
         <a class="stp" href="index.html">
           <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
@@ -204,7 +206,7 @@
       const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
       const logoImg = document.getElementById('headerLogo');
       if (logoImg) {
-        logoImg.src = 'logo_site.png';
+        logoImg.src = 'logo_site_sobe.png';
       }
       if (cachedName) {
         const el = document.getElementById('hdrUser');
@@ -616,7 +618,7 @@ function linhaUsuario(u) {
       <td style="text-align:right; padding-right: 8px;">
         ${!isMe ? `
           <div style="display:inline-flex;gap:5px;justify-content:flex-end;">
-            <button class="btn-icon btn-role" title="${u.role==='admin'?'Tornar User':'Tornar Admin'}" onclick="trocarRole('${u.id}','${u.role}')">
+            <button class="btn-icon ${u.role==='admin'?'btn-role-to-user':'btn-role-to-admin'}" title="${u.role==='admin'?'Tornar User':'Tornar Admin'}" onclick="trocarRole('${u.id}','${u.role}')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
             </button>
             <button class="btn-icon btn-reset" title="Resetar senha" onclick="resetarSenhaUsuario('${u.id}', '${escHtml(u.name || '')}', '${escHtml(u.email || '')}')">
@@ -1112,7 +1114,7 @@ async function executarAdminExport() {
     const a = document.createElement('a');
     a.href = url;
     const periodStr = meses === 'all' ? 'Completo' : `${meses}m`;
-    a.download = `Backup_iGUi_Space_Admin_${periodStr}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
+    a.download = `Backup_Ikatu_Admin_${periodStr}_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1199,7 +1201,7 @@ async function iniciarBackupELimpeza() {
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Backup_iGUi_Space_Antigos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
+    a.download = `Backup_Ikatu_Antigos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1237,4 +1239,4 @@ async function iniciarBackupELimpeza() {
 }
 </script>
 </body>
-</html>
+</html>                                                                                                                             
