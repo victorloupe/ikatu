@@ -7,18 +7,18 @@
 
 // ⚠️ AO FAZER DEPLOY com mudanças: incremente a versão abaixo (v2 → v3 → ...).
 // É isso que dispara o aviso "Nova versão disponível" nas abas abertas.
-const CACHE = 'ikatu-v3';
+const CACHE = 'ikatu-v26';
 
 // Arquivos básicos do app shell (pré-cacheados na instalação)
 const SHELL = [
   'index.html',
   'login.html',
+  'admin.html',
   'manifest.json',
   'projetos.html',
   'pagamentos.html',
   'avisos.html',
   'chat.html',
-  // 'email.html',
   'links.html',
   'styles.css',
   'app.js',
@@ -27,11 +27,14 @@ const SHELL = [
   'pagamentos.js',
   'avisos.js',
   'chat.js',
-  // 'email.js',
   'logo_site.png',
   'favicon.ico',
   'icon-192.png',
-  'icon-512.png'
+  'icon-512.png',
+  'modules/state.js',
+  'modules/image-editor.js',
+  'modules/pdf-generator.js',
+  'modules/supabase-sync.js'
 ];
 
 self.addEventListener('install', e => {

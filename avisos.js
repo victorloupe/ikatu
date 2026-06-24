@@ -768,9 +768,8 @@ function showToast(msg, tipo = 'ok') {
   setTimeout(() => t.classList.remove('show'), 4000);
 }
 
-function escHtml(s) {
-  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// escHtml → alias para esc() global (supabase-client.js)
+const escHtml = esc;
 
 function formatDate(d) {
   const today = new Date();

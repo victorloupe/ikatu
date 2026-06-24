@@ -541,11 +541,8 @@ function iniciais(nome) {
   return ((pts[0]?.[0] || '') + (pts[1]?.[0] || '')).toUpperCase() || '?';
 }
 
-function escHtml(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
+// escHtml → alias para esc() global (supabase-client.js)
+const escHtml = esc;
 
 function cssEsc(s) {
   if (window.CSS && CSS.escape) return CSS.escape(s);

@@ -4,72 +4,73 @@
 
 O nosso sistema mudou de nome!
 
-**iGUi Space** agora se chama
+iGUi Space agora se chama
 
-    ✨ **i k a t u** ✨
+    ✨  I K A T U  ✨
 
-*ikatu* é um termo do tupi que significa *"água boa"* — e faz todo sentido pra nós 💧🏊
+"ikatu" é um termo do tupi que significa "água boa"
+— e faz todo sentido pra nós 💧🏊
 
-🔗 **Novo endereço:** https://ikatu.vercel.app
+🔗 NOVO ENDEREÇO: https://ikatu.vercel.app
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🚀 **O QUE MELHOROU NO SISTEMA**
+🚀 O QUE MELHOROU NO SISTEMA
 
-📱 **App instalável (PWA)**
+📱 APP INSTALÁVEL (PWA)
 O sistema agora pode ser instalado como app no celular e no computador, com atualizações automáticas em segundo plano.
 
-🎬 **Tela de boas-vindas**
+🎬 TELA DE BOAS-VINDAS
 Ao entrar, aparece uma tela animada com checklist mostrando o carregamento de cada módulo.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💬 **CHAT DA EQUIPE (NOVO!)**
+💬 CHAT DA EQUIPE — NOVO!
 
-- Conversas diretas 1:1 entre todos da equipe
-- Canal **Geral** com todo mundo junto
-- Envio de fotos e arquivos (até 25 MB)
-- Arrastar e soltar arquivos direto na conversa
-- Editar e apagar mensagens enviadas
-- Notificação de novas mensagens em **qualquer** página do sistema
+• Conversas diretas 1:1 entre todos da equipe
+• Canal Geral com todo mundo junto
+• Envio de fotos e arquivos (até 25 MB)
+• Arrastar e soltar arquivos direto na conversa
+• Editar e apagar mensagens enviadas
+• Notificação de novas mensagens em qualquer página do sistema
 
-📣 **AVISOS**
+📣 AVISOS
 O mural de avisos virou um módulo separado, mais organizado e independente do chat.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📄 **GERADOR DE PRANCHAS**
+📄 GERADOR DE PRANCHAS
 
-- Imagens PNG transparentes não ficam mais pretas no PDF
-- Todo o texto do PDF sai automaticamente em **CAIXA ALTA**
-- Cada seção agora aceita uma **2ª prancha extra** quando o projeto precisar de mais espaço
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-💰 **PAGAMENTOS**
-
-- Admin vê e edita registros de **todos os projetistas** em uma só tela
-- Modo **"Todos"** mostra todos os projetos mesclados
-- Cada projeto aceita de **1 a 5 piscinas** descritas separadamente
-- Toda edição fica registrada: quem editou, quando e o que mudou
+• Imagens PNG transparentes não ficam mais pretas no PDF
+• Todo o texto do PDF sai automaticamente em CAIXA ALTA
+• Cada seção agora aceita uma 2ª prancha extra quando o projeto precisar de mais espaço
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📧 **MÓDULO DE E-MAIL (NOVO!)**
+💰 PAGAMENTOS
+
+• Admin vê e edita registros de todos os projetistas em uma só tela
+• Modo "Todos" mostra todos os projetos mesclados
+• Cada projeto aceita de 1 a 5 piscinas descritas separadamente
+• Toda edição fica registrada: quem editou, quando e o que mudou
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📧 MÓDULO DE E-MAIL — NOVO!
 Leia, responda e componha e-mails do Gmail direto pelo sistema:
 
-- Caixa de entrada e marcadores
-- Responder e encaminhar mensagens
-- Compor novos e-mails
-- Anexar arquivos arrastando e soltando
+• Caixa de entrada e marcadores
+• Responder e encaminhar mensagens
+• Compor novos e-mails
+• Anexar arquivos arrastando e soltando
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔒 **Por trás dos panos**
+🔒 POR TRÁS DOS PANOS
 Melhorias de segurança, proteção contra injeção de código e compressão automática de imagens.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-👉 **Acesse agora:** https://ikatu.vercel.app
+👉 Acesse agora: https://ikatu.vercel.app
 
 Qualquer dúvida, só falar! 🙌

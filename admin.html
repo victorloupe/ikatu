@@ -11,8 +11,9 @@
 <link rel="stylesheet" href="styles.css?v=20260622a">
 <style>
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
-  .tab{padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+  .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
   .tab.active{color:#1a2a3a;border-bottom-color:#1a2a3a;}
+  .tab svg{width:16px;height:16px;stroke:currentColor;fill:none;}
   .tab-pane{display:none;}
   .tab-pane.active{display:block;}
 
@@ -230,11 +231,43 @@
     <div class="proj-page-wrap">
 
       <div class="tabs" style="display: flex; width: 100%;">
-        <button class="tab active" onclick="abaLinks()">🔗 Links</button>
-        <button class="tab" onclick="abaUsuarios()">👥 Usuários</button>
-        <button class="tab" onclick="abaSugestoes()">💡 Sugestões</button>
+        <button class="tab active" onclick="abaLinks()">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+          Links
+        </button>
+        <button class="tab" onclick="abaUsuarios()">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Usuários
+        </button>
+        <button class="tab" onclick="abaSugestoes()">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 14c.2-.2.4-.4.6-.7C16.8 11.7 17 10 15.8 8.3 14.7 6.7 13 6 11 6c-3.3 0-6 2.7-6 6 0 1.7.7 3.3 2 4.3.4.3.6.8.6 1.3V19c0 .6.4 1 1 1h4c.6 0 1-.4 1-1v-1.4c0-.5.2-1 .6-1.3z"/>
+            <line x1="9" y1="22" x2="15" y2="22"/>
+          </svg>
+          Sugestões
+        </button>
+        <button class="tab" onclick="abaPrecos()">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+          Preços
+        </button>
         <button class="tab" onclick="abaBackup()" style="margin-left: auto; position: relative;">
-          💾 Backup & Limpeza
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+            <polyline points="17 21 17 13 7 13 7 21"/>
+            <polyline points="7 3 7 8 15 8"/>
+          </svg>
+          Backup & Limpeza
           <span id="tabBackupBadge" style="display:none;width:8px;height:8px;background:#e74c3c;border-radius:50%;position:absolute;top:4px;right:4px;border:1px solid #fff;"></span>
         </button>
       </div>
@@ -323,6 +356,97 @@
               <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- ABA PREÇOS -->
+      <div class="tab-pane" id="panePrecos">
+        <div class="section-hd">
+          <h3>Preços dos Tipos de Projeto</h3>
+        </div>
+        
+        <div style="background:#ffffff; border:1.5px solid var(--border); border-radius:10px; padding:20px; margin-bottom:24px; box-sizing:border-box;">
+          <p style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5;margin-top:0;">Defina os valores unitários padrão cobrados para cada tipo de projeto. Usuários normais não poderão alterar esses valores na página de pagamentos.</p>
+          
+          <div style="overflow-x:auto;">
+            <table class="users-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th style="padding-left: 12px; width: 60%; background:#f0f4f8; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; padding:8px 6px;">Tipo de Projeto</th>
+                  <th style="text-align: right; padding-right: 12px; width: 40%; background:#f0f4f8; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; padding:8px 6px;">Valor Unitário</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding-left: 12px; font-weight: 600; color: #1a2a3a; padding:8px 6px; border-bottom:1px solid var(--border);">Até 02 Projetos</td>
+                  <td align="right" style="padding-right: 12px; padding:8px 6px; border-bottom:1px solid var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">R$</span>
+                      <input type="number" id="adm_val_ate2" step="5" style="width:120px; padding:6px 10px; border:1.5px solid var(--border); border-radius:6px; text-align:right; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s;">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 12px; font-weight: 600; color: #1a2a3a; padding:8px 6px; border-bottom:1px solid var(--border);">03 a 4 Projetos</td>
+                  <td align="right" style="padding-right: 12px; padding:8px 6px; border-bottom:1px solid var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">R$</span>
+                      <input type="number" id="adm_val_3a4" step="5" style="width:120px; padding:6px 10px; border:1.5px solid var(--border); border-radius:6px; text-align:right; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s;">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 12px; font-weight: 600; color: #1a2a3a; padding:8px 6px; border-bottom:1px solid var(--border);">Mais que 05 Projetos</td>
+                  <td align="right" style="padding-right: 12px; padding:8px 6px; border-bottom:1px solid var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">R$</span>
+                      <input type="number" id="adm_val_mais5" step="5" style="width:120px; padding:6px 10px; border:1.5px solid var(--border); border-radius:6px; text-align:right; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s;">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 12px; font-weight: 600; color: #1a2a3a; padding:8px 6px; border-bottom:1px solid var(--border);">Projeto 360º</td>
+                  <td align="right" style="padding-right: 12px; padding:8px 6px; border-bottom:1px solid var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">R$</span>
+                      <input type="number" id="adm_val_360" step="5" style="width:120px; padding:6px 10px; border:1.5px solid var(--border); border-radius:6px; text-align:right; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s;">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 12px; font-weight: 600; color: #1a2a3a; padding:8px 6px; border-bottom:1px solid var(--border);">Projeto 360º (3 Modificações)</td>
+                  <td align="right" style="padding-right: 12px; padding:8px 6px; border-bottom:1px solid var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">R$</span>
+                      <input type="number" id="adm_val_360_3mod" step="5" style="width:120px; padding:6px 10px; border:1.5px solid var(--border); border-radius:6px; text-align:right; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s;">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 12px; font-weight: 600; color: #1a2a3a; padding:8px 6px; border-bottom:1px solid var(--border);">Conceito</td>
+                  <td align="right" style="padding-right: 12px; padding:8px 6px; border-bottom:1px solid var(--border);">
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">R$</span>
+                      <input type="number" id="adm_val_conceito" step="5" style="width:120px; padding:6px 10px; border:1.5px solid var(--border); border-radius:6px; text-align:right; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s;">
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-left: 12px; font-weight: 600; color: #1a2a3a; padding:8px 6px; border-bottom:none;">Alterações GRANDES</td>
+                  <td align="right" style="padding-right: 12px; padding:8px 6px; border-bottom:none;">
+                    <div style="display:inline-flex; align-items:center; gap:6px;">
+                      <span style="font-size: 13px; font-weight: 600; color: var(--muted);">R$</span>
+                      <input type="number" id="adm_val_alt_grandes" step="5" style="width:120px; padding:6px 10px; border:1.5px solid var(--border); border-radius:6px; text-align:right; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s;">
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button class="btn-sm primary" onclick="salvarPrecosGlobais()" style="padding: 10px 24px; font-weight:700; font-family:'Inter',sans-serif; border:none; border-radius:6px; cursor:pointer;">Salvar Preços</button>
+          </div>
         </div>
       </div>
 
@@ -516,7 +640,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (badge) badge.style.display = temNova ? 'block' : 'none';
   }).catch(() => {});
 
-  await Promise.all([carregarUsuarios(), carregarLinks(), carregarSugestoes()]);
+  await Promise.all([carregarUsuarios(), carregarLinks(), carregarSugestoes(), carregarPrecosGlobais()]);
 });
 
 // ── Tabs ──
@@ -525,6 +649,7 @@ function abaLinks() {
   document.getElementById('paneLinks').classList.add('active');
   document.getElementById('paneUsuarios').classList.remove('active');
   document.getElementById('paneSugestoes').classList.remove('active');
+  document.getElementById('panePrecos').classList.remove('active');
   document.getElementById('paneBackup').classList.remove('active');
 }
 function abaUsuarios() {
@@ -532,6 +657,7 @@ function abaUsuarios() {
   document.getElementById('paneUsuarios').classList.add('active');
   document.getElementById('paneLinks').classList.remove('active');
   document.getElementById('paneSugestoes').classList.remove('active');
+  document.getElementById('panePrecos').classList.remove('active');
   document.getElementById('paneBackup').classList.remove('active');
 }
 function abaSugestoes() {
@@ -539,14 +665,24 @@ function abaSugestoes() {
   document.getElementById('paneSugestoes').classList.add('active');
   document.getElementById('paneLinks').classList.remove('active');
   document.getElementById('paneUsuarios').classList.remove('active');
+  document.getElementById('panePrecos').classList.remove('active');
+  document.getElementById('paneBackup').classList.remove('active');
+}
+function abaPrecos() {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===3));
+  document.getElementById('panePrecos').classList.add('active');
+  document.getElementById('paneLinks').classList.remove('active');
+  document.getElementById('paneUsuarios').classList.remove('active');
+  document.getElementById('paneSugestoes').classList.remove('active');
   document.getElementById('paneBackup').classList.remove('active');
 }
 function abaBackup() {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===3));
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===4));
   document.getElementById('paneBackup').classList.add('active');
-  document.getElementById('paneUsuarios').classList.remove('active');
   document.getElementById('paneLinks').classList.remove('active');
+  document.getElementById('paneUsuarios').classList.remove('active');
   document.getElementById('paneSugestoes').classList.remove('active');
+  document.getElementById('panePrecos').classList.remove('active');
 }
 
 // ── Usuários ──
@@ -1235,6 +1371,50 @@ async function iniciarBackupELimpeza() {
     showToast('Erro no processo: ' + e.message, 'err');
     btn.disabled = false;
     btn.textContent = originalTxt;
+  }
+}
+
+async function carregarPrecosGlobais() {
+  try {
+    const precos = await sbGetPrecosProjeto();
+    if (precos) {
+      document.getElementById('adm_val_ate2').value = precos.val_ate2 ?? 70;
+      document.getElementById('adm_val_3a4').value = precos.val_3a4 ?? 80;
+      document.getElementById('adm_val_mais5').value = precos.val_mais5 ?? 95;
+      document.getElementById('adm_val_360').value = precos.val_360 ?? 90;
+      document.getElementById('adm_val_360_3mod').value = precos.val_360_3mod ?? 105;
+      document.getElementById('adm_val_conceito').value = precos.val_conceito ?? 150;
+      document.getElementById('adm_val_alt_grandes').value = precos.val_alt_grandes ?? 60;
+    } else {
+      document.getElementById('adm_val_ate2').value = 70;
+      document.getElementById('adm_val_3a4').value = 80;
+      document.getElementById('adm_val_mais5').value = 95;
+      document.getElementById('adm_val_360').value = 90;
+      document.getElementById('adm_val_360_3mod').value = 105;
+      document.getElementById('adm_val_conceito').value = 150;
+      document.getElementById('adm_val_alt_grandes').value = 60;
+    }
+  } catch(e) {
+    console.error('Erro ao carregar preços:', e);
+  }
+}
+
+async function salvarPrecosGlobais() {
+  try {
+    const precos = {
+      val_ate2: parseFloat(document.getElementById('adm_val_ate2').value) || 0,
+      val_3a4: parseFloat(document.getElementById('adm_val_3a4').value) || 0,
+      val_mais5: parseFloat(document.getElementById('adm_val_mais5').value) || 0,
+      val_360: parseFloat(document.getElementById('adm_val_360').value) || 0,
+      val_360_3mod: parseFloat(document.getElementById('adm_val_360_3mod').value) || 0,
+      val_conceito: parseFloat(document.getElementById('adm_val_conceito').value) || 0,
+      val_alt_grandes: parseFloat(document.getElementById('adm_val_alt_grandes').value) || 0
+    };
+    
+    await sbSalvarPrecosProjeto(precos);
+    showToast('💵 Preços salvos com sucesso!', 'ok');
+  } catch (e) {
+    showToast('Erro ao salvar preços: ' + e.message, 'err');
   }
 }
 </script>

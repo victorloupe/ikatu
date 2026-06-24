@@ -6,10 +6,10 @@
 <title>Prancha Técnica iGUI – Gerador</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260621x"></script>
+<script src="supabase-client.js?v=20260624l"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=20260622a">
+<link rel="stylesheet" href="styles.css?v=20260624l">
 <style>
   /* Abas de prancha extra (2ª página por seção) */
   .prancha-tabs { display:flex; align-items:center; gap:6px; margin:6px 0 14px; flex-wrap:wrap; }
@@ -218,7 +218,7 @@
 
     <!-- SEC 1: IDENTIFICAÇÃO -->
     <div class="card active" id="s0">
-      <div class="card-hd"><div class="card-ico">🏢</div><div><div class="card-title">IDENTIFICAÇÃO DO PROJETO</div><div class="card-sub">Dados do cliente e informações gerais</div></div></div>
+      <div class="card-hd"><div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="16" height="12" rx="2"/><circle cx="7" cy="9" r="2"/><path d="M4.5 14c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5"/><line x1="11.5" y1="9" x2="15.5" y2="9"/><line x1="11.5" y1="12" x2="14" y2="12"/></svg></div><div><div class="card-title">IDENTIFICAÇÃO DO PROJETO</div><div class="card-sub">Dados do cliente e informações gerais</div></div><img class="card-hd-logo" src="" alt="" style="visibility:hidden;"></div>
       <div class="card-bd">
         <div class="row r3">
           <div class="field"><label>Loja / Franquia</label><input type="text" id="loja" placeholder="Ex: iGUI João Pessoa" oninput="autoSave()"></div>
@@ -229,6 +229,29 @@
           <div class="field"><label>Nome do Cliente</label><input type="text" id="cliente" placeholder="Nome completo do cliente" oninput="autoSave()"></div>
           <div class="field"><label>Cidade / Estado</label><input type="text" id="cidade" placeholder="Ex: João Pessoa – PB" oninput="autoSave()"></div>
           <div class="field"><label>Criado por (Usuário)</label><input type="text" id="usuario_logado" readonly style="background:#f0f4f8;cursor:not-allowed;" title="Preenchido automaticamente pelo login"></div>
+        </div>
+        <div class="row r2">
+          <div class="field">
+            <label>Tipo de Projeto</label>
+            <select id="tipo_projeto" onchange="autoSave()" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 13px;font-family:'Inter',sans-serif;font-size:14px;width:100%">
+              <option value="">-- Selecione --</option>
+              <option value="Até 02 Projetos">Até 02 Projetos</option>
+              <option value="03 a 4 Projetos">03 a 4 Projetos</option>
+              <option value="Mais que 05 Projetos">Mais que 05 Projetos</option>
+              <option value="Projeto 360º">Projeto 360º</option>
+              <option value="Projeto 360º (3 Modificações)">Projeto 360º (3 Modificações)</option>
+              <option value="Conceito">Conceito</option>
+              <option value="Alterações GRANDES">Alterações GRANDES</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Franquia / Marca</label>
+            <select id="loja_tipo" onchange="onLojaTipoChange(this.value); autoSave()" style="border:1.5px solid var(--border);border-radius:6px;padding:9px 13px;font-family:'Inter',sans-serif;font-size:14px;width:100%">
+              <option value="">-- Selecione --</option>
+              <option value="iGUi" selected>iGUi</option>
+              <option value="Splash">Splash</option>
+            </select>
+          </div>
         </div>
         <div class="row r1">
           <div class="field"><label>Observações (rodapé da prancha)</label><textarea id="obs" placeholder="Ex: Conferir medidas antes da execução" oninput="autoSave()"></textarea></div>
@@ -248,7 +271,7 @@
 
     <!-- SEC 2: PROJETO 3D -->
     <div class="card" id="s1">
-      <div class="card-hd"><div class="card-ico">🏊</div><div><div class="card-title">PROJETO 3D</div><div class="card-sub">Renders e perspectivas — grade 2×2 na capa da prancha</div></div></div>
+      <div class="card-hd"><div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2L18 6.5V13.5L10 18L2 13.5V6.5L10 2Z"/><path d="M10 2V18"/><path d="M2 6.5L10 11L18 6.5"/></svg></div><div><div class="card-title">PROJETO 3D</div><div class="card-sub">Renders e perspectivas — grade 2×2 na capa da prancha</div></div><img class="card-hd-logo" src="" alt="" style="visibility:hidden;"></div>
       <div class="card-bd">
         <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">Insira as <strong>vistas do projeto 3D</strong> (mínimo de 4 recomendado) e a <strong>imagem com medidas do deck</strong>. As imagens serão usadas automaticamente nas outras abas.</p>
         <div class="img-grid g4" id="grid-vistas-3d" style="margin-bottom:12px;">
@@ -270,7 +293,7 @@
 
     <!-- SEC 3: DESCRITIVO -->
     <div class="card" id="s2">
-      <div class="card-hd"><div class="card-ico">📋</div><div><div class="card-title">DESCRITIVO TÉCNICO</div><div class="card-sub">Modelo, cerâmica, medidas deck e acessórios</div></div></div>
+      <div class="card-hd"><div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H5a1.5 1.5 0 00-1.5 1.5v13A1.5 1.5 0 005 18h10a1.5 1.5 0 001.5-1.5V7L12 2z"/><path d="M12 2v5h4.5"/><line x1="6.5" y1="10.5" x2="13.5" y2="10.5"/><line x1="6.5" y1="13.5" x2="11" y2="13.5"/></svg></div><div><div class="card-title">DESCRITIVO TÉCNICO</div><div class="card-sub">Modelo, cerâmica, medidas deck e acessórios</div></div><img class="card-hd-logo" src="" alt="" style="visibility:hidden;"></div>
       <div class="card-bd">
         <div class="div"><span>Imagens do Deck (sincronizadas automaticamente)</span></div>
         <p style="font-size:11px;color:var(--muted);margin-bottom:10px;">
@@ -313,7 +336,7 @@
 
     <!-- SEC 4: REVESTIMENTOS -->
     <div class="card" id="s3">
-      <div class="card-hd"><div class="card-ico">🪵</div><div><div class="card-title">REVESTIMENTOS</div><div class="card-sub">Pisos, decks, pedras e acabamentos externos</div></div></div>
+      <div class="card-hd"><div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="11" y="3" width="6" height="6" rx="1"/><rect x="3" y="11" width="6" height="6" rx="1"/><rect x="11" y="11" width="6" height="6" rx="1"/></svg></div><div><div class="card-title">REVESTIMENTOS</div><div class="card-sub">Pisos, decks, pedras e acabamentos externos</div></div><img class="card-hd-logo" src="" alt="" style="visibility:hidden;"></div>
       <div class="card-bd">
         <div class="sec-toggle-wrap" id="sectog-rev" onclick="toggleSec('rev')">
           <div class="sec-tog-sw"></div>
@@ -345,7 +368,7 @@
 
     <!-- SEC 5: MOBILIÁRIO -->
     <div class="card" id="s4">
-      <div class="card-hd"><div class="card-ico">🪑</div><div><div class="card-title">MOBILIÁRIO</div><div class="card-sub">Espreguiçadeiras, mesas, cadeiras e decoração</div></div></div>
+      <div class="card-hd"><div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 10V6a1 1 0 011-1h8a1 1 0 011 1v4"/><path d="M3 10a2 2 0 012 2v1.5h10V12a2 2 0 012-2"/><path d="M1.5 10.5A1.5 1.5 0 003 12"/><path d="M18.5 10.5A1.5 1.5 0 0017 12"/><line x1="6" y1="13.5" x2="6" y2="16"/><line x1="14" y1="13.5" x2="14" y2="16"/></svg></div><div><div class="card-title">MOBILIÁRIO</div><div class="card-sub">Espreguiçadeiras, mesas, cadeiras e decoração</div></div><img class="card-hd-logo" src="" alt="" style="visibility:hidden;"></div>
       <div class="card-bd">
         <div class="sec-toggle-wrap" id="sectog-mob" onclick="toggleSec('mob')">
           <div class="sec-tog-sw"></div>
@@ -377,7 +400,7 @@
 
     <!-- SEC 6: PAISAGISMO -->
     <div class="card" id="s5">
-      <div class="card-hd"><div class="card-ico">🌿</div><div><div class="card-title">PAISAGISMO</div><div class="card-sub">Plantas, jardins e elementos naturais — adicione por espécie ou área</div></div></div>
+      <div class="card-hd"><div class="card-ico"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3c-6 0-11 4.5-9 12"/><path d="M17 3C11 3 6 7.5 8 15"/><path d="M8 15L4 19"/></svg></div><div><div class="card-title">PAISAGISMO</div><div class="card-sub">Plantas, jardins e elementos naturais — adicione por espécie ou área</div></div><img class="card-hd-logo" src="" alt="" style="visibility:hidden;"></div>
       <div class="card-bd">
         <div class="sec-toggle-wrap" id="sectog-pai" onclick="toggleSec('pai')">
           <div class="sec-tog-sw"></div>
@@ -489,82 +512,57 @@
     <!-- Rodapé -->
     <div class="modal-footer" style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px;">
       <button class="btn-modal cancel" onclick="fecharCropModal()" style="padding:10px 14px; font-weight:700; border-radius:8px; font-size:13px; white-space:nowrap;">Cancelar</button>
-      <button class="btn-modal" onclick="usarOriginalSemRecortar()" style="padding:10px 14px; font-weight:700; border-radius:8px; background:#f39c12; color:#fff; border:none; cursor:pointer; font-size:13px; white-space:nowrap;">Usar Original (Sem Recortar)</button>
-      <button class="btn-modal confirm" onclick="confirmarRecorte()" style="padding:10px 14px; font-weight:700; border-radius:8px; background:var(--blue); color:#fff; border:none; cursor:pointer; font-size:13px; white-space:nowrap;">Confirmar Enquadramento</button>
+      <button class="btn-modal" onclick="usarOriginalSemRecortar()" style="padding:10px 14px; font-weight:700; border-radius:8px; background:#f39c12; color:#fff; border:none; cursor:pointer; font-size:13px; white-space:nowrap;">Usar original</button>
+      <button class="btn-modal confirm" onclick="confirmarRecorte()" style="padding:10px 14px; font-weight:700; border-radius:8px; font-size:13px; white-space:nowrap; background:var(--blue); color:#fff; border:none; cursor:pointer;">✂️ Recortar</button>
     </div>
   </div>
 </div>
 
+<!-- Overlay de carregamento -->
 <div class="overlay" id="overlay">
-  <div class="spin"></div>
-  <div class="load-txt" id="loadTxt">Gerando PDF...</div>
-  <div class="load-sub" id="loadSub">Aguarde, isto pode levar alguns segundos</div>
-  <div class="load-progress-wrap">
-    <div class="load-progress-bar" id="loadProgressBar" style="width:0%"></div>
+  <div class="load-box">
+    <div class="load-spinner"></div>
+    <div class="load-txt" id="loadTxt">Gerando PDF...</div>
+    <div class="load-sub" id="loadSub">Aguarde, isto pode levar alguns segundos</div>
+    <div class="load-progress-wrap"><div class="load-progress-bar" id="loadProgressBar" style="width:0%"></div></div>
   </div>
 </div>
+
+<!-- Toast de notificação -->
 <div class="toast" id="toast"></div>
+
 
 <!-- Modal Sobrescrever Projeto -->
 <div class="modal-overlay" id="overwriteModal">
   <div class="modal-box">
-    <div class="modal-title"><span>⚠️</span> Atualizar Prancha</div>
+    <div class="modal-title"><span>⚠️</span> Sobrescrever Projeto?</div>
     <div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6">
-      Você está editando uma prancha já salva no histórico.<br>
-      Gerar o PDF irá <strong>atualizar o registro existente</strong> e baixar um novo PDF.<br>
-      Deseja continuar?
+      Você está editando um projeto existente.<br>
+      Gerar o PDF vai <strong>substituir</strong> a prancha salva na nuvem.<br>
+      Tem certeza?
     </div>
     <div class="modal-footer">
       <button class="btn-modal cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-modal confirm" onclick="confirmarOverwrite()">Atualizar e Gerar PDF</button>
+      <button class="btn-modal confirm" onclick="confirmarOverwrite()">Sim, sobrescrever</button>
     </div>
   </div>
 </div>
 
-<!-- Datalist modelos iGUi -->
-<datalist id="modelos-igui">
-  <option value="Mod001 – 3,00 × 2,00 m">
-  <option value="Mod002 – 4,00 × 2,50 m">
-  <option value="Mod003 – 5,00 × 3,00 m">
-  <option value="Mod004 – 5,00 × 2,50 m">
-  <option value="Mod005 – 6,00 × 3,00 m">
-  <option value="Mod006 – 6,00 × 3,50 m">
-  <option value="Mod007 – 7,00 × 3,00 m">
-  <option value="Mod008 – 7,00 × 3,50 m">
-  <option value="Mod009 – 8,00 × 3,50 m">
-  <option value="Mod010 – 8,00 × 4,00 m">
-  <option value="Mod011 – 9,00 × 4,00 m">
-  <option value="Mod012 – 9,00 × 4,50 m">
-  <option value="Mod013 – 10,00 × 4,00 m">
-  <option value="Mod014 – 10,00 × 4,50 m">
-  <option value="Mod015 – 10,00 × 5,00 m">
-  <option value="Mod016 – 7,00 × 3,50 m">
-  <option value="Mod017 – 6,50 × 3,50 m">
-  <option value="Mod018 – 5,50 × 3,00 m">
-  <option value="Mod019 – 8,50 × 4,00 m">
-  <option value="Mod020 – 11,00 × 5,00 m">
-  <option value="Infinita – 7,00 × 3,50 m">
-  <option value="Infinita – 8,00 × 4,00 m">
-  <option value="Infinita – 10,00 × 4,50 m">
-  <option value="Spa – 2,50 × 2,00 m">
-  <option value="Spa – 3,00 × 2,50 m">
-</datalist>
-
-<!-- Modal Pré-visualização da Prancha -->
-<div id="previewModal" class="overlay-preview" onclick="if(event.target===this)fecharPreviewPrancha()">
-  <div class="preview-box">
-    <div class="preview-bar">
-      <span>👁 Pré-visualização da Prancha</span>
+<!-- Modal Preview PDF -->
+<div class="modal-overlay" id="previewModal" style="align-items:stretch;padding:0;">
+  <div style="display:flex;flex-direction:column;width:100%;height:100%;background:#1a2a3a;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 18px;background:#0f1e2d;flex-shrink:0;">
+      <span style="color:#fff;font-weight:700;font-size:14px;font-family:'Inter Tight',sans-serif;">PRÉ-VISUALIZAÇÃO</span>
       <div style="display:flex;gap:8px;">
-        <button onclick="abrirPreviewNovaGuia()">Abrir em nova guia</button>
-        <button onclick="fecharPreviewPrancha()">✕ Fechar</button>
-        <button class="preview-confirm" onclick="confirmarPreview()">✓ Confirmar e Gerar PDF</button>
+        <button onclick="abrirPreviewNovaGuia()" style="background:var(--blue);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">↗ Abrir em nova guia</button>
+        <button onclick="fecharPreviewPrancha()" style="background:#2c3e50;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">✕ Fechar</button>
       </div>
     </div>
-    <iframe id="previewFrame" class="preview-frame" title="Pré-visualização da prancha"></iframe>
+    <iframe id="previewFrame" src="about:blank" style="flex:1;border:none;width:100%;"></iframe>
   </div>
 </div>
 
-<script src="app.js?v=20260622i"></script>
+
+<script type="module" src="app.js?v=20260624l"></script>
 </body>
 </html>

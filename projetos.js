@@ -5,11 +5,8 @@
 // Logo is handled globally by supabase-client.js
 
 // ── Utilitários ───────────────────────────────────────────────────
-function escapeHtml(v) {
-  return String(v ?? '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+// escapeHtml → alias para esc() global (supabase-client.js)
+const escapeHtml = esc;
 
 let toastTimer;
 function showToast(msg, tipo = 'ok') {
@@ -33,7 +30,7 @@ let _busca = '';
 let _filtroUsuario = '';     // '' = todos
 let _todasPranchas = [];    // cache da última busca ao banco
 let _pagAtual = 1;
-const PRANCHAS_POR_PAGINA = 8;
+const PRANCHAS_POR_PAGINA = 7;
 let animarLista = false;     // próxima renderização entra com animação em cascata
 
 /** Gera as pills de filtro por usuário */
@@ -82,8 +79,8 @@ function irParaPagina(n) {
   _pagAtual = n;
   animarLista = true;
   renderListaPranchas();
-  const lista = document.getElementById('projetosLista');
-  if (lista) lista.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const main = document.querySelector('.proj-content') || document.querySelector('main') || document.documentElement;
+  main.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /** Filtra e renderiza os cards (não vai ao banco) */

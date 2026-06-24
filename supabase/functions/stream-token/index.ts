@@ -18,7 +18,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { StreamChat } from "https://esm.sh/stream-chat@8";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://ikatu.vercel.app",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -100,8 +100,9 @@ serve(async (req: Request) => {
       } catch (_) { /* ok */ }
     }
 
-    // 5. Token do Stream para este usuário
-    const token = server.createToken(user.id);
+    // 5. Token do Stream para este usuário (expira em 24h)
+    const exp = Math.floor(Date.now() / 1000) + 86400;
+    const token = server.createToken(user.id, exp);
 
     return json({ token, apiKey: STREAM_API_KEY, userId: user.id });
   } catch (e) {

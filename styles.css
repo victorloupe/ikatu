@@ -161,6 +161,8 @@ header h1 span{color:var(--blue);}
 .sdb-ico{width:14px;height:14px;flex-shrink:0;opacity:.7;}
 .sdb-btn:hover .sdb-ico{opacity:1;}
 
+#btnPreview{justify-content:center;}
+
 /* Gerar PDF — destaque */
 .sdb-btn.sdb-gerar{
   background:var(--blue);color:#fff;font-weight:700;font-size:12.5px;
@@ -2009,3 +2011,28 @@ body.pg-projetos { background: #e2eaf3; }
   border-radius: 5px;
 }
 @keyframes shimmer { to { background-position: -200% 0; } }
+
+.card-hd-logo {
+  margin-left: auto;
+  max-height: 36px;
+  width: auto;
+}
+
+/* Splash Theme Overrides */
+body.theme-splash .card-ico {
+  background: #de0f7b !important;
+}
+body.theme-splash .sdb-btn.sdb-gerar {
+  background: #de0f7b !important;
+}
+body.theme-splash .sdb-btn.sdb-gerar:hover {
+  background: #c50b6a !important;
+}
+body.theme-splash .btn-nav.primary {
+  background: #de0f7b !important;
+  border-color: #de0f7b !important;
+}
+body.theme-splash .btn-nav.primary:hover {
+  background: #c50b6a !important;
+  border-color: #c50b6a !important;
+}

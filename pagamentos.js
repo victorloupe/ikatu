@@ -331,6 +331,23 @@ async function iniciarPagamentos() {
     if (isAdminUser) {
       await montarSeletorProjetista();
     }
+    
+    // Configurar campos de preço como readonly para usuários normais
+    const idsValores = ['val_ate2', 'val_3a4', 'val_mais5', 'val_360', 'val_360_3mod', 'val_conceito', 'val_alt_grandes'];
+    idsValores.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        if (!isAdminUser) {
+          el.readOnly = true;
+          el.style.background = '#f1f5f9';
+          el.style.cursor = 'not-allowed';
+        } else {
+          el.readOnly = false;
+          el.style.background = '';
+          el.style.cursor = '';
+        }
+      }
+    });
   } catch (e) {
     console.warn('Falha ao preparar admin de pagamentos:', e);
   }
@@ -397,77 +414,94 @@ async function carregarDados() {
     const user = await sbGetUser();
     if (!user) return;
 
+    // Carregar preços globais primeiro
+    let globalPrecos = null;
+    try {
+      globalPrecos = await sbGetPrecosProjeto();
+    } catch (e) {
+      console.warn('Erro ao carregar preços globais:', e);
+    }
+
     // Modo "Todos": carrega e mescla os pagamentos de todos os projetistas
     if (targetUserId === 'ALL') {
       await carregarTodosProjetistas();
     } else {
-    const alvoId = targetUserId || user.id;
-    const ehProprio = alvoId === user.id;
-    const inpNome0 = document.getElementById('projetistaNome');
-    if (inpNome0) inpNome0.readOnly = false;
+      const alvoId = targetUserId || user.id;
+      const ehProprio = alvoId === user.id;
+      const inpNome0 = document.getElementById('projetistaNome');
+      if (inpNome0) inpNome0.readOnly = false;
 
-    // Nome completo do projetista-alvo
-    let nomeCompleto = '';
-    if (ehProprio) {
-      const cachedName = localStorage.getItem('igui_user_name');
-      nomeCompleto = cachedName ? cachedName.toUpperCase() : '';
-      if (!nomeCompleto) nomeCompleto = user.email.split('@')[0].toUpperCase();
-    } else {
-      nomeCompleto = (targetUserName || '').toUpperCase();
-    }
-
-    const { data: list, error } = await sb.from('payments').select('*').eq('user_id', alvoId);
-    if (error) throw error;
-    
-    if (list && list.length > 0) {
-      const data = list[0];
-      pagId = data.id;
-      rowsData = Array.isArray(data.rows_data) ? data.rows_data : [];
-      
-      const meses = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-      ];
-      const hoje = new Date();
-      const mesAtual = meses[hoje.getMonth()];
-      const anoAtual = hoje.getFullYear().toString();
-
-      const h = data.header_data || {};
-      let projetistaVal = h.projetista;
-      if (projetistaVal && !projetistaVal.trim().includes(' ')) {
-        projetistaVal = nomeCompleto;
+      // Nome completo do projetista-alvo
+      let nomeCompleto = '';
+      if (ehProprio) {
+        const cachedName = localStorage.getItem('igui_user_name');
+        nomeCompleto = cachedName ? cachedName.toUpperCase() : '';
+        if (!nomeCompleto) nomeCompleto = user.email.split('@')[0].toUpperCase();
+      } else {
+        nomeCompleto = (targetUserName || '').toUpperCase();
       }
-      document.getElementById('projetistaNome').value = projetistaVal || nomeCompleto;
-      document.getElementById('pagamentoMes').value = mesAtual;
-      document.getElementById('pagamentoAno').value = anoAtual;
-      
-      const v = data.values_data || {};
-      document.getElementById('val_ate2').value = v.val_ate2 ?? 70;
-      document.getElementById('val_3a4').value = v.val_3a4 ?? 80;
-      document.getElementById('val_mais5').value = v.val_mais5 ?? 95;
-      document.getElementById('val_360').value = v.val_360 ?? 90;
-      document.getElementById('val_360_3mod').value = v.val_360_3mod ?? 105;
-      document.getElementById('val_conceito').value = v.val_conceito ?? 150;
-      document.getElementById('val_alt_grandes').value = v.val_alt_grandes ?? 60;
-      
-      // Salva cabecalho com o novo mes/ano atualizado automaticamente
-      salvarCabecalho();
-    } else {
-      const meses = [
-        "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-        "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-      ];
-      const hoje = new Date();
-      const mesAtual = meses[hoje.getMonth()];
-      const anoAtual = hoje.getFullYear().toString();
 
-      rowsData = obterValoresIniciais();
-      document.getElementById('projetistaNome').value = nomeCompleto;
-      document.getElementById('pagamentoMes').value = mesAtual;
-      document.getElementById('pagamentoAno').value = anoAtual;
+      const { data: list, error } = await sb.from('payments').select('*').eq('user_id', alvoId);
+      if (error) throw error;
       
-      await salvarTudoSupabase();
-    }
+      if (list && list.length > 0) {
+        const data = list[0];
+        pagId = data.id;
+        rowsData = Array.isArray(data.rows_data) ? data.rows_data : [];
+        
+        const meses = [
+          "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+          "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ];
+        const hoje = new Date();
+        const mesAtual = meses[hoje.getMonth()];
+        const anoAtual = hoje.getFullYear().toString();
+
+        const h = data.header_data || {};
+        let projetistaVal = h.projetista;
+        if (projetistaVal && !projetistaVal.trim().includes(' ')) {
+          projetistaVal = nomeCompleto;
+        }
+        document.getElementById('projetistaNome').value = projetistaVal || nomeCompleto;
+        document.getElementById('pagamentoMes').value = mesAtual;
+        document.getElementById('pagamentoAno').value = anoAtual;
+        
+        const v = globalPrecos || data.values_data || {};
+        document.getElementById('val_ate2').value = v.val_ate2 ?? 70;
+        document.getElementById('val_3a4').value = v.val_3a4 ?? 80;
+        document.getElementById('val_mais5').value = v.val_mais5 ?? 95;
+        document.getElementById('val_360').value = v.val_360 ?? 90;
+        document.getElementById('val_360_3mod').value = v.val_360_3mod ?? 105;
+        document.getElementById('val_conceito').value = v.val_conceito ?? 150;
+        document.getElementById('val_alt_grandes').value = v.val_alt_grandes ?? 60;
+        
+        // Salva cabecalho com o novo mes/ano atualizado automaticamente
+        salvarCabecalho();
+      } else {
+        const meses = [
+          "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+          "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ];
+        const hoje = new Date();
+        const mesAtual = meses[hoje.getMonth()];
+        const anoAtual = hoje.getFullYear().toString();
+
+        rowsData = obterValoresIniciais();
+        document.getElementById('projetistaNome').value = nomeCompleto;
+        document.getElementById('pagamentoMes').value = mesAtual;
+        document.getElementById('pagamentoAno').value = anoAtual;
+        
+        const v = globalPrecos || {};
+        document.getElementById('val_ate2').value = v.val_ate2 ?? 70;
+        document.getElementById('val_3a4').value = v.val_3a4 ?? 80;
+        document.getElementById('val_mais5').value = v.val_mais5 ?? 95;
+        document.getElementById('val_360').value = v.val_360 ?? 90;
+        document.getElementById('val_360_3mod').value = v.val_360_3mod ?? 105;
+        document.getElementById('val_conceito').value = v.val_conceito ?? 150;
+        document.getElementById('val_alt_grandes').value = v.val_alt_grandes ?? 60;
+
+        await salvarTudoSupabase();
+      }
     }
   } catch (e) {
     console.error('Erro ao carregar dados do Supabase:', e);
@@ -906,10 +940,14 @@ function renderTabela() {
       tr.style.display = 'none';
     }
     
+    const autoBadge = row.auto ? '&#9889;<span style="font-size:9px;font-weight:500;color:#94a3b8;letter-spacing:.2px;">Auto</span>' : '';
     const detailsHtml = row.raw ? `
       <div class="extracted-info" style="margin-top: 2px; padding: 2px 6px;">
         <div>Piscina: ${badgesPiscina(row.raw)}</div>
-        <div style="margin-top: 2px;">Loja: <span class="badge-loja">${esc(lojaFranquia)}</span></div>
+        <div style="margin-top: 2px; display:flex; align-items:center; justify-content:space-between;">
+          <span>Loja: <span class="badge-loja">${esc(lojaFranquia)}</span></span>
+          ${row.auto ? '<span style="display:inline-flex;align-items:center;gap:2px;font-size:9px;color:#94a3b8;">&#9889;<span style="font-weight:500;letter-spacing:.2px;">Automático</span></span>' : ''}
+        </div>
       </div>
     ` : '';
 

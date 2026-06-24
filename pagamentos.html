@@ -352,6 +352,16 @@
     background-color: #e6f4ea !important;
     transition: background-color 0.25s ease;
   }
+  .pag-table tr.row-sem-tipo td:first-child {
+    border-left: 3px solid #f97316;
+  }
+  .badge-sem-tipo {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa;
+    border-radius: 999px; padding: 2px 10px; font-size: 11px;
+    font-weight: 700; cursor: pointer; transition: background 0.15s;
+  }
+  .badge-sem-tipo:hover { background: #ffedd5; }
 
   /* A4 Print Layout */
   @media print {
@@ -808,6 +818,7 @@
                 <button id="btnFiltroTipo360" class="btn-filter" onclick="definirFiltroTipo('Projeto 360º')">360º</button>
                 <button id="btnFiltroTipoConceito" class="btn-filter" onclick="definirFiltroTipo('Conceito')">Conceito</button>
                 <button id="btnFiltroTipoAltGrandes" class="btn-filter" onclick="definirFiltroTipo('Alterações GRANDES')">Alt. Grandes</button>
+                <span id="badgeSemTipo" class="badge-sem-tipo" onclick="filtrarSemTipo()" title="Clique para filtrar projetos sem tipo" style="display:none;">⚠ 0 sem tipo</span>
               </div>
 
               <!-- Projetista Filter (somente admin) -->
@@ -824,10 +835,15 @@
             <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Cole vários nomes de arquivos/linhas no padrão <strong>[ID]_[Modelo]_[Loja]_[Data]</strong> (um por linha):</p>
             <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;814546_Mod047_Feira de Santana_01-06-2026 (3) - iGUi&#10;Splash_Navagio_Abreu e Lima_11-05-2026 (1) - Splash&#10;_Keramos_Espanha_31-05-2026 (2) - Internacional" onkeydown="if(event.ctrlKey && event.key === 'Enter') { event.preventDefault(); processarLote(); }" oninput="atualizarFeedbackLote()"></textarea>
             <div id="bulkFeedback" style="display: none; padding: 2px 4px; margin-bottom: 8px;"></div>
-            <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
-              <button class="btn-action" onclick="exportarExcel()" title="Baixar planilha .xlsx com os projetos do mês selecionado" style="background:#16a34a;">⬇ Excel</button>
-              <button class="btn-action" onclick="abrirModalManual()" style="background:#8b5cf6;">+ Projeto Manual</button>
-              <button class="btn-action" onclick="processarLote()">Processar Lote</button>
+            <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center;">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <button class="btn-action" onclick="exportarExcel()" title="Baixar planilha .xlsx com os projetos do mês selecionado" style="background:#16a34a;">⬇ Excel</button>
+                <button class="btn-action" onclick="abrirModalManual()" style="background:#8b5cf6;">+ Projeto Manual</button>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span id="bulkCount" style="font-size:11px; font-weight:600; color:var(--muted); display:none;"></span>
+                <button class="btn-action" onclick="processarLote()">Processar Lote</button>
+              </div>
             </div>
           </div>
 

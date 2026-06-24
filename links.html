@@ -386,10 +386,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ── Load data ─────────────────────────────────────────
 async function carregarTudo() {
   try {
-    [todasCategorias, todosLinks] = await Promise.all([
+    const [cats, links] = await Promise.all([
       sbListarCategorias(),
       sbListarLinks()
     ]);
+    todasCategorias = cats;
+    todosLinks = (links || []).filter(l => l.category !== 'SystemConfig');
     animarPastas = true; // entrada em cascata ao carregar do banco
     renderTudo();
   } catch (e) {
