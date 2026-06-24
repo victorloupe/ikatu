@@ -1745,28 +1745,63 @@ async function _executarSalvarSessao() {
 
 let _previewUrl = null;
 
-function abrirPreviewPrancha(blobUrl) {
-  _previewUrl = blobUrl;
-  const frame = document.getElementById('previewFrame');
-  if (frame) frame.src = blobUrl;
+async function abrirPreviewPrancha(pdfArrayBuffer) {
+  _previewUrl = pdfArrayBuffer;
   document.getElementById('previewModal')?.classList.add('show');
+  const container = document.getElementById('previewPages');
+  container.innerHTML = '<div style="color:#ccc;padding:32px;font-size:14px;">Carregando visualização...</div>';
+  try {
+    const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+    const pdf = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
+    container.innerHTML = '';
+    for (let p = 1; p <= pdf.numPages; p++) {
+      const page = await pdf.getPage(p);
+      const vp = page.getViewport({ scale: 1.6 });
+      const canvas = document.createElement('canvas');
+      canvas.width = vp.width;
+      canvas.height = vp.height;
+      canvas.style.cssText = 'max-width:100%;box-shadow:0 2px 12px rgba(0,0,0,.5);background:#fff;';
+      container.appendChild(canvas);
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+    }
+  } catch(e) {
+    container.innerHTML = `<div style="color:#f88;padding:32px;">Erro ao renderizar: ${e.message}</div>`;
+  }
 }
 
 function fecharPreviewPrancha() {
   document.getElementById('previewModal')?.classList.remove('show');
-  const frame = document.getElementById('previewFrame');
-  if (frame) frame.src = 'about:blank';
+  const container = document.getElementById('previewPages');
+  if (container) container.innerHTML = '';
   _previewUrl = null;
 }
 
 function abrirPreviewNovaGuia() {
-  if (_previewUrl) window.open(_previewUrl, '_blank');
+  if (!_previewUrl) return;
+  const blob = new Blob([_previewUrl], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
 }
 
 // Confirmar a partir da pré-visualização: fecha o modal e gera o PDF final
 function confirmarPreview() {
   fecharPreviewPrancha();
   gerarPDF();
+}
+
+// Baixar o PDF direto do ArrayBuffer já gerado no preview
+function executarGerarPDFConfirm() {
+  if (_previewUrl) {
+    const blob = new Blob([_previewUrl], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'PRANCHA.pdf';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }
+  fecharPreviewPrancha();
 }
 
 function setLoad(msg, pct) {
@@ -1830,6 +1865,7 @@ Object.assign(window, {
   fecharPreviewPrancha,
   abrirPreviewNovaGuia,
   confirmarPreview,
+  executarGerarPDFConfirm,
   onLojaTipoChange,
   adicionarVista3D,
   removerVista3D,

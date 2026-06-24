@@ -543,8 +543,8 @@ export async function executarGerarPDF(preview = false) {
     const namePDF = `PRANCHA_${lojaRaw}_${modelo_}_${id}_${data}.pdf`.toUpperCase();
 
     if (preview) {
-      const pdfDataUri = doc.output('datauristring');
-      if (window.abrirPreviewPrancha) window.abrirPreviewPrancha(pdfDataUri);
+      const pdfBytes = doc.output('arraybuffer');
+      if (window.abrirPreviewPrancha) window.abrirPreviewPrancha(pdfBytes);
     } else {
       doc.save(namePDF);
     }
