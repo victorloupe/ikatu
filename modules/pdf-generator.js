@@ -543,9 +543,8 @@ export async function executarGerarPDF(preview = false) {
     const namePDF = `PRANCHA_${lojaRaw}_${modelo_}_${id}_${data}.pdf`.toUpperCase();
 
     if (preview) {
-      const pdfBlob = doc.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      if (window.abrirPreviewPrancha) window.abrirPreviewPrancha(blobUrl);
+      const pdfDataUri = doc.output('datauristring');
+      if (window.abrirPreviewPrancha) window.abrirPreviewPrancha(pdfDataUri);
     } else {
       doc.save(namePDF);
     }

@@ -1756,7 +1756,7 @@ function fecharPreviewPrancha() {
   document.getElementById('previewModal')?.classList.remove('show');
   const frame = document.getElementById('previewFrame');
   if (frame) frame.src = 'about:blank';
-  if (_previewUrl) { try { URL.revokeObjectURL(_previewUrl); } catch {} _previewUrl = null; }
+  _previewUrl = null;
 }
 
 function abrirPreviewNovaGuia() {
