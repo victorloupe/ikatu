@@ -1,6 +1,14 @@
 import { S } from './state.js';
 import { cropB64 } from './image-editor.js';
 
+function b64ToDataUri(b64) {
+  if (!b64) return '';
+  if (b64.startsWith('data:')) return b64;
+  if (b64.startsWith('http')) return b64;
+  const mime = b64.startsWith('iVBOR') ? 'image/png' : 'image/jpeg';
+  return `data:${mime};base64,${b64}`;
+}
+
 // ═══════════════════════════════════════════════════
 // MOTOR DE GERAÇÃO DO PDF (jsPDF)
 // ═══════════════════════════════════════════════════
@@ -42,7 +50,7 @@ async function insFit(doc, b64, x, y, w, h) {
       res();
     };
     img.onerror = () => res();
-    img.src = 'data:image/jpeg;base64,' + b64;
+    img.src = b64ToDataUri(b64);
   });
 }
 

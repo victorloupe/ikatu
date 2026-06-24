@@ -1751,8 +1751,8 @@ async function abrirPreviewPrancha(pdfArrayBuffer) {
   const container = document.getElementById('previewPages');
   container.innerHTML = '<div style="color:#ccc;padding:32px;font-size:14px;">Carregando visualização...</div>';
   try {
-    const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+    const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.min.mjs');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149/pdf.worker.min.mjs';
     const pdf = await pdfjsLib.getDocument({ data: pdfArrayBuffer }).promise;
     container.innerHTML = '';
     for (let p = 1; p <= pdf.numPages; p++) {

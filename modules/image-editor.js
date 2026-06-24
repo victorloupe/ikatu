@@ -16,9 +16,16 @@ export const cropState = {
   imgHeight: 0
 };
 
-// Auxiliar de formatação base64
+// Auxiliar de formatação base64 (detecta PNG vs JPEG pelo header base64)
+function b64ToDataUri(b64) {
+  if (!b64) return '';
+  if (b64.startsWith('data:')) return b64;
+  if (b64.startsWith('http')) return b64;
+  const mime = b64.startsWith('iVBOR') ? 'image/png' : 'image/jpeg';
+  return `data:${mime};base64,${b64}`;
+}
 function imgSrc(val) {
-  return 'data:image/jpeg;base64,' + val;
+  return b64ToDataUri(val);
 }
 
 export function abrirEditorComImagemExistente(grp, idx) {
@@ -284,7 +291,7 @@ export function cropB64(b64, cw, ch, q=0.88) {
       res(cv.toDataURL('image/jpeg',q).split(',')[1]);
     };
     img.onerror=()=>res(null);
-    img.src='data:image/jpeg;base64,'+b64;
+    img.src=b64ToDataUri(b64);
   });
 }
 
