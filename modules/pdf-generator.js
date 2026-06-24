@@ -600,9 +600,11 @@ export async function executarGerarPDF(preview = false) {
                 modelo: form.modelo || '',
                 data: _dataHoje,        // data de recebimento — necessário para filtro por mês
                 tipo: form.tipo_projeto || '',
+                data_envio: _dataHoje,
                 obs: '',
                 alt: false,
-                conf: true,
+                conf: false,
+                auto: true,
                 prancha_id: S._editandoId || null,
               };
               if (window.sbAdicionarLinhaAoPagamento) {
