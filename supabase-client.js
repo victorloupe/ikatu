@@ -1604,6 +1604,8 @@ async function sbSalvarPrecosProjeto(precos) {
 // ── Utilitário global de escape HTML ────────────────────────────────────────
 // Função única compartilhada por todos os módulos (pagamentos, app, projetos,
 // avisos, chat). Substitui as versões locais esc/escapeHtml/escHtml.
+window.sbAdicionarLinhaAoPagamento = sbAdicionarLinhaAoPagamento;
+window.sbResolveImagesForPDF = sbResolveImagesForPDF;
 async function sbAdicionarLinhaAoPagamento(userId, rowObj) {
   const { data: list, error: listErr } = await sb.from('payments')
     .select('*').eq('user_id', userId);

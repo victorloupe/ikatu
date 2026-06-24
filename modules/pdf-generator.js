@@ -491,7 +491,8 @@ export async function executarGerarPDF(preview = false) {
         doc.setFillColor(...rgb(C.lightbg));
         doc.setDrawColor(...rgb(C.line));
         doc.rect(cx + 2, cy + 2, imgSize, imgSize, 'FD');
-        if (item.img) await insFit(doc, item.img, cx + 2, cy + 2, imgSize, imgSize);
+        const IMG_PAD = 1.5;
+        if (item.imagem) await insFit(doc, item.imagem, cx + 2 + IMG_PAD, cy + 2 + IMG_PAD, imgSize - IMG_PAD * 2, imgSize - IMG_PAD * 2);
 
         const TX = cx + imgSize + 6;
         const TY1 = cy + 6.5;
@@ -580,15 +581,26 @@ export async function executarGerarPDF(preview = false) {
           if (window.sbGetUser) {
             const user = await window.sbGetUser();
             if (user && !S._adicionadoEmPagamentos) {
+              // Monta raw no formato esperado pelo pagamentos.js: ID_Piscina_Loja
+              const _pad = n => String(n).padStart(2, '0');
+              const _hoje = new Date();
+              const _dataHoje = `${_pad(_hoje.getDate())}/${_pad(_hoje.getMonth() + 1)}/${_hoje.getFullYear()}`;
+              const _raw = [form.id_projeto || '', form.modelo || '', form.loja || ''].join('_');
               const rowPag = {
-                id_projeto: id,
-                cliente: form.cliente,
-                loja: form.loja,
-                modelo: form.modelo,
-                prancha_id: S._editandoId
+                raw: _raw,
+                cliente: form.cliente || '',
+                loja: form.loja || '',
+                modelo: form.modelo || '',
+                data: _dataHoje,        // data de recebimento — necessário para filtro por mês
+                tipo: form.tipo_projeto || '',
+                obs: '',
+                alt: false,
+                conf: true,
+                prancha_id: S._editandoId || null,
               };
               if (window.sbAdicionarLinhaAoPagamento) {
-                await window.sbAdicionarLinhaAoPagamento(user.id, rowPag);
+                const targetUserId = form.usuario_logado_id || user.id;
+                await window.sbAdicionarLinhaAoPagamento(targetUserId, rowPag);
                 S._adicionadoEmPagamentos = true;
                 setTimeout(() => {
                   if (window.showToast) window.showToast('📋 Projeto inserido automaticamente em Pagamentos!', 'info');

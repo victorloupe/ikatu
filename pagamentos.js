@@ -940,7 +940,6 @@ function renderTabela() {
       tr.style.display = 'none';
     }
     
-    const autoBadge = row.auto ? '&#9889;<span style="font-size:9px;font-weight:500;color:#94a3b8;letter-spacing:.2px;">Auto</span>' : '';
     const detailsHtml = row.raw ? `
       <div class="extracted-info" style="margin-top: 2px; padding: 2px 6px;">
         <div>Piscina: ${badgesPiscina(row.raw)}</div>

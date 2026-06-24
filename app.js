@@ -39,7 +39,23 @@ function getFormData() {
     ceramica_nome:    v('ceramica_nome'),
     ceramica_tamanho: v('ceramica_tamanho'),
     ceramica_rejunte: v('ceramica_rejunte'),
-    usuario_logado:   v('usuario_logado'),
+    // Para admin: SELECT usa UUID como value; extraímos o nome da opção selecionada
+    usuario_logado:   (() => {
+      const el = document.getElementById('usuario_logado');
+      if (!el) return '';
+      if (el.tagName === 'SELECT' && el.selectedIndex >= 0) {
+        const uid = el.value;
+        const u = (window.usuariosList || []).find(u => u.id === uid);
+        if (u) return u.name || u.email;
+        // Fallback: texto da opção sem o sufixo de role
+        return (el.options[el.selectedIndex]?.textContent || '').replace(/ [🟣🟢].+$/, '').trim();
+      }
+      return el.value;
+    })(),
+    usuario_logado_id: (() => {
+      const el = document.getElementById('usuario_logado');
+      return (el && el.tagName === 'SELECT') ? el.value : '';
+    })(),
     tipo_projeto:     v('tipo_projeto'),
     loja_tipo:        v('loja_tipo'),
   };
@@ -328,20 +344,19 @@ function restaurar() {
   // Form fields
   const f = d.form || {};
   Object.entries(f).forEach(([k, val]) => {
+    if (k === 'usuario_logado_id') return; // tratado após o loop
     const el = document.getElementById(k);
-    if (el) {
-      if (el.tagName === 'SELECT' && k === 'usuario_logado' && val) {
-        const exists = Array.from(el.options).some(opt => opt.value === val);
-        if (!exists) {
-          const opt = document.createElement('option');
-          opt.value = val;
-          opt.textContent = val;
-          el.appendChild(opt);
-        }
-      }
-      el.value = val;
-    }
+    if (el) el.value = val || '';
   });
+  // Restaurar seleção do projetista pelo UUID (mais preciso que nome)
+  const selULr = document.getElementById('usuario_logado');
+  if (selULr && selULr.tagName === 'SELECT') {
+    const uid = f.usuario_logado_id;
+    if (uid && Array.from(selULr.options).some(o => o.value === uid)) {
+      selULr.value = uid;
+    }
+    // Retrocompatibilidade: saves antigos não têm usuario_logado_id; manter valor atual
+  }
 
   // Atualizar logo do header conforme franquia restaurada
   if (f.loja_tipo) onLojaTipoChange(f.loja_tipo);
@@ -1588,7 +1603,12 @@ function confirmarNovaPrancha() {
   // Repovoar usuario_logado
   const usuarioLogadoEl = document.getElementById('usuario_logado');
   if (usuarioLogadoEl) {
-    usuarioLogadoEl.value = document.getElementById('hdrUser')?.textContent || '';
+    // Para SELECT (admin): volta ao primeiro item (o próprio admin)
+    if (usuarioLogadoEl.tagName === 'SELECT') {
+      usuarioLogadoEl.selectedIndex = 0;
+    } else {
+      usuarioLogadoEl.value = document.getElementById('hdrUser')?.textContent || '';
+    }
     usuarioLogadoEl.dispatchEvent(new Event('change'));
   }
   // Resetar área dinâmica da cerâmica para modo padrão (texto)
@@ -1852,50 +1872,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       select.id = 'usuario_logado';
       select.style.cssText = 'background:#ffffff; cursor:default;';
       
-      // Copiar valor atual
-      const currentVal = usuarioLogadoEl ? usuarioLogadoEl.value : '';
-
       // Substituir no DOM
       if (usuarioLogadoEl) {
         const parent = usuarioLogadoEl.parentElement;
         if (parent) parent.replaceChild(select, usuarioLogadoEl);
       }
 
-      // Adicionar o usuário atual inicialmente para evitar lista vazia
+      // Opção provisória com UUID do admin (será substituída pela lista completa)
       const optSelf = document.createElement('option');
-      optSelf.value = profileName;
+      optSelf.value = _profile.id; // UUID do admin logado
       optSelf.textContent = profileName + ' 🟣 ADMIN';
       select.appendChild(optSelf);
-      if (currentVal && currentVal !== profileName) {
-        const optVal = document.createElement('option');
-        optVal.value = currentVal;
-        optVal.textContent = currentVal;
-        select.appendChild(optVal);
-      }
-      select.value = currentVal || profileName;
+      select.value = _profile.id;
 
-      // Buscar todos os usuários assincronamente
+      // Iniciar busca de usuários em paralelo com initDB (será aguardada antes do cloud load)
       if (window.sbListarUsuarios) {
-        window.sbListarUsuarios().then(usuarios => {
-          window.usuariosList = usuarios;
-          const activeVal = select.value;
-          select.innerHTML = '';
-          usuarios.forEach(u => {
-            const opt = document.createElement('option');
-            opt.value = u.name || u.email;
-            const roleSuffix = u.role === 'admin' ? ' 🟣 ADMIN' : ' 🟢 USER';
-            opt.textContent = (u.name || u.email) + roleSuffix;
-            select.appendChild(opt);
-          });
-          // Garantir que o valor ativo está na lista
-          if (activeVal && !usuarios.some(u => (u.name || u.email) === activeVal)) {
-            const opt = document.createElement('option');
-            opt.value = activeVal;
-            opt.textContent = activeVal;
-            select.appendChild(opt);
-          }
-          select.value = activeVal;
-        }).catch(err => console.warn('Erro ao carregar lista de projetistas:', err));
+        window._usersListPromise = window.sbListarUsuarios();
       }
     }
   } catch(e) { console.warn('Profile load error:', e); }
@@ -1927,6 +1919,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initDB();
   } catch(e) { console.warn('DB init error', e); }
 
+  // Aguardar lista de usuários (iniciada em paralelo) antes do cloud load
+  // Garante que o SELECT de projetista esteja populado antes de restaurar o valor salvo
+  if (window._usersListPromise) {
+    try {
+      const usuarios = await window._usersListPromise;
+      window.usuariosList = usuarios;
+      const selUL = document.getElementById('usuario_logado');
+      if (selUL && selUL.tagName === 'SELECT') {
+        // Preservar seleção atual (por UUID ou por nome para retrocompatibilidade)
+        const activeVal = selUL.value;
+        selUL.innerHTML = '';
+        usuarios.forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.id; // UUID — evita colisão entre usuários com mesmo nome
+          const roleSuffix = u.role === 'admin' ? ' 🟣 ADMIN' : ' 🟢 USER';
+          opt.textContent = (u.name || u.email) + roleSuffix;
+          selUL.appendChild(opt);
+        });
+        // Tentar restaurar pelo UUID; se não encontrar, sem extra option (UUID inválido não deve aparecer)
+        selUL.value = activeVal;
+      }
+    } catch(e) { console.warn('Erro ao carregar lista de projetistas:', e); }
+    window._usersListPromise = null;
+  }
+
   // Verificar se há um projeto vindo da página de pranchas (cloud load)
   const _cloudLoad = sessionStorage.getItem('igui_cloud_load');
   if (_cloudLoad) {
@@ -1936,20 +1953,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Popular estado S com os dados deserializados
       if (sessao.form) {
         Object.entries(sessao.form).forEach(([k, v]) => {
+          if (k === 'usuario_logado_id') return; // tratado após o loop
           const el = document.getElementById(k);
-          if (el) {
-            if (el.tagName === 'SELECT' && k === 'usuario_logado' && v) {
-              const exists = Array.from(el.options).some(opt => opt.value === v);
-              if (!exists) {
-                const opt = document.createElement('option');
-                opt.value = v;
-                opt.textContent = v;
-                el.appendChild(opt);
-              }
-            }
-            el.value = v || '';
-          }
+          if (el) el.value = v || '';
         });
+        // Restaurar projetista pelo UUID (saves novos); ignora saves antigos sem o campo
+        const selCL = document.getElementById('usuario_logado');
+        if (selCL && selCL.tagName === 'SELECT') {
+          const uid = sessao.form.usuario_logado_id;
+          if (uid && Array.from(selCL.options).some(o => o.value === uid)) {
+            selCL.value = uid;
+          }
+        }
         if (sessao.form.loja_tipo) onLojaTipoChange(sessao.form.loja_tipo);
       }
       if (sessao.imgs) {
