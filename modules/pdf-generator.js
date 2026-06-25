@@ -36,6 +36,7 @@ async function insFit(doc, b64, x, y, w, h) {
   if (!b64) return;
   return new Promise(res => {
     const img = new Image();
+    img.crossOrigin = 'anonymous'; // evita canvas tainted se URL escapar do sbResolveImagesForPDF
     img.onload = () => {
       const r = img.width / img.height, rc = w / h;
       let dw, dh, dx, dy;
@@ -46,7 +47,9 @@ async function insFit(doc, b64, x, y, w, h) {
       const cx = cv.getContext('2d');
       cx.fillStyle = '#ffffff'; cx.fillRect(0, 0, cv.width, cv.height);
       cx.drawImage(img, 0, 0, cv.width, cv.height);
-      doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', dx, dy, dw, dh);
+      try {
+        doc.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', dx, dy, dw, dh);
+      } catch(e) { console.warn('insFit canvas error:', e); }
       res();
     };
     img.onerror = () => res();

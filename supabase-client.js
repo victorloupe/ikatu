@@ -82,9 +82,10 @@ function sbInjetarModalSenha() {
     
     <!-- Abas do Modal -->
     <div style="display:flex; border-bottom:1.5px solid #edf2f6; gap:16px; margin-bottom:4px;">
-      <button class="settings-tab-btn active" id="tabBtnSenha" onclick="abrirAbaModal('senha')" style="background:none; border:none; border-bottom:3px solid var(--blue); padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; color:var(--blue); cursor:pointer; transition:all 0.15s; outline:none;">⚙️ Senha</button>
-      <button class="settings-tab-btn" id="tabBtnSugestao" onclick="abrirAbaModal('sugestao')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none;">💡 Sugerir Melhorias</button>
-      <button class="settings-tab-btn" id="tabBtnSobre" onclick="abrirAbaModal('sobre')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none; margin-left:auto;">✨ Sobre</button>
+      <button class="settings-tab-btn active" id="tabBtnSenha" onclick="abrirAbaModal('senha')" style="background:none; border:none; border-bottom:3px solid var(--blue); padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:700; color:var(--blue); cursor:pointer; transition:all 0.15s; outline:none;"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5 7V5a3 3 0 016 0v2"/></svg>Senha</button>
+      <button class="settings-tab-btn" id="tabBtnSugestao" onclick="abrirAbaModal('sugestao')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none;"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;"><path d="M8 2a4 4 0 00-2 7.46V11h4V9.46A4 4 0 008 2z"/><path d="M6 13h4M6.5 15h3"/></svg>Sugerir Melhorias</button>
+      <button class="settings-tab-btn" id="tabBtnDados" onclick="abrirAbaModal('dados')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none;"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;"><circle cx="8" cy="5" r="2.5"/><path d="M2 14c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5"/></svg>Meus Dados</button>
+      <button class="settings-tab-btn" id="tabBtnSobre" onclick="abrirAbaModal('sobre')" style="background:none; border:none; border-bottom:3px solid transparent; padding:8px 4px; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; color:#7f8c8d; cursor:pointer; transition:all 0.15s; outline:none; margin-left:auto;"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-1px;margin-right:4px;"><circle cx="8" cy="8" r="6"/><path d="M8 7v4.5M8 5.2v.3"/></svg>Sobre</button>
     </div>
 
     <!-- Aba 1: Senha -->
@@ -224,9 +225,96 @@ function sbInjetarModalSenha() {
           <span style="font-size:11px;font-weight:700;color:#15803d;">Suporte</span>
         </a>
       </div>
+    </div>
+
+    <!-- Aba 4: Meus Dados -->
+    <div id="abaConfigDados" style="display:none; flex-direction:column; gap:0; height:460px; overflow:hidden;">
+
+      <p style="font-size:11.5px; color:#6a8090; margin:0 0 14px;">Seus dados pessoais ficam visíveis para os administradores.</p>
+
+      <!-- Nome Completo -->
+      <div style="position:relative; margin-bottom:13px;">
+        <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Nome Completo</label>
+        <input type="text" id="dadosNomeCompleto" placeholder="Seu nome completo" style="width:100%; padding:8px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+      </div>
+
+      <!-- Data de Nascimento + Idade -->
+      <div style="display:grid; grid-template-columns:1fr 80px; gap:8px; margin-bottom:13px;">
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Data de Nascimento</label>
+          <input type="date" id="dadosDataNasc" oninput="calcularIdadeCampo()" style="width:100%; padding:8px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Idade</label>
+          <input type="text" id="dadosIdade" readonly placeholder="—" style="width:100%; padding:8px 12px; border:1.5px solid #edf2f6; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box; background:#f0f4f8; color:#4a5a6a; font-weight:700;">
+        </div>
+      </div>
+
+      <!-- CEP + Buscar -->
+      <div style="display:grid; grid-template-columns:1fr auto; gap:8px; align-items:center; margin-bottom:13px;">
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">CEP</label>
+          <input type="text" id="dadosCEP" placeholder="00000-000" maxlength="9" oninput="mascararCEP(this)" style="width:100%; padding:8px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+        <button onclick="buscarCEP()" style="padding:8px 14px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:12px; cursor:pointer; border:1.5px solid var(--blue); background:#fff; color:var(--blue); white-space:nowrap;">🔍 Buscar</button>
+      </div>
+
+      <!-- Rua + Número -->
+      <div style="display:grid; grid-template-columns:1fr 90px; gap:8px; margin-bottom:13px;">
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Rua / Logradouro</label>
+          <input type="text" id="dadosRua" placeholder="Nome da rua" style="width:100%; padding:8px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Número</label>
+          <input type="text" id="dadosNumero" placeholder="Nº" style="width:100%; padding:8px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- Cidade + Estado -->
+      <div style="display:grid; grid-template-columns:1fr 90px; gap:8px; margin-bottom:13px;">
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Cidade</label>
+          <input type="text" id="dadosCidade" placeholder="Sua cidade" style="width:100%; padding:8px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Estado</label>
+          <select id="dadosEstado" style="width:100%; padding:8px 8px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box; background:#fff;">
+            <option value="">—</option>
+            <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option>
+            <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+            <option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option>
+            <option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+            <option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option>
+            <option>SE</option><option>TO</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tamanho Camisa + Nº Chinelo -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:0;">
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Tamanho Camisa</label>
+          <select id="dadosCamisa" style="width:100%; padding:8px 8px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box; background:#fff;">
+            <option value="">—</option>
+            <option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>XGG</option>
+          </select>
+        </div>
+        <div style="position:relative;">
+          <label style="position:absolute; top:-7px; left:10px; background:#fff; padding:0 4px; font-size:10px; font-weight:700; color:#6a8090; letter-spacing:.3px; line-height:1; white-space:nowrap; z-index:1;">Nº Chinelo</label>
+          <input type="number" id="dadosChinelo" min="30" max="48" placeholder="Ex: 40" style="width:100%; padding:8px 12px; border:1.5px solid #c8d4dc; border-radius:7px; font-family:'Inter',sans-serif; font-size:13px; outline:none; box-sizing:border-box;">
+        </div>
+      </div>
+
+      <!-- Botões rodapé -->
+      <div style="border-top:1.5px solid #edf2f6; padding-top:12px; margin-top:auto; display:flex; gap:10px; justify-content:flex-end; flex-shrink:0;">
+        <button onclick="fecharModalSenha()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:#f0f4f8; color:#6a8090;">Cancelar</button>
+        <button onclick="salvarMeusDados()" style="padding:9px 20px; border-radius:7px; font-family:'Inter',sans-serif; font-weight:700; font-size:13px; cursor:pointer; border:none; background:var(--blue); color:#fff;">💾 Salvar Dados</button>
+      </div>
+    </div>
 
     </div></div>`;
-  
+
   const modal = div.firstElementChild;
   document.body.appendChild(modal);
 
@@ -239,6 +327,7 @@ function abrirAbaModal(tab) {
   const abas = {
     senha:    { btn: 'tabBtnSenha',    painel: 'abaConfigSenha'    },
     sugestao: { btn: 'tabBtnSugestao', painel: 'abaConfigSugestao' },
+    dados:    { btn: 'tabBtnDados',    painel: 'abaConfigDados'    },
     sobre:    { btn: 'tabBtnSobre',    painel: 'abaConfigSobre'    },
   };
   Object.entries(abas).forEach(([key, ids]) => {
@@ -251,9 +340,8 @@ function abrirAbaModal(tab) {
     btn.style.borderColor = ativo ? 'var(--blue)' : 'transparent';
     btn.style.fontWeight = ativo ? '700' : '600';
     painel.style.display = ativo ? 'flex' : 'none';
-    if (ativo && key === 'sugestao') {
-      carregarMinhasSugestoes();
-    }
+    if (ativo && key === 'sugestao') carregarMinhasSugestoes();
+    if (ativo && key === 'dados')    carregarMeusDados();
   });
 }
 
@@ -432,6 +520,93 @@ async function carregarMinhasSugestoes() {
     container.innerHTML = `<div style="color:#e74c3c; text-align:center; padding:10px;">Erro ao carregar: ${e.message}</div>`;
   }
 }
+
+// ── Meus Dados ──
+function calcularIdadeCampo() {
+  const input = document.getElementById('dadosDataNasc');
+  const idadeEl = document.getElementById('dadosIdade');
+  if (!input || !idadeEl || !input.value) { if (idadeEl) idadeEl.value = ''; return; }
+  const nasc = new Date(input.value);
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - nasc.getFullYear();
+  const m = hoje.getMonth() - nasc.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+  idadeEl.value = idade >= 0 ? idade + ' anos' : '';
+}
+
+function mascararCEP(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
+  el.value = v;
+}
+
+async function buscarCEP() {
+  const cep = (document.getElementById('dadosCEP')?.value || '').replace(/\D/g, '');
+  if (cep.length !== 8) { alert('CEP inválido. Use 8 dígitos.'); return; }
+  try {
+    const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+    const d = await r.json();
+    if (d.erro) { alert('CEP não encontrado.'); return; }
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('dadosRua', d.logradouro);
+    set('dadosCidade', d.localidade);
+    const sel = document.getElementById('dadosEstado');
+    if (sel && d.uf) sel.value = d.uf;
+  } catch(e) { alert('Erro ao buscar CEP: ' + e.message); }
+}
+
+async function carregarMeusDados() {
+  try {
+    const session = await sbGetSession();
+    if (!session?.user) return;
+    const { data } = await sb.from('profiles').select('nome_completo,data_nascimento,cep,rua,numero,cidade,estado,tamanho_camisa,tamanho_chinelo').eq('id', session.user.id).single();
+    if (!data) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    set('dadosNomeCompleto', data.nome_completo);
+    set('dadosDataNasc', data.data_nascimento);
+    set('dadosCEP', data.cep);
+    set('dadosRua', data.rua);
+    set('dadosNumero', data.numero);
+    set('dadosCidade', data.cidade);
+    set('dadosChinelo', data.tamanho_chinelo);
+    const selEstado = document.getElementById('dadosEstado');
+    if (selEstado) selEstado.value = data.estado || '';
+    const selCamisa = document.getElementById('dadosCamisa');
+    if (selCamisa) selCamisa.value = data.tamanho_camisa || '';
+    calcularIdadeCampo();
+  } catch(e) { console.warn('Erro ao carregar dados pessoais:', e); }
+}
+
+async function salvarMeusDados() {
+  try {
+    const session = await sbGetSession();
+    if (!session?.user) return;
+    const get = id => document.getElementById(id)?.value?.trim() || null;
+    const payload = {
+      nome_completo:   get('dadosNomeCompleto'),
+      data_nascimento: get('dadosDataNasc') || null,
+      cep:             get('dadosCEP'),
+      rua:             get('dadosRua'),
+      numero:          get('dadosNumero'),
+      cidade:          get('dadosCidade'),
+      estado:          get('dadosEstado'),
+      tamanho_camisa:  get('dadosCamisa'),
+      tamanho_chinelo: get('dadosChinelo'),
+    };
+    const { error } = await sb.from('profiles').update(payload).eq('id', session.user.id);
+    if (error) throw error;
+    fecharModalSenha();
+    const toast = document.querySelector('#toast') || null;
+    if (toast) { toast.textContent = '✅ Dados salvos com sucesso!'; toast.className = 'toast ok show'; setTimeout(() => toast.classList.remove('show'), 4000); }
+    else alert('Dados salvos com sucesso!');
+  } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+window.calcularIdadeCampo = calcularIdadeCampo;
+window.mascararCEP = mascararCEP;
+window.buscarCEP = buscarCEP;
+window.salvarMeusDados = salvarMeusDados;
+window.carregarMeusDados = carregarMeusDados;
 
 window.abrirModalSenha = abrirModalSenha;
 window.fecharModalSenha = fecharModalSenha;

@@ -46,6 +46,18 @@ CREATE TABLE IF NOT EXISTS profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Dados pessoais dos usuários (visíveis para admins, editáveis pelo próprio usuário)
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS nome_completo    TEXT,
+  ADD COLUMN IF NOT EXISTS data_nascimento  DATE,
+  ADD COLUMN IF NOT EXISTS cep              TEXT,
+  ADD COLUMN IF NOT EXISTS rua              TEXT,
+  ADD COLUMN IF NOT EXISTS numero           TEXT,
+  ADD COLUMN IF NOT EXISTS cidade           TEXT,
+  ADD COLUMN IF NOT EXISTS estado           TEXT,
+  ADD COLUMN IF NOT EXISTS tamanho_camisa   TEXT,
+  ADD COLUMN IF NOT EXISTS tamanho_chinelo  TEXT;
+
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "profiles_select_own" ON profiles;

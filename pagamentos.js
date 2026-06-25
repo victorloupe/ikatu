@@ -1353,38 +1353,40 @@ function recalcularFinanceiro() {
     }
 
     const num = nProjeto(row.raw);
-    
+    // Quando for projeto Inter., exibe o nome da loja no lugar de "Inter."
+    const label = num === 'Inter.' ? (loja(row.raw) || 'Inter.') : num;
+
     // Contabilidade de tipos
     if (row.tipo === 'Até 02 Projetos') qty_ate2++;
     else if (row.tipo === '03 a 4 Projetos') {
       qty_3a4++;
-      if (num) list_3_piscinas.push(num);
+      if (label) list_3_piscinas.push(label);
     }
     else if (row.tipo === 'Mais que 05 Projetos') {
       qty_mais5++;
-      if (num) list_3_piscinas.push(num);
+      if (label) list_3_piscinas.push(label);
     }
     else if (row.tipo === 'Projeto 360º') {
       qty_360++;
-      if (num) list_360.push(num);
+      if (label) list_360.push(label);
     }
     else if (row.tipo === 'Projeto 360º (3 Modificações)') {
       qty_360_3mod++;
-      if (num) list_360.push(num);
+      if (label) list_360.push(label);
     }
     else if (row.tipo === 'Conceito') {
       qty_conceito++;
-      if (num) list_conceito.push(num);
+      if (label) list_conceito.push(label);
     }
     // Contabilidade para Alterações GRANDES (seja pelo tipo ou pelo checkbox "Grande Alteração")
     let isAltGrande = (row.tipo === 'Alterações GRANDES');
     if (row.alt) {
       isAltGrande = true;
     }
-    
+
     if (isAltGrande) {
       qty_alt_grandes++;
-      if (num) list_alt_grandes.push(num);
+      if (label) list_alt_grandes.push(label);
     }
   });
 

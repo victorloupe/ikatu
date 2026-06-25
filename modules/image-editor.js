@@ -277,6 +277,7 @@ export function compressImg(source, maxW, quality) {
 export function cropB64(b64, cw, ch, q=0.88) {
   return new Promise(res => {
     const img = new Image();
+    img.crossOrigin = 'anonymous'; // evita canvas tainted se URL escapar do sbResolveImagesForPDF
     img.onload = () => {
       const cr=cw/ch, ir=img.width/img.height;
       let sx,sy,sw,sh;

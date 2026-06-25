@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin — Ikatu</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260624l"></script>
+<script src="supabase-client.js?v=20260625d"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="styles.css?v=20260624l">
@@ -599,6 +599,24 @@
   </div>
 </div>
 
+<!-- Modal dados pessoais do usuário -->
+<div class="modal-overlay" id="modalDadosUsuario">
+  <div class="modal-box" style="max-width:480px; width:100%;">
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div id="dadosUserAvatar" style="width:44px; height:44px; border-radius:50%; background:var(--blue); color:#fff; font-family:Inter Tight,sans-serif; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">?</div>
+      <div>
+        <div id="dadosUserNome" style="font-size:15px; font-weight:700; color:#1a2a3a;">—</div>
+        <div id="dadosUserEmail" style="font-size:12px; color:#8a9aaa;">—</div>
+      </div>
+      <div id="dadosUserAniv" style="margin-left:auto; flex-shrink:0;"></div>
+    </div>
+    <div id="dadosUserConteudo" style="display:flex; flex-direction:column; gap:10px; font-size:13px;"></div>
+    <div style="margin-top:18px; display:flex; justify-content:flex-end;">
+      <button class="btn-modal cancel" onclick="fecharDadosUsuario()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -745,7 +763,7 @@ function linhaUsuario(u) {
     const data = new Date(u.created_at).toLocaleDateString('pt-BR');
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td style="padding-left: 8px;"><strong>${escHtml(u.name||'—')}</strong>${isMe ? ' <span style="font-size:10px;color:var(--muted)">(você)</span>' : ''}</td>
+      <td style="padding-left: 8px;"><strong onclick="abrirDadosUsuario('${u.id}')" style="cursor:pointer;color:var(--blue);text-decoration:underline;text-underline-offset:3px;">${escHtml(u.name||'—')}</strong>${isMe ? ' <span style="font-size:10px;color:var(--muted)">(você)</span>' : ''}</td>
       <td style="color:var(--muted);font-size:12px">${escHtml(u.email)}</td>
       <td style="text-align: center;"><span class="role-badge ${u.role}">${u.role}</span></td>
       <td style="white-space:nowrap; text-align: center;"><span class="status-dot ${u.active!==false?'on':'off'}"></span>${u.active!==false?'Ativo':'Inativo'}</td>
@@ -1416,6 +1434,88 @@ async function salvarPrecosGlobais() {
   } catch (e) {
     showToast('Erro ao salvar preços: ' + e.message, 'err');
   }
+}
+
+// ── Dados pessoais do usuário (visualização admin) ──
+function abrirDadosUsuario(userId) {
+  const u = usuarios.find(x => x.id === userId);
+  if (!u) return;
+
+  const ini = (u.name || u.email || '?')[0].toUpperCase();
+  document.getElementById('dadosUserAvatar').textContent = ini;
+  document.getElementById('dadosUserNome').textContent = u.name || '—';
+  document.getElementById('dadosUserEmail').textContent = u.email || '—';
+  document.getElementById('dadosUserAniv').innerHTML = '';
+
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  function calcIdade(nasc) {
+    if (!nasc) return null;
+    const d = new Date(nasc), h = new Date();
+    let a = h.getFullYear() - d.getFullYear();
+    if (h.getMonth() - d.getMonth() < 0 || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) a--;
+    return a >= 0 ? a : null;
+  }
+
+  function diasAniversario(nasc) {
+    if (!nasc) return null;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const d = new Date(nasc + 'T00:00:00');
+    const prox = new Date(hoje.getFullYear(), d.getMonth(), d.getDate());
+    if (prox < hoje) prox.setFullYear(hoje.getFullYear() + 1);
+    return Math.round((prox - hoje) / 864e5);
+  }
+
+  function campo(label, valor, destaque, badge) {
+    if (!valor) return '';
+    return `<div style="display:flex; gap:6px; align-items:center;">
+      <span style="font-size:11px; font-weight:700; color:#8a9aaa; min-width:120px; flex-shrink:0;">${esc(label)}</span>
+      <span style="color:${destaque?'var(--blue)':'#1a2a3a'}; font-weight:${destaque?'700':'500'}; flex:1;">${esc(valor)}</span>
+      ${badge || ''}
+    </div>`;
+  }
+
+  const idade = calcIdade(u.data_nascimento);
+  const dataNasc = u.data_nascimento ? new Date(u.data_nascimento+'T00:00:00').toLocaleDateString('pt-BR') : null;
+  const endereco = [u.rua, u.numero].filter(Boolean).join(', ');
+  const localidade = [u.cidade, u.estado].filter(Boolean).join(' — ');
+
+  const temDados = u.nome_completo || dataNasc || u.cep || u.tamanho_camisa || u.tamanho_chinelo;
+
+  // Badge de aniversário no slot do header
+  if (u.data_nascimento) {
+    const dias = diasAniversario(u.data_nascimento);
+    let badgeHtml = '';
+    if (dias === 0) {
+      badgeHtml = `<span style="font-size:12px; font-weight:700; color:#fff; background:#e67e22; border-radius:20px; padding:5px 14px; white-space:nowrap; box-shadow:0 2px 8px rgba(230,126,34,.35);">🎂 Aniversário hoje!</span>`;
+    } else if (dias === 1) {
+      badgeHtml = `<span style="font-size:12px; font-weight:700; color:#fff; background:var(--blue); border-radius:20px; padding:5px 14px; white-space:nowrap; box-shadow:0 2px 8px rgba(30,136,229,.25);">🎂 Amanhã!</span>`;
+    } else if (dias <= 7) {
+      badgeHtml = `<span style="font-size:12px; font-weight:700; color:#fff; background:var(--blue); border-radius:20px; padding:5px 14px; white-space:nowrap; box-shadow:0 2px 8px rgba(30,136,229,.25);">🎂 em ${dias} dias</span>`;
+    } else if (dias <= 30) {
+      badgeHtml = `<span style="font-size:12px; font-weight:600; color:var(--blue); background:#e8f4fd; border-radius:20px; padding:5px 14px; white-space:nowrap;">🎂 em ${dias} dias</span>`;
+    } else {
+      badgeHtml = `<span style="font-size:12px; font-weight:500; color:#8a9aaa; background:#f0f4f8; border-radius:20px; padding:5px 14px; white-space:nowrap;">🎂 em ${dias} dias</span>`;
+    }
+    document.getElementById('dadosUserAniv').innerHTML = badgeHtml;
+  }
+
+  const html = temDados ? [
+    campo('Nome completo', u.nome_completo),
+    dataNasc ? campo('Nascimento', dataNasc + (idade !== null ? '  (' + idade + ' anos)' : '')) : '',
+    campo('CEP', u.cep),
+    campo('Endereço', endereco || null),
+    campo('Cidade / Estado', localidade || null),
+    campo('Tamanho camisa', u.tamanho_camisa, true),
+    campo('Nº chinelo', u.tamanho_chinelo, true),
+  ].filter(Boolean).join('') : '<div style="color:#8a9aaa; font-size:13px; text-align:center; padding:16px 0;">Nenhum dado pessoal preenchido ainda.</div>';
+
+  document.getElementById('dadosUserConteudo').innerHTML = html;
+  document.getElementById('modalDadosUsuario').classList.add('show');
+}
+
+function fecharDadosUsuario() {
+  document.getElementById('modalDadosUsuario').classList.remove('show');
 }
 </script>
 </body>

@@ -1790,18 +1790,10 @@ function confirmarPreview() {
   gerarPDF();
 }
 
-// Baixar o PDF direto do ArrayBuffer já gerado no preview
+// Baixar PDF a partir da pré-visualização: mesma ação do botão "Gerar PDF Final"
 function executarGerarPDFConfirm() {
-  if (_previewUrl) {
-    const blob = new Blob([_previewUrl], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'PRANCHA.pdf';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  }
   fecharPreviewPrancha();
+  executarGerarPDF();
 }
 
 function setLoad(msg, pct) {
