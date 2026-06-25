@@ -1,23 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin — Ikatu</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260625f"></script>
-<meta name="theme-color" content="#1a2a3a">
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=20260624l">
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Admin — iGUi Space</title>
+  <link rel="stylesheet" href="../styles.css?v=20260624l">
+  <link rel="stylesheet" href="mobile.css?v=20260625">
+  <style>
+  /* ══ CSS do admin (não está em styles.css) ══ */
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
   .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
   .tab.active{color:#1a2a3a;border-bottom-color:#1a2a3a;}
   .tab svg{width:16px;height:16px;stroke:currentColor;fill:none;}
   .tab-pane{display:none;}
   .tab-pane.active{display:block;}
-
-  /* Users table */
   .users-table{width:100%;border-collapse:collapse;font-size:13px;}
   .users-table th{background:#f0f4f8;padding:8px 6px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
   .users-table td{padding:8px 6px;border-bottom:1px solid var(--border);}
@@ -31,13 +27,10 @@
   .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;}
   .status-dot.on{background:#27ae60;}
   .status-dot.off{background:#e74c3c;}
-
   .btn-sm{padding:4px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;line-height:1.2;}
   .btn-sm:hover{border-color:#cbd5e1;background:#f1f5f9;color:#0f172a;}
   .btn-sm.primary{padding:8px 14px;border-radius:6px;font-size:12px;background:#1a2a3a;color:#fff;border-color:#1a2a3a;}
   .btn-sm.primary:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
-  
-  /* Minimal styled state buttons for User Actions */
   .btn-sm.btn-role{background:#f0f7ff;color:#0284c7;border-color:#e0f2fe;}
   .btn-sm.btn-role:hover{background:#e0f2fe;border-color:#bae6fd;color:#0369a1;}
   .btn-sm.btn-reset{background:#fffbeb;color:#d97706;border-color:#fef3c7;}
@@ -46,11 +39,7 @@
   .btn-sm.btn-deactivate:hover{background:#fee2e2;border-color:#fecaca;color:#dc2626;}
   .btn-sm.btn-activate{background:#f0fdf4;color:#16a34a;border-color:#dcfce7;}
   .btn-sm.btn-activate:hover{background:#dcfce7;border-color:#bbf7d0;color:#15803d;}
-  
-  .users-table .btn-sm {
-    width: 90px;
-    box-sizing: border-box;
-  }
+  .users-table .btn-sm{width:90px;box-sizing:border-box;}
   .btn-icon{width:28px;height:28px;padding:0;border-radius:6px;cursor:pointer;border:1px solid transparent;background:transparent;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
   .btn-icon.btn-role-to-user{color:#7c3aed;}
   .btn-icon.btn-role-to-user:hover{background:#ede9fe;border-color:#ddd6fe;color:#6d28d9;}
@@ -62,32 +51,25 @@
   .btn-icon.btn-deactivate:hover{background:#fee2e2;border-color:#fecaca;color:#dc2626;}
   .btn-icon.btn-activate{color:#16a34a;}
   .btn-icon.btn-activate:hover{background:#dcfce7;border-color:#bbf7d0;color:#15803d;}
-
   .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .section-hd h3{font-size:14px;font-weight:700;color:#1a2a3a;}
-
-  /* Invite form */
   .invite-form{background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
   .invite-form .field{flex:1;min-width:160px;}
   .invite-form label{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:5px;}
-  .invite-form input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:#fff;}
+  .invite-form input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:#fff;box-sizing:border-box;}
   .invite-form input:focus{border-color:var(--blue);}
-
-  /* Links in admin */
   .links-table{width:100%;border-collapse:collapse;font-size:13px;}
   .links-table th{background:#f0f4f8;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
   .links-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
   .links-table tr:last-child td{border-bottom:none;}
-  .link-url-cell{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);font-size:12px;}
-
-  /* Modal */
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(18,30,42,.7);z-index:500;align-items:center;justify-content:center;}
+  .link-url-cell{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);font-size:12px;}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(18,30,42,.7);z-index:500;align-items:center;justify-content:center;padding:16px;}
   .modal-overlay.show{display:flex;}
-  .modal-box{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.15);}
+  .modal-box{background:#fff;border-radius:14px;padding:24px;width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.15);max-height:90vh;overflow-y:auto;}
   .modal-title{font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:20px;}
   .modal-field{margin-bottom:14px;}
   .modal-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:5px;}
-  .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
+  .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;box-sizing:border-box;}
   .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);}
   .modal-field textarea{resize:vertical;min-height:70px;}
   .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
@@ -95,139 +77,69 @@
   .btn-modal.cancel{background:var(--gray);color:var(--muted);}
   .btn-modal.confirm{background:#1a2a3a;color:#fff;}
   .btn-modal.confirm:hover{background:var(--blue);}
-</style>
+  .precos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+  .preco-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;}
+  .preco-card-nome{font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:10px;}
+  .preco-field{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
+  .preco-field label{flex:1;color:var(--muted);}
+  .preco-field input{width:70px;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;text-align:right;outline:none;}
+  .preco-field input:focus{border-color:var(--blue);}
+  .sug-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
+  .sug-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .sug-autor{font-size:11px;font-weight:700;color:#1a2a3a;}
+  .sug-data{font-size:10px;color:var(--muted);}
+  .sug-text{font-size:12px;color:var(--text);line-height:1.5;}
+  /* Overrides mobile */
+    header { display: none !important; }
+    .m-header-right { margin-left: auto !important; }
+    .sidebar { display: none !important; }
+    .layout { padding-left: 0 !important; display: block !important; }
+    .main-content { padding-top: var(--header-h) !important; padding-bottom: calc(var(--nav-h) + 8px) !important; }
+    /* Tabs scroll horizontal no mobile */
+    .tabs { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
+    .tab { flex-shrink: 0 !important; font-size: 11px !important; padding: 8px 12px !important; }
+    #adminBadge, #navAdmin, #hdrUser, #userAvatar { display: none !important; }
+
+    /* ── Tabelas: scroll horizontal em vez de linhas gigantes ── */
+    .users-table, .links-table { font-size: 11px !important; }
+
+    /* Links: oculta coluna Descrição (col 4) — evita linhas enormes */
+    .links-table { min-width: 420px; }
+    .links-table th:nth-child(4),
+    .links-table td:nth-child(4) { display: none !important; }
+    .link-url-cell { white-space: nowrap !important; max-width: 130px !important; }
+
+    /* Usuários: oculta "Desde" (col 5) e "Assinatura" (col 6) */
+    #paneUsuarios .users-table { min-width: 480px; }
+    #paneUsuarios .users-table th:nth-child(5),
+    #paneUsuarios .users-table td:nth-child(5),
+    #paneUsuarios .users-table th:nth-child(6),
+    #paneUsuarios .users-table td:nth-child(6) { display: none !important; }
+    #paneUsuarios .users-table td:last-child { white-space: nowrap; }
+
+    /* Preços: sem scroll, inputs menores */
+    #panePrecos .users-table { min-width: 0 !important; width: 100% !important; }
+    #panePrecos .users-table input[type="number"] { width: 80px !important; font-size: 13px; }
+    #panePrecos [style*="overflow-x:auto"] { overflow-x: visible !important; }
+  </style>
 </head>
-<body class="pg-projetos">
+<body>
 
-<header>
-  <button id="btnMenuToggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" class="btn-menu-toggle" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; display:none; align-items:center; justify-content:center; padding: 0 12px 0 0; outline:none;">
-    ☰
-  </button>
-  
-  <div>
-    <h1>ADMIN <span>PAINEL</span></h1>
-    <div class="hdr-sub">Ikatu</div>
-  </div>
-</header>
-
-<div class="layout">
-  <aside class="sidebar">
-    <img src="logo_site.png" style="width:160px;display:block;margin:4px auto 18px;" alt="iGUI">
-    <div class="sidebar-actions" style="margin-top:auto;">
-      <!-- Navegação de Páginas (Mais minimalista, com ícones SVG iguais) -->
-      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço Ikatu</div>
-      <nav class="steps" style="margin-bottom:6px;">
-        <a class="stp" href="index.html">
-          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <rect x="2" y="3" width="12" height="10" rx="1.5"/>
-            <path d="M6 3v10M2 7h12"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Gerador</span>
-        </a>
-        <a class="stp" href="projetos.html">
-          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <rect x="2" y="2" width="5" height="5" rx="1"/>
-            <rect x="9" y="2" width="5" height="5" rx="1"/>
-            <rect x="2" y="9" width="5" height="5" rx="1"/>
-            <rect x="9" y="9" width="5" height="5" rx="1"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Pranchas</span>
-        </a>
-        <a class="stp" href="links.html">
-          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <path d="M7 9a3 3 0 004.24.1l2-2a3 3 0 00-4.24-4.24l-1.1 1.1"/>
-            <path d="M9 7a3 3 0 00-4.24-.1l-2 2a3 3 0 004.24 4.24l1.1-1.1"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Links</span>
-        </a>
-        <a class="stp" href="avisos.html" id="navChat">
-          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
-            <path d="M6 13a2 2 0 0 0 4 0"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Avisos</span>
-          <span class="chat-nav-badge" id="chatNavBadge"></span>
-        </a>
-        <a class="stp" href="chat.html" id="navChatDM">
-          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Chat</span>
-          <span class="chat-nav-badge" id="chatDmNavBadge"></span>
-        </a>
-        <!--
-        <a class="stp" href="email.html" id="navEmail">
-          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <rect x="1" y="3" width="14" height="10" rx="1.5"/>
-            <path d="M1 5l7 5 7-5"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Gmail</span>
-        </a>
-        -->
-        <a class="stp" href="pagamentos.html">
-          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <rect x="1" y="3" width="14" height="10" rx="2"/>
-            <line x1="1" y1="7" x2="15" y2="7"/>
-            <line x1="4" y1="10" x2="6" y2="10"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Pagamentos</span>
-        </a>
-        <a class="stp active" href="admin.html" id="navAdmin" style="display:none">
-          <svg class="sdb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
-          <span class="stp-txt" style="font-weight:inherit;">Admin</span>
-          <span class="admin-nav-badge" id="adminNavBadge"></span>
-        </a>
-      </nav>
-
-      <div class="sdb-divider"></div>
-      
-      <div class="sidebar-user-card">
-        <div class="su-avatar" id="userAvatar">?</div>
-        <div class="su-info">
-          <span class="su-name" id="hdrUser" title="Usuário logado">—</span>
-          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-            <button class="su-signout" onclick="sbSignOut()">
-              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3"/><path d="M10 5l3 3-3 3M13 8H6"/></svg>
-              Sair
-            </button>
-            <button class="su-settings" onclick="abrirModalSenha()" title="Alterar Senha" style="background:none; border:none; padding:0; cursor:pointer; color:#7f8c8d; opacity:0.75; transition:opacity 0.15s; display:inline-flex; align-items:center;">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px; height:13px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
+  <header class="m-header" style="display:flex !important;">
+    <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
+    
+    <div class="m-header-right">
+      <a class="m-header-user" id="mHeaderUser" href="perfil.html"></a>
     </div>
-  </aside>
-  <script>
-    (function() {
-      const cachedName = localStorage.getItem('igui_user_name');
-      const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
-      const logoImg = document.getElementById('headerLogo');
-      if (logoImg) {
-        logoImg.src = 'logo_site_sobe.png';
-      }
-      if (cachedName) {
-        const el = document.getElementById('hdrUser');
-        if (el) el.textContent = cachedName;
-        const av = document.getElementById('userAvatar');
-        if (av) {
-          const pts = cachedName.trim().split(/\s+/);
-          av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
-        }
-      }
-      if (cachedIsAdmin) {
-        const navAdmin = document.getElementById('navAdmin');
-        if (navAdmin) navAdmin.style.display = 'flex';
-        const adminBadge = document.getElementById('adminBadge');
-        if (adminBadge) adminBadge.style.display = 'inline-block';
-      }
-    })();
-  </script>
+  </header>
 
-  <div class="main-content">
+  <span id="hdrUser"    style="display:none"></span>
+  <span id="userAvatar" style="display:none"></span>
+  <span id="adminBadge" style="display:none"></span>
+  <a    id="navAdmin"   style="display:none" href="admin.html"></a>
+
+  <div class="layout">
+<div class="main-content">
     <div class="proj-page-wrap">
 
       <div class="tabs" style="display: flex; width: 100%;">
@@ -619,6 +531,11 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="m-toast" id="mToastGlobal"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../supabase-client.js?v=20260615d"></script>
+<script src="mobile-nav.js?v=20260625b"></script>
 <script>
 let usuarios = [];
 let todosLinks = [];
@@ -1335,58 +1252,31 @@ async function iniciarBackupELimpeza() {
 
       const sessaoSalvar = {
         version: '1.0',
-        app: 'PranchaIGUI',
-        ts: new Date(p.created_at).getTime(),
-        ...sessao
+        dados: sessao,
       };
-
-      const nome = [
-        p.project_code || 'SEM_CODIGO',
-        p.client_name || 'SEM_CLIENTE',
-        new Date(p.created_at).toLocaleDateString('pt-BR').replace(/\//g, '-')
-      ].join('_').replace(/\s+/g, '_') + '.igui';
-
-      zip.file(nome, JSON.stringify(sessaoSalvar));
+      const nome = (p.project_code || p.id || 'projeto').replace(/[^a-zA-Z0-9_-]/g, '_');
+      zip.file(`${nome}.json`, JSON.stringify(sessaoSalvar, null, 2));
     });
 
-    btn.textContent = 'Gerando arquivo de download...';
-    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Backup_Ikatu_Antigos_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.zip`;
-    document.body.appendChild(a);
+    btn.textContent = 'Gerando ZIP...';
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `backup_pranchas_${new Date().toISOString().slice(0,10)}.zip`;
     a.click();
-    document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    showToast('📦 Backup baixado com sucesso!', 'ok');
+    // Apagar as pranchas do banco após backup
+    btn.textContent = 'Excluindo pranchas antigas...';
+    for (const p of antigas) {
+      await sbDeletarProjetoAdmin(p.id, p.user_id).catch(() => {});
+    }
 
-    setTimeout(() => {
-      confirmar(
-        'Liberar Espaço no Supabase',
-        `Deseja excluir permanentemente estas ${antigas.length} pranchas antigas (e todas as suas imagens do Storage) do servidor para liberar espaço?`,
-        async () => {
-          btn.textContent = 'Excluindo pranchas do servidor...';
-          for (let i = 0; i < antigas.length; i++) {
-            const p = antigas[i];
-            await sbDeletarProjetoAdmin(p.id, p.user_id);
-          }
-          showToast(`🗑️ ${antigas.length} pranchas antigas removidas com sucesso!`, 'ok');
-          btn.disabled = false;
-          btn.textContent = originalTxt;
-          const badge = document.getElementById('adminNavBadge');
-          if (badge) badge.style.display = 'none';
-          const tabBadge = document.getElementById('tabBackupBadge');
-          if (tabBadge) tabBadge.style.display = 'none';
-        }
-      );
-    }, 1000);
-
+    showToast(`Backup de ${antigas.length} pranchas concluído e excluídas com sucesso!`, 'ok');
   } catch(e) {
-    console.error(e);
-    showToast('Erro no processo: ' + e.message, 'err');
+    showToast('Erro no backup: ' + (e.message || e), 'error');
+  } finally {
     btn.disabled = false;
     btn.textContent = originalTxt;
   }
@@ -1394,129 +1284,40 @@ async function iniciarBackupELimpeza() {
 
 async function carregarPrecosGlobais() {
   try {
-    const precos = await sbGetPrecosProjeto();
-    if (precos) {
-      document.getElementById('adm_val_ate2').value = precos.val_ate2 ?? 70;
-      document.getElementById('adm_val_3a4').value = precos.val_3a4 ?? 80;
-      document.getElementById('adm_val_mais5').value = precos.val_mais5 ?? 95;
-      document.getElementById('adm_val_360').value = precos.val_360 ?? 90;
-      document.getElementById('adm_val_360_3mod').value = precos.val_360_3mod ?? 105;
-      document.getElementById('adm_val_conceito').value = precos.val_conceito ?? 150;
-      document.getElementById('adm_val_alt_grandes').value = precos.val_alt_grandes ?? 60;
-    } else {
-      document.getElementById('adm_val_ate2').value = 70;
-      document.getElementById('adm_val_3a4').value = 80;
-      document.getElementById('adm_val_mais5').value = 95;
-      document.getElementById('adm_val_360').value = 90;
-      document.getElementById('adm_val_360_3mod').value = 105;
-      document.getElementById('adm_val_conceito').value = 150;
-      document.getElementById('adm_val_alt_grandes').value = 60;
-    }
-  } catch(e) {
-    console.error('Erro ao carregar preços:', e);
-  }
+    const p = await sbGetPrecosProjeto();
+    if (!p) return;
+    const campos = {
+      adm_val_ate2:       p.val_ate2,
+      adm_val_3a4:        p.val_3a4,
+      adm_val_mais5:      p.val_mais5,
+      adm_val_360:        p.val_360,
+      adm_val_360_3mod:   p.val_360_3mod,
+      adm_val_conceito:   p.val_conceito,
+      adm_val_alt_grandes:p.val_alt_grandes,
+    };
+    Object.entries(campos).forEach(([id, v]) => {
+      const el = document.getElementById(id);
+      if (el && v != null) el.value = v;
+    });
+  } catch(e) { console.warn('Erro ao carregar preços:', e); }
 }
 
 async function salvarPrecosGlobais() {
+  const g = id => parseFloat(document.getElementById(id)?.value || 0);
+  const precos = {
+    val_ate2:        g('adm_val_ate2'),
+    val_3a4:         g('adm_val_3a4'),
+    val_mais5:       g('adm_val_mais5'),
+    val_360:         g('adm_val_360'),
+    val_360_3mod:    g('adm_val_360_3mod'),
+    val_conceito:    g('adm_val_conceito'),
+    val_alt_grandes: g('adm_val_alt_grandes'),
+  };
   try {
-    const precos = {
-      val_ate2: parseFloat(document.getElementById('adm_val_ate2').value) || 0,
-      val_3a4: parseFloat(document.getElementById('adm_val_3a4').value) || 0,
-      val_mais5: parseFloat(document.getElementById('adm_val_mais5').value) || 0,
-      val_360: parseFloat(document.getElementById('adm_val_360').value) || 0,
-      val_360_3mod: parseFloat(document.getElementById('adm_val_360_3mod').value) || 0,
-      val_conceito: parseFloat(document.getElementById('adm_val_conceito').value) || 0,
-      val_alt_grandes: parseFloat(document.getElementById('adm_val_alt_grandes').value) || 0
-    };
-    
     await sbSalvarPrecosProjeto(precos);
-    showToast('💵 Preços salvos com sucesso!', 'ok');
-  } catch (e) {
-    showToast('Erro ao salvar preços: ' + e.message, 'err');
-  }
+    showToast('Preços salvos com sucesso!', 'ok');
+  } catch(e) { showToast('Erro ao salvar: ' + e.message, 'error'); }
 }
-
-// ── Dados pessoais do usuário (visualização admin) ──
-function abrirDadosUsuario(userId) {
-  const u = usuarios.find(x => x.id === userId);
-  if (!u) return;
-
-  const ini = (u.name || u.email || '?')[0].toUpperCase();
-  document.getElementById('dadosUserAvatar').textContent = ini;
-  document.getElementById('dadosUserNome').textContent = u.name || '—';
-  document.getElementById('dadosUserEmail').textContent = u.email || '—';
-  document.getElementById('dadosUserAniv').innerHTML = '';
-
-  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-  function calcIdade(nasc) {
-    if (!nasc) return null;
-    const d = new Date(nasc), h = new Date();
-    let a = h.getFullYear() - d.getFullYear();
-    if (h.getMonth() - d.getMonth() < 0 || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) a--;
-    return a >= 0 ? a : null;
-  }
-
-  function diasAniversario(nasc) {
-    if (!nasc) return null;
-    const hoje = new Date(); hoje.setHours(0,0,0,0);
-    const d = new Date(nasc + 'T00:00:00');
-    const prox = new Date(hoje.getFullYear(), d.getMonth(), d.getDate());
-    if (prox < hoje) prox.setFullYear(hoje.getFullYear() + 1);
-    return Math.round((prox - hoje) / 864e5);
-  }
-
-  function campo(label, valor, destaque, badge) {
-    if (!valor) return '';
-    return `<div style="display:flex; gap:6px; align-items:center;">
-      <span style="font-size:11px; font-weight:700; color:#8a9aaa; min-width:120px; flex-shrink:0;">${esc(label)}</span>
-      <span style="color:${destaque?'var(--blue)':'#1a2a3a'}; font-weight:${destaque?'700':'500'}; flex:1;">${esc(valor)}</span>
-      ${badge || ''}
-    </div>`;
-  }
-
-  const idade = calcIdade(u.data_nascimento);
-  const dataNasc = u.data_nascimento ? new Date(u.data_nascimento+'T00:00:00').toLocaleDateString('pt-BR') : null;
-  const endereco = [u.rua, u.numero].filter(Boolean).join(', ');
-  const localidade = [u.cidade, u.estado].filter(Boolean).join(' — ');
-
-  const temDados = u.nome_completo || dataNasc || u.cep || u.tamanho_camisa || u.tamanho_chinelo;
-
-  // Badge de aniversário no slot do header
-  if (u.data_nascimento) {
-    const dias = diasAniversario(u.data_nascimento);
-    let badgeHtml = '';
-    if (dias === 0) {
-      badgeHtml = `<span style="font-size:12px; font-weight:700; color:#fff; background:#e67e22; border-radius:20px; padding:5px 14px; white-space:nowrap; box-shadow:0 2px 8px rgba(230,126,34,.35);">🎂 Aniversário hoje!</span>`;
-    } else if (dias === 1) {
-      badgeHtml = `<span style="font-size:12px; font-weight:700; color:#fff; background:var(--blue); border-radius:20px; padding:5px 14px; white-space:nowrap; box-shadow:0 2px 8px rgba(30,136,229,.25);">🎂 Amanhã!</span>`;
-    } else if (dias <= 7) {
-      badgeHtml = `<span style="font-size:12px; font-weight:700; color:#fff; background:var(--blue); border-radius:20px; padding:5px 14px; white-space:nowrap; box-shadow:0 2px 8px rgba(30,136,229,.25);">🎂 em ${dias} dias</span>`;
-    } else if (dias <= 30) {
-      badgeHtml = `<span style="font-size:12px; font-weight:600; color:var(--blue); background:#e8f4fd; border-radius:20px; padding:5px 14px; white-space:nowrap;">🎂 em ${dias} dias</span>`;
-    } else {
-      badgeHtml = `<span style="font-size:12px; font-weight:500; color:#8a9aaa; background:#f0f4f8; border-radius:20px; padding:5px 14px; white-space:nowrap;">🎂 em ${dias} dias</span>`;
-    }
-    document.getElementById('dadosUserAniv').innerHTML = badgeHtml;
-  }
-
-  const html = temDados ? [
-    campo('Nome completo', u.nome_completo),
-    dataNasc ? campo('Nascimento', dataNasc + (idade !== null ? '  (' + idade + ' anos)' : '')) : '',
-    campo('CEP', u.cep),
-    campo('Endereço', endereco || null),
-    campo('Cidade / Estado', localidade || null),
-    campo('Tamanho camisa', u.tamanho_camisa, true),
-    campo('Nº chinelo', u.tamanho_chinelo, true),
-  ].filter(Boolean).join('') : '<div style="color:#8a9aaa; font-size:13px; text-align:center; padding:16px 0;">Nenhum dado pessoal preenchido ainda.</div>';
-
-  document.getElementById('dadosUserConteudo').innerHTML = html;
-  document.getElementById('modalDadosUsuario').classList.add('show');
-}
-
-function fecharDadosUsuario() {
-  document.getElementById('modalDadosUsuario').classList.remove('show');
-}
-</script>
+  </script>
 </body>
 </html>

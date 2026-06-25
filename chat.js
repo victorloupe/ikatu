@@ -46,6 +46,8 @@ async function init() {
       if (typeof ev.total_unread_count === 'number') atualizarBadgeTotal(ev.total_unread_count);
       if (ev.type === 'message.new' && (!canalAtual || ev.cid !== canalAtual.cid)) {
         marcarUnreadNaLista();
+        // Som para mensagens de outros canais (DM em segundo plano)
+        if (ev.message?.user?.id !== meId && window.tocarSom) window.tocarSom();
       }
     });
     atualizarBadgeTotal(client.user?.total_unread_count || 0);
@@ -195,9 +197,11 @@ async function montarConversa(channel, titulo, subtitulo, avatarTxt) {
     renderizarMensagens(channel.state.messages || []);
     await channel.markRead().catch(() => {});
 
-    listenerCanal = channel.on('message.new', () => {
+    listenerCanal = channel.on('message.new', (ev) => {
       renderizarMensagens(canalAtual.state.messages || []);
       if (document.visibilityState === 'visible') channel.markRead().catch(() => {});
+      // Som para mensagens de outros usuários no canal aberto
+      if (ev?.message?.user?.id !== meId && window.tocarSom) window.tocarSom();
     });
     channel.on('message.updated', () => renderizarMensagens(canalAtual.state.messages || []));
     channel.on('message.deleted', () => renderizarMensagens(canalAtual.state.messages || []));

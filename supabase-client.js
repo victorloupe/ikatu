@@ -602,6 +602,43 @@ async function salvarMeusDados() {
   } catch(e) { alert('Erro ao salvar: ' + e.message); }
 }
 
+// ── Notificações: som + OS notification ──────────────────────────
+let _audioNotif = null;
+let _audioUnlocked = false;
+
+function _initAudio() {
+  if (_audioNotif) return;
+  try { _audioNotif = new Audio('water_drip.mp3'); _audioNotif.volume = 0.6; } catch (e) {}
+}
+
+// Desbloqueia autoplay na primeira interação do usuário (click/touch)
+// sem isso, browsers bloqueiam play() em segundo plano
+['click', 'touchstart', 'keydown'].forEach(evt => {
+  document.addEventListener(evt, function _unlock() {
+    _initAudio();
+    if (!_audioUnlocked && _audioNotif) {
+      const v = _audioNotif.volume;
+      _audioNotif.volume = 0;
+      _audioNotif.play().then(() => {
+        _audioNotif.pause();
+        _audioNotif.currentTime = 0;
+        _audioNotif.volume = v;
+        _audioUnlocked = true;
+      }).catch(() => {});
+    }
+    document.removeEventListener(evt, _unlock);
+  }, { once: true });
+});
+
+function tocarSom() {
+  try {
+    _initAudio();
+    _audioNotif.currentTime = 0;
+    _audioNotif.play().catch(() => {});
+  } catch (e) {}
+}
+window.tocarSom = tocarSom;
+
 window.calcularIdadeCampo = calcularIdadeCampo;
 window.mascararCEP = mascararCEP;
 window.buscarCEP = buscarCEP;

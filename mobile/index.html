@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>iGUi Space</title>
+  <link rel="stylesheet" href="mobile.css?v=20260625">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .splash { text-align: center; }
+    .splash img { height: 48px; margin-bottom: 16px; opacity: 0.7; }
+    .splash p { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="splash">
+    <img src="../logo_app.png" alt="iGUi Space">
+    <p>Carregando…</p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../supabase-client.js?v=20260615d"></script>
+  <script>
+    (async () => {
+      // Aguarda sessão
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        location.href = '../login.html';
+        return;
+      }
+      // Redireciona direto para pagamentos (página principal mobile)
+      location.replace('pagamentos.html');
+    })();
+  </script>
+</body>
+</html>

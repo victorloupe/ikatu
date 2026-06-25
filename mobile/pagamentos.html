@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pagamentos — iGUi Space</title>
+  <link rel="stylesheet" href="mobile.css?v=20260625">
+  <style>
+    /* ── Filtros ─────────────────────────────────── */
+    .pag-filters {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: var(--header-h);
+      z-index: 100;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pag-filters select {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: #fafcff;
+      outline: none;
+      flex-shrink: 0;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .pag-filters select:focus { border-color: var(--blue); }
+
+    /* ── Resumo ──────────────────────────────────── */
+    .pag-resumo {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 12px 14px;
+    }
+    .pag-resumo-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: var(--shadow);
+    }
+    .pag-resumo-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .pag-resumo-valor {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .pag-resumo-valor.green { color: var(--green); }
+    .pag-resumo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Seção por projetista ─────────────────────── */
+    .pag-projetista-section {
+      margin: 0 14px 16px;
+    }
+    .pag-projetista-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--dark);
+      border-radius: 10px 10px 0 0;
+      cursor: pointer;
+    }
+    .pag-projetista-name {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.3px;
+    }
+    .pag-projetista-total {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+    }
+    .pag-projetista-body {
+      background: #fff;
+      border-radius: 0 0 10px 10px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    /* ── Linha de projeto ────────────────────────── */
+    .pag-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      border-bottom: 1px solid #f0f4f8;
+    }
+    .pag-row:last-child { border-bottom: none; }
+
+    .pag-row-num {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--blue);
+      min-width: 56px;
+      flex-shrink: 0;
+    }
+
+    .pag-row-info { flex: 1; min-width: 0; }
+    .pag-row-piscina {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pag-row-loja {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .pag-row-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .pag-tipo-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      border: 1px solid;
+      white-space: nowrap;
+      max-width: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pag-row-valor {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .pag-row-data {
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* Status sem projetos no mês */
+    .pag-projetista-empty {
+      padding: 16px 14px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* Busca */
+    .pag-search-bar {
+      padding: 8px 14px 0;
+      background: #fff;
+      position: sticky;
+      top: calc(var(--header-h) + 48px);
+      z-index: 99;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+    .pag-search-bar input {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 14px 9px 36px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: #fafcff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none' stroke='%239aa8b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M14 14l-3-3'/%3E%3C/svg%3E") no-repeat 12px center;
+      outline: none;
+      -webkit-appearance: none;
+    }
+    .pag-search-bar input:focus { border-color: var(--blue); }
+    .pag-search-bar input::placeholder { color: #b0bec7; }
+
+    /* Skeleton */
+    .pag-skel-section { margin: 0 14px 16px; }
+    .pag-skel-hd { height: 42px; border-radius: 10px 10px 0 0; }
+    .pag-skel-body { background:#fff; border-radius:0 0 10px 10px; padding:12px 14px; }
+    .pag-skel-row { display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #f0f4f8; }
+    .pag-skel-row:last-child { border-bottom:none; }
+
+    /* Alt badge */
+    .pag-alt-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: #f39c12;
+      border-radius: 50%;
+      margin-left: 4px;
+      vertical-align: middle;
+      title: "Grande Alteração";
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="m-header">
+    <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
+    
+    <div class="m-header-right">
+      <a class="m-header-user" id="mHeaderUser" href="perfil.html"></a>
+    </div>
+  </header>
+
+  <!-- Filtros -->
+  <div class="pag-filters">
+    <select id="filtroProjetista" onchange="aplicarFiltros()" style="flex:1;min-width:0;">
+      <option value="">Todos</option>
+    </select>
+    <select id="filtroMes" onchange="aplicarFiltros()">
+      <option value="0">Janeiro</option>
+      <option value="1">Fevereiro</option>
+      <option value="2">Março</option>
+      <option value="3">Abril</option>
+      <option value="4">Maio</option>
+      <option value="5">Junho</option>
+      <option value="6">Julho</option>
+      <option value="7">Agosto</option>
+      <option value="8">Setembro</option>
+      <option value="9">Outubro</option>
+      <option value="10">Novembro</option>
+      <option value="11">Dezembro</option>
+    </select>
+    <select id="filtroAno" onchange="aplicarFiltros()"></select>
+  </div>
+
+  <!-- Busca -->
+  <div class="pag-search-bar">
+    <br>
+    <input type="search" id="filtroBusca" placeholder="Buscar OS, modelo, loja…" oninput="aplicarFiltros()">
+  </div>
+  <!-- Conteúdo -->
+  <div class="m-content">
+    <div id="pagResumo" class="pag-resumo" style="display:none"></div>
+    <div id="pagLista"></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="m-toast" id="mToastGlobal"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../supabase-client.js?v=20260615d"></script>
+  <script src="mobile-nav.js?v=20260625b"></script>
+  <script>
+  // ═══════════════════════════════════════════════
+  // Pagamentos Mobile — leitura de todos os usuários
+  // ═══════════════════════════════════════════════
+
+  // ── Helpers do formato raw ──────────────────────
+  function nProjeto(raw) {
+    if (!raw) return '—';
+    const p = raw.toString().replace(/\s*\(\d+\)\s*$/, '').split('_')[0] || '';
+    return /^\d+$/.test(p) ? p : 'Inter.';
+  }
+  function piscina(raw) {
+    if (!raw) return '';
+    return raw.toString().replace(/\s*\(\d+\)\s*$/, '').split('_')[1] || '';
+  }
+  function piscinasArr(raw) {
+    return (piscina(raw) || '').split(';').map(s => s.trim()).filter(Boolean);
+  }
+  function loja(raw) {
+    if (!raw) return '';
+    return raw.toString().replace(/\s*\(\d+\)\s*$/, '').split('_')[2] || '';
+  }
+  function dataEnvio(raw) {
+    if (!raw) return '';
+    const limpo = raw.toString().trim().replace(/\s*\(\d+\)\s*$/, '');
+    const m1 = limpo.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (m1) return m1[1].padStart(2,'0') + '-' + m1[2].padStart(2,'0');
+    const m2 = limpo.match(/(\d{1,2})[-/](\d{1,2})/);
+    if (m2) return m2[1].padStart(2,'0') + '-' + m2[2].padStart(2,'0');
+    const p = limpo.split('_');
+    if (p.length < 4) return '';
+    const dt = p[3];
+    const ped = dt.split('-');
+    if (ped.length >= 2) return ped[0].padStart(2,'0') + '-' + ped[1].padStart(2,'0');
+    return '';
+  }
+  function extrairMesAnoRow(row) {
+    const dtEnv = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+    const dtRec = row.data || '';
+    const dtRef = dtEnv || dtRec;
+    if (!dtRef) return null;
+    // tenta DD-MM ou DD-MM-YYYY
+    const m = dtRef.match(/(\d{1,2})[-/](\d{1,2})(?:[-/](\d{4}))?/);
+    if (!m) return null;
+    return { mes: parseInt(m[2], 10) - 1, ano: m[3] ? parseInt(m[3], 10) : new Date().getFullYear() };
+  }
+
+  function obterEstiloTipo(tipo) {
+    const map = {
+      'Até 02 Projetos':              { bg:'#e0f2fe', color:'#0369a1', border:'#7dd3fc' },
+      '03 a 4 Projetos':              { bg:'#e0e7ff', color:'#3730a3', border:'#a5b4fc' },
+      'Mais que 05 Projetos':         { bg:'#cffafe', color:'#0891b2', border:'#22d3ee' },
+      'Projeto 360º':                 { bg:'#f3e8ff', color:'#6b21a8', border:'#d8b4fe' },
+      'Projeto 360º (3 Modificações)':{ bg:'#f3e8ff', color:'#6b21a8', border:'#d8b4fe' },
+      'Conceito':                     { bg:'#fef3c7', color:'#b7791f', border:'#f5d87a' },
+      'Alterações GRANDES':           { bg:'#f8fafc', color:'#475569', border:'#cbd5e1' },
+    };
+    return map[tipo] || { bg:'#f1f5f9', color:'#64748b', border:'#cbd5e1' };
+  }
+
+  // ── Preços globais (para calcular valores) ──────
+  const VALORES_PADRAO = { val_ate2:70, val_3a4:80, val_mais5:95, val_360:90, val_360_3mod:105, val_conceito:150, val_alt_grandes:60 };
+  let precos = { ...VALORES_PADRAO };
+
+  function calcularValor(tipo, alt) {
+    let v = 0;
+    switch (tipo) {
+      case 'Até 02 Projetos':               v = precos.val_ate2; break;
+      case '03 a 4 Projetos':               v = precos.val_3a4; break;
+      case 'Mais que 05 Projetos':          v = precos.val_mais5; break;
+      case 'Projeto 360º':                  v = precos.val_360; break;
+      case 'Projeto 360º (3 Modificações)': v = precos.val_360_3mod; break;
+      case 'Conceito':                      v = precos.val_conceito; break;
+      case 'Alterações GRANDES':            v = precos.val_alt_grandes; break;
+    }
+    if (alt) v += precos.val_alt_grandes || 0;
+    return v;
+  }
+
+  // ── Estado ──────────────────────────────────────
+  let todosRegistros = [];  // [{ user_id, nome, rows_data }]
+  let filtroMes  = new Date().getMonth();
+  let filtroAno  = new Date().getFullYear();
+  let filtroProj = '';
+  let filtroTexto = '';
+
+  // ── Inicialização ───────────────────────────────
+  async function init() {
+    // Preencher anos no select
+    const anoSel = document.getElementById('filtroAno');
+    const anoAtual = new Date().getFullYear();
+    for (let a = anoAtual; a >= 2024; a--) {
+      const opt = document.createElement('option');
+      opt.value = a; opt.textContent = a;
+      if (a === anoAtual) opt.selected = true;
+      anoSel.appendChild(opt);
+    }
+    document.getElementById('filtroMes').value = filtroMes;
+
+    // Carrega preços globais
+    try {
+      const p = await sbGetPrecosProjeto();
+      if (p) precos = { ...VALORES_PADRAO, ...p };
+    } catch (_) {}
+
+    // Carrega todos os pagamentos
+    await carregarTodos();
+  }
+
+  function renderSkeleton() {
+    const lista = document.getElementById('pagLista');
+    let html = '';
+    for (let i = 0; i < 3; i++) {
+      html += `
+        <div class="pag-skel-section">
+          <div class="pag-skel-hd m-skel"></div>
+          <div class="pag-skel-body">
+            ${[1,2,3].map(() => `
+              <div class="pag-skel-row">
+                <div class="m-skel" style="width:50px;height:14px;border-radius:4px;flex-shrink:0"></div>
+                <div style="flex:1">
+                  <div class="m-skel" style="width:70%;height:13px;border-radius:4px;margin-bottom:6px"></div>
+                  <div class="m-skel" style="width:40%;height:10px;border-radius:4px"></div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+                  <div class="m-skel" style="width:60px;height:14px;border-radius:8px"></div>
+                  <div class="m-skel" style="width:50px;height:12px;border-radius:4px"></div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
+    lista.innerHTML = html;
+  }
+
+  // Pull-to-refresh hook
+  window.ptrRecarregar = () => carregarTodos();
+
+  async function carregarTodos() {
+    renderSkeleton();
+    document.getElementById('pagResumo').style.display = 'none';
+
+    try {
+      const { data, error } = await sb.from('payments').select('*').order('updated_at', { ascending: false });
+      if (error) throw error;
+
+      // Busca nomes dos usuários
+      let nomes = {};
+      const roles = {};
+      try {
+        const usuarios = await sbListarUsuarios();
+        (usuarios || []).forEach(u => { nomes[u.id] = u.name || u.email || u.id; roles[u.id] = u.role || ''; });
+      } catch (_) {}
+
+      todosRegistros = (data || []).map(rec => ({
+        user_id: rec.user_id,
+        nome: nomes[rec.user_id] || rec.header_data?.projetista || rec.user_id,
+        rows_data: Array.isArray(rec.rows_data) ? rec.rows_data : [],
+      }));
+
+      // Popular select de projetistas — únicos, nome completo
+      const selProj = document.getElementById('filtroProjetista');
+      selProj.innerHTML = '<option value="">Todos</option>';
+      const vistos = new Set();
+      todosRegistros.forEach(r => {
+        if (vistos.has(r.user_id)) return;
+        if (roles[r.user_id] === 'admin') return; // oculta admins
+        vistos.add(r.user_id);
+        const opt = document.createElement('option');
+        opt.value = r.user_id;
+        opt.textContent = r.nome;
+        selProj.appendChild(opt);
+      });
+
+      aplicarFiltros();
+    } catch (e) {
+      console.error(e);
+      document.getElementById('pagLista').innerHTML = '<div class="m-empty"><div class="m-empty-icon">⚠️</div><div class="m-empty-title">Erro ao carregar</div><div class="m-empty-sub">' + (e.message || '') + '</div></div>';
+    }
+  }
+
+  function aplicarFiltros() {
+    filtroMes   = parseInt(document.getElementById('filtroMes').value, 10);
+    filtroAno   = parseInt(document.getElementById('filtroAno').value, 10);
+    filtroProj  = document.getElementById('filtroProjetista').value;
+    filtroTexto = (document.getElementById('filtroBusca')?.value || '').trim().toLowerCase();
+    renderLista();
+  }
+
+  // ── Renderização ────────────────────────────────
+  function renderLista() {
+    const lista = document.getElementById('pagLista');
+    const resumoEl = document.getElementById('pagResumo');
+    lista.innerHTML = '';
+
+    let registrosFiltrados = todosRegistros;
+    if (filtroProj) {
+      registrosFiltrados = registrosFiltrados.filter(r => r.user_id === filtroProj);
+    }
+
+    let totalGeral = 0;
+    let totalProjetos = 0;
+
+    registrosFiltrados.forEach(reg => {
+      // Filtra linhas pelo mês/ano selecionado
+      const rowsFiltradas = reg.rows_data.filter(row => {
+        const ma = extrairMesAnoRow(row);
+        if (!ma) return false;
+        if (ma.mes !== filtroMes || ma.ano !== filtroAno) return false;
+        if (filtroTexto) {
+          const haystack = [
+            nProjeto(row.raw),
+            piscina(row.raw),
+            loja(row.raw),
+            row.tipo || '',
+          ].join(' ').toLowerCase();
+          if (!haystack.includes(filtroTexto)) return false;
+        }
+        return true;
+      });
+
+      let totalProjUsr = rowsFiltradas.reduce((acc, r) => acc + calcularValor(r.tipo, r.alt), 0);
+      totalGeral += totalProjUsr;
+      totalProjetos += rowsFiltradas.length;
+
+      const section = document.createElement('div');
+      section.className = 'pag-projetista-section';
+
+      // Header da seção
+      const hd = document.createElement('div');
+      hd.className = 'pag-projetista-header';
+      hd.innerHTML = `
+        <span class="pag-projetista-name">${esc(reg.nome)}</span>
+        <span class="pag-projetista-total">R$ ${totalProjUsr.toFixed(2).replace('.', ',')}</span>
+      `;
+      // Toggle collapse
+      hd.addEventListener('click', () => {
+        const body = section.querySelector('.pag-projetista-body');
+        body.style.display = body.style.display === 'none' ? '' : 'none';
+      });
+      section.appendChild(hd);
+
+      // Body com linhas
+      const body = document.createElement('div');
+      body.className = 'pag-projetista-body';
+
+      if (!rowsFiltradas.length) {
+        body.innerHTML = '<div class="pag-projetista-empty">Nenhum projeto neste período</div>';
+      } else {
+        rowsFiltradas.forEach(row => {
+          const num = nProjeto(row.raw);
+          const piscs = piscinasArr(row.raw);
+          const piscinaStr = piscs.join(', ') || '—';
+          const lojaStr = loja(row.raw) || '—';
+          const dtEnv = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+          const tipo = row.tipo || '';
+          const est = obterEstiloTipo(tipo);
+          const valor = calcularValor(tipo, row.alt || false);
+
+          const valorStr = valor > 0 ? `R$ ${valor.toFixed(2).replace('.', ',')}` : '—';
+          const dtStr = dtEnv ? dtEnv : '';
+
+          body.innerHTML += `
+            <div class="pag-row">
+              <div class="pag-row-num">${esc(num)}</div>
+              <div class="pag-row-info">
+                <div class="pag-row-piscina">${esc(piscinaStr)}</div>
+                <div class="pag-row-loja">${esc(lojaStr)}</div>
+              </div>
+              <div class="pag-row-right">
+                <span class="pag-tipo-badge" style="background:${est.bg};color:${est.color};border-color:${est.border}">${esc(tipo || '—')}</span>
+                <span class="pag-row-valor">${valorStr}</span>
+                ${dtStr ? `<span class="pag-row-data">${esc(dtStr)}</span>` : ''}
+              </div>
+            </div>`;
+        });
+      }
+
+      section.appendChild(body);
+      lista.appendChild(section);
+    });
+
+    // ── Resumo do período ──────────────────────────
+    if (totalProjetos > 0) {
+      resumoEl.style.display = '';
+      resumoEl.innerHTML = `
+        <div class="pag-resumo-item">
+          <span class="pag-resumo-label">Projetos</span>
+          <span class="pag-resumo-valor">${totalProjetos}</span>
+        </div>
+        <div class="pag-resumo-divider"></div>
+        <div class="pag-resumo-item">
+          <span class="pag-resumo-label">Total</span>
+          <span class="pag-resumo-valor pag-resumo-destaque">R$ ${totalGeral.toFixed(2).replace('.', ',')}</span>
+        </div>`;
+    } else {
+      resumoEl.style.display = 'none';
+      lista.innerHTML = `<div class="m-empty" style="padding-top:40px">
+        <div class="m-empty-icon">
+          <svg viewBox="0 0 40 40" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="30" height="30" rx="4"/><path d="M5 14h30"/><path d="M13 22h14M13 28h8"/></svg>
+        </div>
+        <div class="m-empty-title">Nenhum registro neste período</div>
+        <div class="m-empty-sub">Tente outro mês ou ajuste os filtros</div>
+      </div>`;
+    }
+  }
+
+  // ── Init ──────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof sb === 'undefined') {
+      const t = setInterval(() => {
+        if (typeof sb !== 'undefined') { clearInterval(t); init(); }
+      }, 100);
+      setTimeout(() => clearInterval(t), 8000);
+    } else {
+      init();
+    }
+  });
+  </script>
+</body>

@@ -159,7 +159,7 @@ async function exportarSessao() {
     const d       = new Date();
     const data    = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
     a.href     = url;
-    a.download = `${id}_Prancha Tecnica-${modelo_}_${lojaRaw}_${data}.igui`;
+    a.download = `${id}_Prancha Técnica ${modelo_}_${lojaRaw}_${data}.igui`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

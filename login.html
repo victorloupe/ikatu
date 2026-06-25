@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260625d"></script>
+<script src="supabase-client.js?v=20260625f"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/sirxemic/jquery.ripples/dist/jquery.ripples-min.js"></script>
 <style>
@@ -301,7 +301,7 @@
   (async () => {
     const s = await sbGetSession();
     if (s) {
-      window.location.href = window.innerWidth <= 768 ? 'pagamentos.html' : 'index.html';
+      window.location.href = window.innerWidth <= 768 ? 'mobile/pagamentos.html' : 'index.html';
     }
   })();
 
@@ -385,7 +385,7 @@
     // Tela de abertura: checklist carregando o sistema e então redireciona
     const nome = profile?.name || email.split('@')[0];
     iniciarSplash(nome, profile?.role === 'admin', profile?.assinatura_expira_em, () => {
-      window.location.href = window.innerWidth <= 768 ? 'pagamentos.html' : 'index.html';
+      window.location.href = window.innerWidth <= 768 ? 'mobile/pagamentos.html' : 'index.html';
     });
   }
 
@@ -463,6 +463,7 @@
         setTimeout(() => {
           row.classList.remove('loading');
           row.classList.add('done');
+          if (window.tocarSom) window.tocarSom();
         }, CARGA);
       }, INICIO + i * PASSO);
     });

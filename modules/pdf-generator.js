@@ -551,7 +551,7 @@ export async function executarGerarPDF(preview = false) {
       const d = new Date();
       return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
     })();
-    const namePDF = `PRANCHA_${lojaRaw}_${modelo_}_${id}_${data}.pdf`.toUpperCase();
+    const namePDF = `${id}_Prancha Técnica ${modelo_}_${lojaRaw}_${data}.pdf`;
 
     if (preview) {
       const pdfBytes = doc.output('arraybuffer');

@@ -82,6 +82,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (nova?.sender_id === meId) return; // Própria mensagem
       if (nova?.status !== 'sent') return;
 
+      // Som sempre que chega aviso novo (de outro usuário)
+      if (window.tocarSom) window.tocarSom();
+
       // Notificação nativa só quando a aba não está visível (se está vendo, a tela já mostra)
       if (document.visibilityState !== 'visible' &&
           ('Notification' in window) && Notification.permission === 'granted') {
