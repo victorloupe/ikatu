@@ -1184,7 +1184,7 @@ async function sbSalvarProjeto(payload, existingId = null) {
     store:         payload.form?.loja       || '',
     model:         payload.form?.modelo     || '',
     proj_date:     payload.form?.data_proj  || '',
-    brand:         payload.form?.loja_tipo  || 'iGUI',
+    brand:         (() => { const b = payload.form?.loja_tipo || 'iGUI'; return b === 'iGUi' ? 'iGUI' : b; })(),
     session_data:  sessionData,
     thumbnail_url: sessionData.imgs?.['3d']?.[0] || null,
     created_by:    payload.form?.usuario_logado || '',
