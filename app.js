@@ -1909,7 +1909,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Opção provisória com UUID do admin (será substituída pela lista completa)
       const optSelf = document.createElement('option');
       optSelf.value = _profile.id; // UUID do admin logado
-      optSelf.textContent = profileName + ' 🟣 ADMIN';
+      optSelf.textContent = profileName + ' ADMIN';
       select.appendChild(optSelf);
       select.value = _profile.id;
 
@@ -1958,13 +1958,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Preservar seleção atual (por UUID ou por nome para retrocompatibilidade)
         const activeVal = selUL.value;
         selUL.innerHTML = '';
-        usuarios.forEach(u => {
+        const admins     = usuarios.filter(u => u.role === 'admin');
+        const projetistas = usuarios.filter(u => u.role !== 'admin');
+        const toOpt = u => {
           const opt = document.createElement('option');
-          opt.value = u.id; // UUID — evita colisão entre usuários com mesmo nome
-          const roleSuffix = u.role === 'admin' ? ' 🟣 ADMIN' : ' 🟢 USER';
-          opt.textContent = (u.name || u.email) + roleSuffix;
-          selUL.appendChild(opt);
-        });
+          opt.value = u.id;
+          opt.textContent = (u.name || u.email) + (u.role === 'admin' ? ' ADMIN' : ' USER');
+          return opt;
+        };
+        if (admins.length) {
+          const grp = document.createElement('optgroup');
+          grp.label = '🟣 Administradores';
+          admins.forEach(u => grp.appendChild(toOpt(u)));
+          selUL.appendChild(grp);
+        }
+        if (projetistas.length) {
+          const grp = document.createElement('optgroup');
+          grp.label = '🟢 Projetistas';
+          projetistas.forEach(u => grp.appendChild(toOpt(u)));
+          selUL.appendChild(grp);
+        }
         // Tentar restaurar pelo UUID; se não encontrar, sem extra option (UUID inválido não deve aparecer)
         selUL.value = activeVal;
       }
@@ -2136,24 +2149,4 @@ function removerVista3D(idx) {
     S.origImgs['3d'].splice(idx, 1);
   }
 
-  // Adjust selection indices to handle deletion
-  ['rev','mob','pai'].forEach(tipo => {
-    if (S.selectedImgs[tipo]) {
-      S.selectedImgs[tipo] = S.selectedImgs[tipo].map(sel => {
-        if (sel === idx) return null;
-        if (sel > idx) return sel - 1;
-        return sel;
-      });
-    }
-  });
-
-  renderVistas3D();
-  renderImgSelectors();
-  autoSave();
-}
-
-function atualizarExibirCapa3d(idx, checked) {
-  if (!S.exibirCapa3d) S.exibirCapa3d = {};
-  S.exibirCapa3d[idx] = checked;
-  autoSave();
-}
+  // Adjust selection indi

@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pranchas Geradas – iGUi</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js?v=20260625f"></script>
+<script src="supabase-client.js?v=202606261041"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=20260624l">
+<link rel="stylesheet" href="styles.css?v=202606261041">
 <script>
   if (window.innerWidth <= 768) {
     window.location.href = 'mobile/pagamentos.html';
@@ -168,6 +168,9 @@
         </button>
       </div>
 
+      <!-- Filtros por marca -->
+      <div class="proj-brand-bar" id="brandFilterBar"></div>
+
       <!-- Filtros por usuário -->
       <div class="proj-filter-bar" id="userFilterBar" style="display:none"></div>
 
@@ -226,10 +229,3 @@
     <div class="modal-footer">
       <button class="btn-modal cancel" onclick="fecharExportModal()">Cancelar</button>
       <button class="btn-modal confirm" id="btnConfirmExport" style="background:var(--blue); color:#fff;">Confirmar Exportação</button>
-    </div>
-  </div>
-</div>
-
-<script src="projetos.js?v=20260614"></script>
-</body>
-</html>

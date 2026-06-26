@@ -548,6 +548,34 @@ body.pg-projetos { background: #e2eaf3; }
   background: currentColor; opacity: .7; flex-shrink: 0;
 }
 
+/* Filtros de marca */
+.proj-brand-bar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+}
+.proj-brand-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: 20px;
+  border: 1.5px solid var(--brand-color, #ccc);
+  background: #fff;
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700;
+  color: var(--brand-color, #888); cursor: pointer;
+  transition: all .14s; white-space: nowrap;
+}
+.proj-brand-pill:hover {
+  background: var(--brand-bg, #f5f5f5);
+}
+.proj-brand-pill.active {
+  background: var(--brand-color, #888);
+  color: #fff;
+  border-color: var(--brand-color, #888);
+}
+.proj-brand-pill .pb-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--brand-color, #888);
+}
+.proj-brand-pill.active .pb-dot { background: #fff; }
+
 /* Lista e cards */
 .proj-lista { display: flex; flex-direction: column; gap: 8px; }
 
@@ -555,9 +583,15 @@ body.pg-projetos { background: #e2eaf3; }
   display: flex; align-items: center; gap: 14px;
   background: #fff; border: 1px solid var(--border);
   border-radius: 10px; padding: 12px 16px;
-  transition: box-shadow .15s, border-color .15s;
+  transition: box-shadow .15s, border-color .15s, background .15s;
 }
 .proj-card:hover { box-shadow: 0 2px 14px rgba(0,0,0,.09); border-color: #b8cad8; }
+
+/* Identidade visual por marca */
+.proj-card-igui   { background: #f0f8ff; border-left: 4px solid #00AEEF; }
+.proj-card-igui:hover { background: #e4f3fc; border-color: #00AEEF; }
+.proj-card-splash { background: #fff0f7; border-left: 4px solid #e91e8c; }
+.proj-card-splash:hover { background: #fce4f2; border-color: #e91e8c; }
 
 .proj-thumb {
   width: 80px; height: 56px; object-fit: cover;
@@ -1986,53 +2020,4 @@ body.pg-projetos { background: #e2eaf3; }
   background: none;
   border: none;
   cursor: pointer;
-  color: #0080bb;
-  font-size: 13px;
-  line-height: 1;
-  padding: 0;
-  opacity: .7;
-  transition: opacity .15s;
-}
-.email-attach-preview-chip button:hover { opacity: 1; }
-
-/* ── Skeleton da lista de emails ── */
-.email-skel-item {
-  padding: 11px 14px 11px 28px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.email-skel-line {
-  height: 10px;
-  background: linear-gradient(90deg, #e8edf2 25%, #f5f8fa 50%, #e8edf2 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-  border-radius: 5px;
-}
-@keyframes shimmer { to { background-position: -200% 0; } }
-
-.card-hd-logo {
-  margin-left: auto;
-  max-height: 36px;
-  width: auto;
-}
-
-/* Splash Theme Overrides */
-body.theme-splash .card-ico {
-  background: #de0f7b !important;
-}
-body.theme-splash .sdb-btn.sdb-gerar {
-  background: #de0f7b !important;
-}
-body.theme-splash .sdb-btn.sdb-gerar:hover {
-  background: #c50b6a !important;
-}
-body.theme-splash .btn-nav.primary {
-  background: #de0f7b !important;
-  border-color: #de0f7b !important;
-}
-body.theme-splash .btn-nav.primary:hover {
-  background: #c50b6a !important;
-  border-color: #c50b6a !important;
-}
+  color

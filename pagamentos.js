@@ -363,18 +363,25 @@ async function montarSeletorProjetista() {
   try { lista = await sbListarUsuarios(); } catch (e) { return; }
   if (!lista || !lista.length) return;
 
-  // Admins não são projetistas — não entram na lista
-  usuariosPagamentos = lista.filter(u => u.role !== 'admin');
+  // Todos os usuários entram na lista (admins aparecem se tiverem dados de pagamento)
+  usuariosPagamentos = lista;
   // Abre no modo "Todos" (visão geral do mês de todos os projetistas)
   targetUserId = 'ALL';
   targetUserName = 'Todos os projetistas';
 
-  const opts = ['<option value="ALL" selected>Todos os projetistas</option>'].concat(
-    usuariosPagamentos.map(u =>
-      `<option value="${esc(u.id)}">${esc(u.name || u.email)}</option>`
-    )
-  );
-  sel.innerHTML = opts.join('');
+  const admins     = usuariosPagamentos.filter(u => u.role === 'admin');
+  const projetistas = usuariosPagamentos.filter(u => u.role !== 'admin');
+
+  const toOpt = u => `<option value="${esc(u.id)}">${esc(u.name || u.email)}${u.role === 'admin' ? ' ADMIN' : ' USER'}</option>`;
+
+  let html = '<option value="ALL" selected>Todos os projetistas</option>';
+  if (admins.length) {
+    html += `<optgroup label="🟣 Administradores">${admins.map(toOpt).join('')}</optgroup>`;
+  }
+  if (projetistas.length) {
+    html += `<optgroup label="🟢 Projetistas">${projetistas.map(toOpt).join('')}</optgroup>`;
+  }
+  sel.innerHTML = html;
   wrap.style.display = 'flex';
 }
 
@@ -2313,14 +2320,4 @@ function atualizarFeedbackLote() {
     
     let html = '';
     if (validos > 0) {
-      html += `<span style="color: #16a34a; margin-right: 12px;">✓ ${validos} linha${validos > 1 ? 's' : ''} válida${validos > 1 ? 's' : ''}</span>`;
-    }
-    if (invalidos > 0) {
-      html += `<span style="color: #dc2626;">⚠ ${invalidos} linha${invalidos > 1 ? 's' : ''} fora do padrão</span>`;
-    }
-    feedback.innerHTML = html;
-  } else {
-    feedback.innerHTML = '';
-    feedback.style.display = 'none';
-  }
-}
+      html += `<span style="color: #1

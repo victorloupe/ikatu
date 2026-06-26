@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin — iGUi Space</title>
-  <link rel="stylesheet" href="../styles.css?v=20260624l">
-  <link rel="stylesheet" href="mobile.css?v=20260625">
+  <link rel="stylesheet" href="../styles.css?v=202606261041">
+  <link rel="stylesheet" href="mobile.css?v=202606261041">
   <style>
   /* ══ CSS do admin (não está em styles.css) ══ */
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
@@ -93,11 +93,11 @@
     header { display: none !important; }
     .m-header-right { margin-left: auto !important; }
     .sidebar { display: none !important; }
-    .layout { padding-left: 0 !important; display: block !important; }
+    .layout { padding-left: 0 !important; display: block !important; min-height: 0 !important; }
     .main-content { padding-top: var(--header-h) !important; padding-bottom: calc(var(--nav-h) + 8px) !important; }
     /* Tabs scroll horizontal no mobile */
-    .tabs { overflow-x: auto !important; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
-    .tab { flex-shrink: 0 !important; font-size: 11px !important; padding: 8px 12px !important; }
+    .tabs { overflow-x: visible !important; flex-wrap: nowrap !important; }
+    .tab { flex: 1 !important; justify-content: center !important; font-size: 11px !important; padding: 8px 4px !important; }
     #adminBadge, #navAdmin, #hdrUser, #userAvatar { display: none !important; }
 
     /* ── Tabelas: scroll horizontal em vez de linhas gigantes ── */
@@ -173,15 +173,7 @@
           </svg>
           Preços
         </button>
-        <button class="tab" onclick="abaBackup()" style="margin-left: auto; position: relative;">
-          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-            <polyline points="17 21 17 13 7 13 7 21"/>
-            <polyline points="7 3 7 8 15 8"/>
-          </svg>
-          Backup & Limpeza
-          <span id="tabBackupBadge" style="display:none;width:8px;height:8px;background:#e74c3c;border-radius:50%;position:absolute;top:4px;right:4px;border:1px solid #fff;"></span>
-        </button>
+
       </div>
 
       <!-- ABA USUÁRIOS -->
@@ -534,8 +526,8 @@
 <div class="m-toast" id="mToastGlobal"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="../supabase-client.js?v=20260615d"></script>
-<script src="mobile-nav.js?v=20260625b"></script>
+<script src="../supabase-client.js?v=202606261041"></script>
+<script src="mobile-nav.js?v=202606261041"></script>
 <script>
 let usuarios = [];
 let todosLinks = [];
@@ -618,6 +610,69 @@ function abaBackup() {
   document.getElementById('paneUsuarios').classList.remove('active');
   document.getElementById('paneSugestoes').classList.remove('active');
   document.getElementById('panePrecos').classList.remove('active');
+}
+
+// ── Modal dados pessoais do usuário ──
+function abrirDadosUsuario(userId) {
+  const u = usuarios.find(x => x.id === userId);
+  if (!u) return;
+  const ini = (u.name || u.email || '?')[0].toUpperCase();
+  document.getElementById('dadosUserAvatar').textContent = ini;
+  document.getElementById('dadosUserNome').textContent = u.name || '—';
+  document.getElementById('dadosUserEmail').textContent = u.email || '—';
+  document.getElementById('dadosUserAniv').innerHTML = '';
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function calcIdade(nasc) {
+    if (!nasc) return null;
+    const d = new Date(nasc), h = new Date();
+    let a = h.getFullYear() - d.getFullYear();
+    if (h.getMonth() - d.getMonth() < 0 || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) a--;
+    return a >= 0 ? a : null;
+  }
+  function diasAniversario(nasc) {
+    if (!nasc) return null;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const d = new Date(nasc + 'T00:00:00');
+    const prox = new Date(hoje.getFullYear(), d.getMonth(), d.getDate());
+    if (prox < hoje) prox.setFullYear(hoje.getFullYear() + 1);
+    return Math.round((prox - hoje) / 864e5);
+  }
+  function campo(label, valor, destaque) {
+    if (!valor) return '';
+    return `<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:11px;font-weight:700;color:#8a9aaa;min-width:110px;flex-shrink:0;">${esc(label)}</span>
+      <span style="color:${destaque?'var(--blue)':'#1a2a3a'};font-weight:${destaque?'700':'500'};flex:1;">${esc(valor)}</span>
+    </div>`;
+  }
+  const idade = calcIdade(u.data_nascimento);
+  const dataNasc = u.data_nascimento ? new Date(u.data_nascimento+'T00:00:00').toLocaleDateString('pt-BR') : null;
+  const endereco = [u.rua, u.numero].filter(Boolean).join(', ');
+  const localidade = [u.cidade, u.estado].filter(Boolean).join(' — ');
+  if (u.data_nascimento) {
+    const dias = diasAniversario(u.data_nascimento);
+    let b = '';
+    if (dias === 0)      b = `<span style="font-size:11px;font-weight:700;color:#fff;background:#e67e22;border-radius:20px;padding:4px 10px;">\uD83C\uDF82 Hoje!</span>`;
+    else if (dias === 1) b = `<span style="font-size:11px;font-weight:700;color:#fff;background:var(--blue);border-radius:20px;padding:4px 10px;">\uD83C\uDF82 Amanhã!</span>`;
+    else if (dias <= 7)  b = `<span style="font-size:11px;font-weight:700;color:#fff;background:var(--blue);border-radius:20px;padding:4px 10px;">\uD83C\uDF82 em ${dias} dias</span>`;
+    else if (dias <= 30) b = `<span style="font-size:11px;font-weight:600;color:var(--blue);background:#e8f4fd;border-radius:20px;padding:4px 10px;">\uD83C\uDF82 em ${dias} dias</span>`;
+    else                 b = `<span style="font-size:11px;font-weight:500;color:#8a9aaa;background:#f0f4f8;border-radius:20px;padding:4px 10px;">\uD83C\uDF82 em ${dias} dias</span>`;
+    document.getElementById('dadosUserAniv').innerHTML = b;
+  }
+  const temDados = u.nome_completo || dataNasc || u.cep || u.tamanho_camisa || u.tamanho_chinelo;
+  const html = temDados ? [
+    campo('Nome completo', u.nome_completo),
+    dataNasc ? campo('Nascimento', dataNasc + (idade !== null ? ' (' + idade + ' anos)' : '')) : '',
+    campo('CEP', u.cep),
+    campo('Endereço', endereco || null),
+    campo('Cidade / Estado', localidade || null),
+    campo('Tamanho camisa', u.tamanho_camisa, true),
+    campo('Nº chinelo', u.tamanho_chinelo, true),
+  ].filter(Boolean).join('') : '<div style="color:#8a9aaa;font-size:13px;text-align:center;padding:16px 0;">Nenhum dado pessoal preenchido ainda.</div>';
+  document.getElementById('dadosUserConteudo').innerHTML = html;
+  document.getElementById('modalDadosUsuario').classList.add('show');
+}
+function fecharDadosUsuario() {
+  document.getElementById('modalDadosUsuario').classList.remove('show');
 }
 
 // ── Usuários ──

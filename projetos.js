@@ -28,10 +28,40 @@ function showToastHTML(msg, tipo = 'ok') {
 // ── Renderização ──────────────────────────────────────────────────
 let _busca = '';
 let _filtroUsuario = '';     // '' = todos
+let _filtroBrand   = '';     // '' = todos | 'iGUI' | 'Splash'
 let _todasPranchas = [];    // cache da última busca ao banco
 let _pagAtual = 1;
 const PRANCHAS_POR_PAGINA = 7;
 let animarLista = false;     // próxima renderização entra com animação em cascata
+
+/** Gera os botões de filtro por marca (iGUI / Splash) */
+function renderBrandFilters() {
+  const bar = document.getElementById('brandFilterBar');
+  if (!bar) return;
+  bar.innerHTML = '';
+
+  const brands = [
+    { value: 'iGUI',   label: 'iGUi',   color: '#00AEEF', bg: '#e8f6fd' },
+    { value: 'Splash', label: 'Splash', color: '#e91e8c', bg: '#fde8f4' },
+  ];
+
+  brands.forEach(({ value, label, color, bg }) => {
+    const btn = document.createElement('button');
+    const isActive = _filtroBrand === value;
+    btn.className = 'proj-brand-pill' + (isActive ? ' active' : '');
+    btn.style.setProperty('--brand-color', color);
+    btn.style.setProperty('--brand-bg', bg);
+    btn.innerHTML = `<span class="pb-dot" style="background:${color}"></span>${label}`;
+    btn.onclick = () => {
+      _filtroBrand = isActive ? '' : value;
+      _pagAtual = 1;
+      animarLista = true;
+      renderBrandFilters();
+      renderListaPranchas();
+    };
+    bar.appendChild(btn);
+  });
+}
 
 /** Gera as pills de filtro por usuário */
 function renderUserFilters(lista) {
@@ -90,6 +120,11 @@ function renderListaPranchas() {
   const q = _busca.trim().toUpperCase();
   let filtrados = _todasPranchas;
 
+  // Filtro por marca
+  if (_filtroBrand) {
+    filtrados = filtrados.filter(p => (p.brand || 'iGUI') === _filtroBrand);
+  }
+
   // Filtro por usuário
   if (_filtroUsuario) {
     filtrados = filtrados.filter(p => (p.created_by || '') === _filtroUsuario);
@@ -141,8 +176,9 @@ function renderListaPranchas() {
       ? `<img src="${p.thumbnail_url}" class="proj-thumb" alt="Thumbnail">`
       : '<div class="proj-thumb proj-thumb-empty">🏊</div>';
 
+    const isSplash = (p.brand || 'iGUI') === 'Splash';
     const card = document.createElement('div');
-    card.className = 'proj-card';
+    card.className = 'proj-card' + (isSplash ? ' proj-card-splash' : ' proj-card-igui');
     if (animar) {
       card.classList.add('row-entrada');
       card.style.animationDelay = `${Math.min(i * 70, 1000)}ms`;
@@ -233,6 +269,7 @@ async function renderProjetos() {
     const lista = await sbListarProjetos();
     _todasPranchas = lista;
     renderUserFilters(lista);
+    renderBrandFilters();
     animarLista = true; // entrada em cascata ao carregar do banco
     renderListaPranchas();
   } catch (e) {
@@ -570,38 +607,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   mostrarSkeletonPranchas();
 
   // Auth check (usa cache local — não vai à rede)
-  const session = await sbRequireAuth();
-  if (!session) return;
-
-  // Perfil e lista de pranchas em PARALELO — elimina o waterfall
-  const [profile] = await Promise.all([
-    sbGetProfile().catch(e => { console.warn('Profile error:', e); return null; }),
-    renderProjetos(),
-  ]);
-
-  // Atualiza UI do usuário com o que veio do banco
-  if (profile) {
-    const displayName = profile.name || profile.email || '—';
-    const el = document.getElementById('hdrUser');
-    if (el) el.textContent = displayName;
-    const av = document.getElementById('userAvatar');
-    if (av && displayName !== '—') {
-      const pts = displayName.trim().split(/\s+/);
-      av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
-    }
-    if (profile.role === 'admin') {
-      const badge = document.getElementById('adminBadge');
-      const nav   = document.getElementById('navAdmin');
-      if (badge) badge.style.display = 'inline-block';
-      if (nav)   nav.style.display   = 'flex';
-    }
-  }
-
-  sbVerificarMsgNaoLidas().then(temNova => {
-    const badge = document.getElementById('chatNavBadge');
-    if (badge) badge.style.display = temNova ? 'block' : 'none';
-  }).catch(() => {});
-
-  // Purga em segundo plano: itens na lixeira há mais de 30 dias
-  sbPurgarLixeiraAntiga().catch(() => {});
-});
+  const se
