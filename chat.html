@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chat — iGUi Space</title>
 <script>if (window.innerWidth <= 768) { window.location.href = 'mobile/chat.html'; }</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/stream-chat@8/dist/browser.full-bundle.min.js"></script>
 <script src="supabase-client.js?v=202606261041"></script>
 <meta name="theme-color" content="#1a2a3a">
@@ -257,4 +257,11 @@
     <p style="font-size:14px;color:var(--muted);margin:10px 0 20px;line-height:1.6">Tem certeza que deseja apagar esta mensagem? Isso não pode ser desfeito.</p>
     <div class="modal-footer">
       <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
-      <button class="btn-modal confirm" style="background:#e74c3c" onclick="confirmarDeleteMsg()">Apagar</butto
+      <button class="btn-modal confirm" style="background:#e74c3c" onclick="confirmarDeleteMsg()">Apagar</button>
+    </div>
+  </div>
+</div>
+
+<script src="chat.js?v=202606261041"></script>
+</body>
+</html>

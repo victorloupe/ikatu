@@ -2149,4 +2149,24 @@ function removerVista3D(idx) {
     S.origImgs['3d'].splice(idx, 1);
   }
 
-  // Adjust selection indi
+  // Adjust selection indices to handle deletion
+  ['rev','mob','pai'].forEach(tipo => {
+    if (S.selectedImgs[tipo]) {
+      S.selectedImgs[tipo] = S.selectedImgs[tipo].map(sel => {
+        if (sel === idx) return null;
+        if (sel > idx) return sel - 1;
+        return sel;
+      });
+    }
+  });
+
+  renderVistas3D();
+  renderImgSelectors();
+  autoSave();
+}
+
+function atualizarExibirCapa3d(idx, checked) {
+  if (!S.exibirCapa3d) S.exibirCapa3d = {};
+  S.exibirCapa3d[idx] = checked;
+  autoSave();
+}

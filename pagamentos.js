@@ -2320,4 +2320,14 @@ function atualizarFeedbackLote() {
     
     let html = '';
     if (validos > 0) {
-      html += `<span style="color: #1
+      html += `<span style="color: #16a34a; margin-right: 12px;">✓ ${validos} linha${validos > 1 ? 's' : ''} válida${validos > 1 ? 's' : ''}</span>`;
+    }
+    if (invalidos > 0) {
+      html += `<span style="color: #dc2626;">⚠ ${invalidos} linha${invalidos > 1 ? 's' : ''} fora do padrão</span>`;
+    }
+    feedback.innerHTML = html;
+  } else {
+    feedback.innerHTML = '';
+    feedback.style.display = 'none';
+  }
+}

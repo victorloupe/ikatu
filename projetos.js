@@ -607,4 +607,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   mostrarSkeletonPranchas();
 
   // Auth check (usa cache local — não vai à rede)
-  const se
+  const session = await sbRequireAuth();
+  if (!session) return;
+
+  // Perfil e lista de pranchas em PARALELO — elimina o waterfall
+  const [profile] = await Promise.all([
+    sbGetProfile().catch(e => { console.warn('Profile error:', e); return null; }),
+    renderProjetos(),
+  ]);
+
+  // Atualiza UI do usuário com o que veio do banco
+  if (profile) {
+    const displayName = profile.name || profile.email || '—';
+    const el = document.getElementById('hdrUser');
+    if (el) el.textContent = displayName;
+    const av = document.getElementById('userAvatar');
+    if (av && displayName !== '—') {
+      const pts = displayName.trim().split(/\s+/);
+      av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
+    }
+    if (profile.role === 'admin') {
+      const badge = document.getElementById('adminBadge');
+      const nav   = document.getElementById('navAdmin');
+      if (badge) badge.style.display = 'inline-block';
+      if (nav)   nav.style.display   = 'flex';
+    }
+  }
+
+  sbVerificarMsgNaoLidas().then(temNova => {
+    const badge = document.getElementById('chatNavBadge');
+    if (badge) badge.style.display = temNova ? 'block' : 'none';
+  }).catch(() => {});
+
+  // Purga em segundo plano: itens na lixeira há mais de 30 dias
+  sbPurgarLixeiraAntiga().catch(() => {});
+});
