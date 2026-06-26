@@ -14,13 +14,28 @@ function esc(s) {
 }
 
 // --- Funções de Extração fornecidas pelo usuário ---
+// Retorna a marca do projeto independentemente do formato
+function getBrand(texto) {
+  if (!texto) return "iGUI";
+  let limpo = texto.toString().trim();
+  if (/^splash/i.test(limpo)) return "Splash";
+  let partes = limpo.split("_");
+  if (/^\d+$/.test(partes[0])) return "iGUI";
+  return "Inter.";
+}
+
 function nProjeto(texto) {
   if (!texto) return "";
   let limpo = texto.toString().trim()
     .replace(/\s*\(\d+\)\s*$/, ""); // remove (1), (2), etc no fim
 
-  if (/splash/i.test(limpo)) {
-    return "Splash";
+  if (/^splash/i.test(limpo)) {
+    let partes = limpo.split("_");
+    // Novo formato: Splash_819194_Piscina_Loja_Data → extrai número
+    if (partes.length >= 2 && /^\d+$/.test(partes[1])) {
+      return partes[1].trim();
+    }
+    return "Splash"; // formato antigo sem número
   }
   let partes = limpo.split("_");
   let projeto = partes[0] || "";
@@ -54,6 +69,10 @@ function piscina(texto) {
   if (!texto) return "";
   let limpo = texto.toString().replace(/\s*\(\d+\)\s*$/, "");
   let partes = limpo.split("_");
+  // Novo Splash: Splash_819194_Piscina_... → piscina em partes[2]
+  if (/^splash/i.test(partes[0]) && /^\d+$/.test(partes[1])) {
+    return partes[2] || "";
+  }
   return partes[1] || "";
 }
 
@@ -105,6 +124,10 @@ function loja(texto) {
   if (!texto) return "";
   let limpo = texto.toString().replace(/\s*\(\d+\)\s*$/, "");
   let partes = limpo.split("_");
+  // Novo Splash: Splash_819194_Piscina_Loja_... → loja em partes[3]
+  if (/^splash/i.test(partes[0]) && /^\d+$/.test(partes[1])) {
+    return partes[3] || "";
+  }
   return partes[2] || "";
 }
 
@@ -798,11 +821,11 @@ function renderTabela() {
     let matchesLoja = true;
     if (filtroLojaAtivo !== 'todos') {
       if (filtroLojaAtivo === 'Splash') {
-        matchesLoja = numProj === 'Splash';
+        matchesLoja = getBrand(row.raw) === 'Splash';
       } else if (filtroLojaAtivo === 'Inter.') {
-        matchesLoja = numProj === 'Inter.';
+        matchesLoja = getBrand(row.raw) === 'Inter.';
       } else if (filtroLojaAtivo === 'iGUi') {
-        matchesLoja = /^\d+$/.test(numProj);
+        matchesLoja = getBrand(row.raw) === 'iGUI';
       }
     }
 
@@ -916,11 +939,11 @@ function renderTabela() {
     let matchesLoja = true;
     if (filtroLojaAtivo !== 'todos') {
       if (filtroLojaAtivo === 'Splash') {
-        matchesLoja = numProj === 'Splash';
+        matchesLoja = getBrand(row.raw) === 'Splash';
       } else if (filtroLojaAtivo === 'Inter.') {
-        matchesLoja = numProj === 'Inter.';
+        matchesLoja = getBrand(row.raw) === 'Inter.';
       } else if (filtroLojaAtivo === 'iGUi') {
-        matchesLoja = /^\d+$/.test(numProj);
+        matchesLoja = getBrand(row.raw) === 'iGUI';
       }
     }
     
@@ -957,16 +980,17 @@ function renderTabela() {
       </div>
     ` : '';
 
-    // Configuração de cores pastel dinâmicas para o identificador do projeto
+    // Configuração de cores por marca (iGUI=azul, Splash=rosa, Inter=verde)
+    const rowBrand = getBrand(row.raw);
     let badgeBg = '#e2eaf3';
     let badgeColor = '#7f8c9a';
-    if (numProj === 'Splash') {
+    if (rowBrand === 'Splash') {
       badgeBg = '#fce7f3';
       badgeColor = '#be185d';
-    } else if (numProj === 'Inter.') {
+    } else if (rowBrand === 'Inter.') {
       badgeBg = '#dcfce7';
       badgeColor = '#15803d';
-    } else if (/^\d+$/.test(numProj)) {
+    } else { // iGUI
       badgeBg = '#e0f2fe';
       badgeColor = '#0369a1';
     }
@@ -1360,8 +1384,10 @@ function recalcularFinanceiro() {
     }
 
     const num = nProjeto(row.raw);
-    // Quando for projeto Inter., exibe o nome da loja no lugar de "Inter."
-    const label = num === 'Inter.' ? (loja(row.raw) || 'Inter.') : num;
+    // Quando não há ID numérico (Inter. ou Splash antigo), exibe o nome da loja
+    const label = (num === 'Inter.' || num === 'Splash')
+      ? (loja(row.raw) || num)
+      : num;
 
     // Contabilidade de tipos
     if (row.tipo === 'Até 02 Projetos') qty_ate2++;
@@ -1733,11 +1759,11 @@ function marcarVisiveisComoConferidos() {
     let matchesLoja = true;
     if (filtroLojaAtivo !== 'todos') {
       if (filtroLojaAtivo === 'Splash') {
-        matchesLoja = numProj === 'Splash';
+        matchesLoja = getBrand(row.raw) === 'Splash';
       } else if (filtroLojaAtivo === 'Inter.') {
-        matchesLoja = numProj === 'Inter.';
+        matchesLoja = getBrand(row.raw) === 'Inter.';
       } else if (filtroLojaAtivo === 'iGUi') {
-        matchesLoja = /^\d+$/.test(numProj);
+        matchesLoja = getBrand(row.raw) === 'iGUI';
       }
     }
 

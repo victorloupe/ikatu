@@ -156,10 +156,13 @@ async function exportarSessao() {
     const id      = (payload.form.id_projeto||'000000').trim();
     const modelo_ = (payload.form.modelo||'').replace(/[<>:"/\\|?*]/g,'').trim();
     const lojaRaw = (payload.form.loja||'').replace(/[<>:"/\\|?*]/g,'').trim();
+    const marca_  = (payload.form.loja_tipo||'').trim();
     const d       = new Date();
     const data    = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
     a.href     = url;
-    a.download = `${id}_Prancha Técnica ${modelo_}_${lojaRaw}_${data}.igui`;
+    a.download = marca_ === 'Splash'
+      ? `Splash_${id}_${modelo_}_${lojaRaw}_${data}.igui`
+      : `${id}_Prancha Técnica ${modelo_}_${lojaRaw}_${data}.igui`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

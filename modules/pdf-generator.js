@@ -551,7 +551,10 @@ export async function executarGerarPDF(preview = false) {
       const d = new Date();
       return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
     })();
-    const namePDF = `${id}_Prancha Técnica ${modelo_}_${lojaRaw}_${data}.pdf`;
+    const marca_ = (form.loja_tipo || '').trim();
+    const namePDF = marca_ === 'Splash'
+      ? `Splash_${id}_${modelo_}_${lojaRaw}_${data}.pdf`
+      : `${id}_Prancha Técnica ${modelo_}_${lojaRaw}_${data}.pdf`;
 
     if (preview) {
       const pdfBytes = doc.output('arraybuffer');
@@ -595,7 +598,9 @@ export async function executarGerarPDF(preview = false) {
               const _pad = n => String(n).padStart(2, '0');
               const _hoje = new Date();
               const _dataHoje = `${_pad(_hoje.getDate())}/${_pad(_hoje.getMonth() + 1)}/${_hoje.getFullYear()}`;
-              const _raw = [form.id_projeto || '', form.modelo || '', form.loja || ''].join('_');
+              const _raw = form.loja_tipo === 'Splash'
+                ? ['Splash', form.id_projeto || '', form.modelo || '', form.loja || ''].join('_')
+                : [form.id_projeto || '', form.modelo || '', form.loja || ''].join('_');
               const rowPag = {
                 raw: _raw,
                 cliente: form.cliente || '',

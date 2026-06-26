@@ -834,7 +834,7 @@
           <div class="bulk-import-area">
             <h4 style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Importação em Lote</h4>
             <p style="font-size: 11px; color: var(--muted); margin-bottom: 8px;">Cole vários nomes de arquivos/linhas no padrão <strong>[ID]_[Modelo]_[Loja]_[Data]</strong> (um por linha):</p>
-            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;814546_Mod047_Feira de Santana_01-06-2026 (3) - iGUi&#10;Splash_Navagio_Abreu e Lima_11-05-2026 (1) - Splash&#10;_Keramos_Espanha_31-05-2026 (2) - Internacional" onkeydown="if(event.ctrlKey && event.key === 'Enter') { event.preventDefault(); processarLote(); }" oninput="atualizarFeedbackLote()"></textarea>
+            <textarea id="bulkInput" class="bulk-textarea" placeholder="Ex:&#10;814546_Mod047_Feira de Santana_01-06-2026 (3) - iGUi&#10;Splash_Cancún 6M_Goianinha_17-06-2026 - Splash (sem nº)&#10;Splash_112565_Cancún 6M_Goianinha_17-06-2026 - Splash (com nº)&#10;_Keramos_Espanha_31-05-2026 (2) - Internacional" onkeydown="if(event.ctrlKey && event.key === 'Enter') { event.preventDefault(); processarLote(); }" oninput="atualizarFeedbackLote()"></textarea>
             <div id="bulkFeedback" style="display: none; padding: 2px 4px; margin-bottom: 8px;"></div>
             <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center;">
               <div style="display: flex; gap: 8px; align-items: center;">
