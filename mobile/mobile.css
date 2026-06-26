@@ -69,7 +69,7 @@ html, body {
 .m-header-title span { color: var(--blue); }
 
 .m-header-right {
-  margin-left: auto;
+  margin-left: auto !important;
   display: flex;
   align-items: center;
   gap: 10px;

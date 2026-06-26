@@ -25,7 +25,7 @@
       // Aguarda sessão
       const { data: { session } } = await sb.auth.getSession();
       if (!session) {
-        location.href = '../login.html';
+        location.href = 'login.html';
         return;
       }
       // Redireciona direto para pagamentos (página principal mobile)

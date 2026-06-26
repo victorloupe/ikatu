@@ -174,7 +174,7 @@
       });
 
       const session = await sbGetSession();
-      if (!session) { location.href = '../login.html'; return; }
+      if (!session) { location.href = 'login.html'; return; }
 
       const profile = await sbGetProfile();
       if (!profile) return;
@@ -266,7 +266,7 @@
     try {
       await sbSignOut();
       sessionStorage.clear();
-      location.href = '../login.html';
+      location.href = 'login.html';
     } catch(e) { mToast('Erro ao sair', 'error'); }
   }
 

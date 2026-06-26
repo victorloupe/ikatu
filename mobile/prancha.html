@@ -111,6 +111,46 @@
       flex-shrink: 0;
     }
 
+    /* ── Brand colors ───────────────────────────── */
+    .prancha-row-igui   { border-left: 3px solid #00AEEF; background: #f0f8ff; }
+    .prancha-row-splash { border-left: 3px solid #e91e8c; background: #fff0f7; }
+    .prancha-row-igui:active   { background: #e4f3fc; }
+    .prancha-row-splash:active { background: #fce4f2; }
+
+    .prancha-brand-bar {
+      display: flex;
+      gap: 8px;
+      padding: 8px 14px 4px;
+      background: var(--bg);
+    }
+    .prancha-brand-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1.5px solid var(--brand-color, #ccc);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--brand-color, #888);
+      background: #fff;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .prancha-brand-pill.active {
+      background: var(--brand-color, #888);
+      color: #fff;
+    }
+    .pb-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--brand-color, #888);
+      flex-shrink: 0;
+    }
+    .prancha-brand-pill.active .pb-dot { background: #fff; }
+    .prancha-row-tag.brand-igui   { color: #0090cc; background: #e4f3fc; }
+    .prancha-row-tag.brand-splash { color: #c0186f; background: #fce4f2; }
+
     /* ── Paginação ───────────────────────────────── */
     .prancha-paginacao {
       display: flex;
@@ -255,6 +295,9 @@
     </div>
   </div>
 
+  <!-- Filtros de marca -->
+  <div class="prancha-brand-bar" id="brandBar"></div>
+
   <!-- Conteúdo -->
   <div class="m-content">
     <div id="pranchaLista"></div>
@@ -295,6 +338,7 @@
 
   let todasPranchas = [];
   let buscaAtual    = '';
+  let filtroBrand   = '';   // '' | 'iGUI' | 'Splash'
   let paginaAtual   = 1;
   const POR_PAGINA  = 8;
 
@@ -340,21 +384,48 @@
 
   // ── Filtro ──────────────────────────────────
   function filtrar(lista) {
-    if (!buscaAtual) return lista;
-    const q = buscaAtual.toLowerCase();
-    return lista.filter(p =>
-      (p.project_code  || '').toLowerCase().includes(q) ||
-      (p.model         || '').toLowerCase().includes(q) ||
-      (p.store         || '').toLowerCase().includes(q) ||
-      (p.client_name   || '').toLowerCase().includes(q) ||
-      (p.created_by    || '').toLowerCase().includes(q)
-    );
+    let r = lista;
+    if (filtroBrand) r = r.filter(p => (p.brand || 'iGUI') === filtroBrand);
+    if (buscaAtual) {
+      const q = buscaAtual.toLowerCase();
+      r = r.filter(p =>
+        (p.project_code  || '').toLowerCase().includes(q) ||
+        (p.model         || '').toLowerCase().includes(q) ||
+        (p.store         || '').toLowerCase().includes(q) ||
+        (p.client_name   || '').toLowerCase().includes(q) ||
+        (p.created_by    || '').toLowerCase().includes(q)
+      );
+    }
+    return r;
   }
 
   function buscar(valor) {
     buscaAtual = valor.trim().toLowerCase();
     paginaAtual = 1;
     renderLista(todasPranchas);
+  }
+
+  function renderBrandBar() {
+    const bar = document.getElementById('brandBar');
+    if (!bar) return;
+    const brands = [
+      { value: 'iGUI',   label: 'iGUi',   color: '#00AEEF' },
+      { value: 'Splash', label: 'Splash', color: '#e91e8c' },
+    ];
+    bar.innerHTML = '';
+    brands.forEach(({ value, label, color }) => {
+      const btn = document.createElement('button');
+      btn.className = 'prancha-brand-pill' + (filtroBrand === value ? ' active' : '');
+      btn.style.setProperty('--brand-color', color);
+      btn.innerHTML = `<span class="pb-dot"></span>${label}`;
+      btn.onclick = () => {
+        filtroBrand = (filtroBrand === value) ? '' : value;
+        paginaAtual = 1;
+        renderBrandBar();
+        renderLista(todasPranchas);
+      };
+      bar.appendChild(btn);
+    });
   }
 
   // ── Skeleton ────────────────────────────────
@@ -413,14 +484,20 @@
              </svg>
            </div>`;
 
+      const brand      = p.brand || 'iGUI';
+      const isSplash   = brand === 'Splash';
+      const brandClass = isSplash ? 'prancha-row-splash' : 'prancha-row-igui';
+      const brandTag   = isSplash ? 'brand-splash' : 'brand-igui';
+
       const tags = [];
       const dataFmt = formatarData(p.proj_date);
-      if (dataFmt)     tags.push(`<span class="prancha-row-tag">${esc(dataFmt)}</span>`);
+      if (dataFmt)      tags.push(`<span class="prancha-row-tag">${esc(dataFmt)}</span>`);
       if (p.created_by) tags.push(`<span class="prancha-row-tag projetista">${esc(p.created_by)}</span>`);
       if (p.store)      tags.push(`<span class="prancha-row-tag">${esc(p.store)}</span>`);
+      tags.push(`<span class="prancha-row-tag ${brandTag}">${esc(brand)}</span>`);
 
       listaEl.innerHTML += `
-        <div class="prancha-row" onclick="abrirViewer(${globalIdx})">
+        <div class="prancha-row ${brandClass}" onclick="abrirViewer(${globalIdx})">
           ${thumb}
           <div class="prancha-row-info">
             <div class="prancha-row-os">${esc(p.project_code || 'Sem OS')}</div>
@@ -536,7 +613,7 @@
   }
 
   // ── Init ─────────────────────────────────────
-  document.addEventListener('DOMContentLoaded', carregarPranchas);
+  document.addEventListener('DOMContentLoaded', () => { renderBrandBar(); carregarPranchas(); });
 
   </script>
 </body>
