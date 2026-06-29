@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (isAdmin) {
     document.getElementById('adminBadge').style.display = 'inline-block';
-    document.getElementById('navAdmin').style.display = 'flex';
+    document.querySelectorAll('#navRelacaoProjetos, #navLojasPiscinas, #navAdmin, #labelAdmin, #navAdminGroup').forEach(el => el.style.display = 'flex');
     document.getElementById('btnSchedule').style.display = 'flex';
   }
 

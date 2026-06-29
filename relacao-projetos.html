@@ -1,0 +1,3103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relação de Projetos — Admin — Ikatu</title>
+<script>if (window.innerWidth <= 768) { window.location.href = 'index.html'; }</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="supabase-client.js?v=202606261041"></script>
+<meta name="theme-color" content="#1a2a3a">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css?v=202606261041">
+<style>
+  /* Header Relação */
+  .rel-banner {
+    background: #000000;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 12px 24px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+  .rel-logo {
+    height: 38px;
+    display: block;
+  }
+  .rel-title {
+    font-family: 'Inter Tight', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .toolbar-right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+  .tool-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .tool-field label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .tool-field select, .tool-field input {
+    padding: 7px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    outline: none;
+    background: #fff;
+  }
+  .tool-field select:focus, .tool-field input:focus {
+    border-color: var(--blue);
+  }
+
+  /* Action buttons */
+  .btn-action {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    display:inline-flex;
+    align-items:center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn-action.add {
+    background: #1e293b;
+    color: #fff;
+    border-color: #1e293b;
+    gap: 6px;
+  }
+  .btn-action.add:hover {
+    background: #0f172a;
+    border-color: #0f172a;
+  }
+  .btn-action.save {
+    background: #27ae60;
+    color: #fff;
+  }
+  .btn-action.save:hover {
+    background: #219653;
+  }
+  .btn-action.export {
+    background: #34495e;
+    color: #fff;
+  }
+  .btn-action.export:hover {
+    background: #2c3e50;
+  }
+  .export-icon-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-icon-export {
+    width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    border: 1.5px solid #cbd5e1;
+    background: #eef2f7;
+    color: #1a2a3a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-icon-export:hover {
+    background: #1a2a3a;
+    color: #fff;
+    border-color: #1a2a3a;
+    transform: translateY(-1px);
+  }
+  .btn-icon-export svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Spreadsheet grid table */
+  .grid-container {
+    overflow-x: hidden;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 10px;
+    max-height: calc(100vh - 210px);
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+  }
+  .grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    table-layout: fixed;
+  }
+  .grid-table th {
+    background: #1e293b;
+    color: #e2e8f0;
+    font-weight: 600;
+    padding: 11px 10px;
+    text-align: center;
+    border-right: 1px solid #334155;
+    border-bottom: 3px solid #0f172a;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+    text-transform: uppercase;
+    font-size: 9.5px;
+    letter-spacing: 0.6px;
+  }
+  .grid-table th:last-child {
+    border-right: none;
+  }
+  .grid-table td {
+    padding: 0;
+    border-right: 1px solid #e8edf2;
+    border-bottom: 1px solid #e8edf2;
+    height: 38px;
+    vertical-align: middle;
+  }
+  /* Separador de grupo (borda inferior da details-row) já cuida do gap */
+  .grid-table tr.main-row td {
+    border-bottom: none;
+  }
+
+  /* Inputs inside cells */
+  .cell-input, .cell-select {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    padding: 0 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    color: #1e293b;
+    box-sizing: border-box;
+    outline: none;
+    transition: background 0.1s;
+    text-align: center;
+  }
+  /* Negrito apenas em Loja, ID Projeto e Projetista */
+  .cell-input[id^="loja-input-"],
+  .cell-input[data-field="project_code"],
+  .cell-select[data-field="projetista"] {
+    font-weight: 700;
+  }
+  .cell-input:focus, .cell-select:focus {
+    background: #e0f2fe !important;
+    box-shadow: inset 0 0 0 1.5px var(--blue);
+  }
+  .cell-select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .cell-select-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .cell-select-wrap::after {
+    content: "▾";
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: #64748b;
+    pointer-events: none;
+  }
+
+  /* Centered checkbox */
+  .cell-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+  .cell-check input {
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    margin: 0;
+  }
+
+  /* Delete row button */
+  .btn-row-del {
+    background: transparent;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    font-size: 14px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+  }
+  .btn-row-del:hover {
+    background: #fee2e2;
+  }
+
+  /* Row animations & status colors */
+  .grid-table tr.deleted-row td {
+    opacity: 0.4;
+    background: #fecaca !important;
+    text-decoration: line-through;
+  }
+  .row-enter td {
+    animation: rowEnter .34s ease both;
+    animation-delay: inherit;
+  }
+  .details-row.row-enter td {
+    animation-duration: .38s;
+  }
+  @keyframes rowEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .loading-row td {
+    padding: 10px 12px !important;
+    background: #f8fafc !important;
+  }
+  .sk-line {
+    display: block;
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(90deg,#e2e8f0 0%,#f8fafc 45%,#e2e8f0 100%);
+    background-size: 220% 100%;
+    animation: shimmer 1.15s linear infinite;
+  }
+  @keyframes shimmer {
+    from { background-position: 220% 0; }
+    to { background-position: -220% 0; }
+  }
+
+  /* Details row inputs & selectors */
+  .details-fabrica-input {
+    width: 100%;
+    background: #e2e8f0;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #475569;
+    cursor: not-allowed;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .details-obs-input {
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #1e293b;
+    box-sizing: border-box;
+    outline: none;
+    text-align: center;
+  }
+  .details-obs-input:focus {
+    border-color: var(--blue);
+    background: #e0f2fe;
+  }
+  .details-pool-select {
+    width: 145px;
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 4px;
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .details-pool-select:focus {
+    border-color: var(--blue);
+    background: #e0f2fe;
+  }
+
+  /* Loja autocomplete global */
+  #lojaAcGlobal{position:fixed;z-index:1000;background:#fff;border:1.5px solid var(--blue);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.14);display:none;max-height:220px;overflow-y:auto;min-width:180px;}
+  .loja-ac-item{padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #f1f5f9;color:#1a2a3a;display:flex;align-items:center;gap:8px;}
+  .loja-ac-item:last-child{border-bottom:none;}
+  .loja-ac-item:hover,.loja-ac-item.focused{background:#e8f4fd;}
+  .loja-ac-item mark{background:transparent;color:var(--blue);font-weight:700;}
+  .loja-ac-item .ac-fab{color:#94a3b8;font-size:10px;margin-left:auto;white-space:nowrap;}
+
+  /* Franchise Theme Colors */
+  tr.fr-igui td { background-color: #f0f7ff !important; }
+  tr.fr-igui:hover td { background-color: #dbeafe !important; }
+  tr.fr-igui.details-row td { background-color: #f8fbff !important; border-top: 1px solid #dbeafe !important; border-bottom: 3px solid #1e293b !important; }
+
+  tr.fr-splash td { background-color: #fff1f6 !important; }
+  tr.fr-splash:hover td { background-color: #fce7f3 !important; }
+  tr.fr-splash.details-row td { background-color: #fffbfd !important; border-top: 1px solid #fce7f3 !important; border-bottom: 3px solid #1e293b !important; }
+
+  tr.fr-conceito td { background-color: #fffbeb !important; }
+  tr.fr-conceito:hover td { background-color: #fef9c3 !important; }
+  tr.fr-conceito.details-row td { background-color: #fffdf5 !important; border-top: 1px solid #fef9c3 !important; border-bottom: 3px solid #1e293b !important; }
+
+  tr.fr-internacional td { background-color: #faf5ff !important; }
+  tr.fr-internacional:hover td { background-color: #ede9fe !important; }
+  tr.fr-internacional.details-row td { background-color: #fdfcff !important; border-top: 1px solid #ede9fe !important; border-bottom: 3px solid #1e293b !important; }
+
+  .cell-select-projetista {
+    border-radius: 6px;
+    font-weight: 700;
+    padding: 4px 20px 4px 8px !important;
+    transition: all 0.2s;
+    border: 1.5px solid transparent;
+  }
+
+  /* Summary and Grid Cards */
+  .summary-table th, .summary-table td {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+  }
+  .summary-table th {
+    background: #edf7fd;
+    color: var(--dark);
+    font-weight: 700;
+  }
+  .summary-table tr.total-row {
+    background: #e1f5fe;
+    color: var(--dark);
+    font-weight: 800;
+    font-size: 13px;
+  }
+  .project-pools-row td {
+    background: #f8fbff !important;
+    padding: 7px 14px !important;
+  }
+
+  /* Container de pools dinâmico */
+  .pools-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+  .btn-add-pool {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 16px;
+    font-weight: 300;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    line-height: 1;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .btn-add-pool:hover {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+    transform: scale(1.1);
+  }
+
+  /* Badge do número de linha */
+  .row-num-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Inter Tight', sans-serif;
+  }
+  .project-pools {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    color: #64748b;
+    font-size: 11px;
+  }
+  .project-pools-label {
+    font-size: 10px;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: .35px;
+    margin-right: 2px;
+  }
+  .pool-chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #075985;
+    font-size: 10.5px;
+    font-weight: 700;
+    border: 1px solid #bae6fd;
+  }
+  .project-note {
+    color: #64748b;
+    font-size: 10.5px;
+    margin-left: 8px;
+  }
+  .pag-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border: 1px solid var(--border);
+  }
+  .pag-grid {
+    display: grid;
+    grid-template-columns: 1.8fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 1024px) {
+    .pag-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .summary-title-bar {
+    background: linear-gradient(135deg, #1a2a3a 0%, #243547 100%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px;
+    text-transform: uppercase;
+    text-align: center;
+    border-bottom: 2px solid var(--blue);
+  }
+
+  /* Payment registration box */
+  .pay-box{margin-top:20px;background:linear-gradient(135deg,#0f2435 0%,#1a3a52 100%);border-radius:12px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .pay-box-info{color:#fff;}
+  .pay-box-label{font-size:10px;font-weight:700;letter-spacing:.8px;color:#7fb3d3;text-transform:uppercase;margin-bottom:4px;}
+  .pay-box-total{font-size:28px;font-weight:800;color:#4ade80;font-family:'Inter Tight',sans-serif;}
+  .pay-box-sub{font-size:11px;color:#94a3b8;margin-top:2px;}
+  .btn-pay{padding:12px 24px;background:#4ade80;color:#0f172a;border:none;border-radius:8px;font-family:'Inter',sans-serif;font-weight:800;font-size:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px;white-space:nowrap;flex-shrink:0;}
+  .btn-pay:hover{background:#22c55e;transform:translateY(-1px);box-shadow:0 4px 12px rgba(74,222,128,.35);}
+  .btn-pay:disabled{background:#475569;color:#94a3b8;cursor:not-allowed;transform:none;box-shadow:none;}
+
+  /* Payment history */
+  .hist-section{margin-top:24px;}
+  .hist-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .hist-title{font-size:11px;font-weight:700;color:#1a2a3a;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:8px;}
+  .hist-badge{background:#dcfce7;color:#16a34a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+  .hist-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .hist-table th{background:#f8fafc;padding:8px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--border);}
+  .hist-table td{padding:9px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+  .hist-table tr:last-child td{border-bottom:none;}
+  .hist-table tr:hover td{background:#f8fafc;}
+  .hist-period{font-weight:700;color:#1a2a3a;}
+  .hist-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:700;}
+  .hist-tag.pago{background:#dcfce7;color:#16a34a;}
+  .hist-empty{text-align:center;color:var(--muted);padding:24px;font-size:12px;}
+
+  /* Centraliza tudo na tabela do resumo por projetista */
+  #resumoTabelaProjetosCorpo td {
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 8px 10px !important;
+  }
+  .hist-total-row td{background:#f0fdf4;font-weight:700;color:#16a34a;border-top:2px solid #bbf7d0;}
+
+  /* KPI cards */
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+  .kpi-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .kpi-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+  .kpi-value{font-size:26px;font-weight:800;color:#1a2a3a;font-family:'Inter Tight',sans-serif;line-height:1;}
+  .kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+
+  /* Charts grid */
+  .charts-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px;}
+  @media(max-width:900px){.charts-grid{grid-template-columns:1fr 1fr;}}
+  .chart-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+  .chart-card.full{grid-column:1/-1;}
+  .chart-title{font-size:11px;font-weight:700;color:#1a2a3a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+  .chart-title span{background:#e8f4fd;color:var(--blue);border-radius:4px;padding:2px 7px;font-size:10px;}
+
+  /* Full Width override */
+  .proj-page-wrap {
+    max-width: 100% !important;
+    padding: 16px 20px 60px !important;
+  }
+
+  /* Tabs Navigation Styling */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0;
+    align-items: flex-end;
+  }
+  .tabs-spacer { flex: 1; }
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all .15s;
+    outline: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: #1a2a3a; border-bottom-color: #1a2a3a; }
+  .tab svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+  .tab-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 20px; height: 18px; padding: 0 5px;
+    border-radius: 9px; font-size: 10px; font-weight: 700; line-height: 1;
+    background: #e2e8f0; color: #64748b; transition: all .15s;
+  }
+  .tab.active .tab-badge { background: #1e293b; color: #fff; }
+  .tab-badge.danger { background: #fee2e2; color: #dc2626; }
+  .tab.active .tab-badge.danger { background: #dc2626; color: #fff; }
+
+  /* Status badges - Em Andamento */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700;
+    white-space: nowrap;
+  }
+  .status-badge.prazo   { background: #dcfce7; color: #16a34a; }
+  .status-badge.atencao { background: #fef9c3; color: #b45309; }
+  .status-badge.atrasado{ background: #fee2e2; color: #dc2626; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .prazo   .status-dot { background: #16a34a; }
+  .atencao .status-dot { background: #d97706; }
+  .atrasado .status-dot{ background: #dc2626; }
+
+  /* Em andamento table */
+  #andamentoTabela { width: 100%; border-collapse: collapse; }
+  #andamentoTabela th {
+    background: #1e293b; color: #fff; font-size: 9.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .4px; padding: 11px 10px;
+    text-align: center; border-bottom: 3px solid #0f172a;
+  }
+  #andamentoTabela td {
+    padding: 0 10px; height: 40px; border-right: 1px solid #e8edf2;
+    border-bottom: 1px solid #e8edf2; font-size: 12px; text-align: center;
+    vertical-align: middle;
+  }
+  #andamentoTabela tr:hover td { background: #f8fafc; }
+  .dias-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  }
+  .dias-badge.prazo   { background: #dcfce7; color: #16a34a; }
+  .dias-badge.atencao { background: #fef9c3; color: #b45309; }
+  .dias-badge.atrasado{ background: #fee2e2; color: #dc2626; }
+  .tab-pane {
+    display: none;
+  }
+  .tab-pane.active {
+    display: block;
+  }
+</style>
+</head>
+<body class="pg-projetos">
+
+<header>
+  <button id="btnMenuToggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" class="btn-menu-toggle" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; display:none; align-items:center; justify-content:center; padding: 0 12px 0 0; outline:none;">
+    ☰
+  </button>
+  <div>
+    <h1>RELAÇÃO DE <span>PROJETOS</span></h1>
+    <div class="hdr-sub">Ikatu</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <img src="logo_site.png" style="width:160px;display:block;margin:4px auto 18px;" alt="iGUI">
+    <div class="sidebar-actions" style="margin-top:auto;">
+      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço Ikatu</div>
+      <nav class="steps" style="margin-bottom:6px;">
+        <a class="stp" href="index.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+            <path d="M6 3v10M2 7h12"/>
+          </svg>
+          <span class="stp-txt">Gerador</span>
+        </a>
+        <a class="stp" href="projetos.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="2" y="2" width="5" height="5" rx="1"/>
+            <rect x="9" y="2" width="5" height="5" rx="1"/>
+            <rect x="2" y="9" width="5" height="5" rx="1"/>
+            <rect x="9" y="9" width="5" height="5" rx="1"/>
+          </svg>
+          <span class="stp-txt">Pranchas</span>
+        </a>
+        <a class="stp" href="links.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M7 9a3 3 0 004.24.1l2-2a3 3 0 00-4.24-4.24l-1.1 1.1"/>
+            <path d="M9 7a3 3 0 00-4.24-.1l-2 2a3 3 0 004.24 4.24l1.1-1.1"/>
+          </svg>
+          <span class="stp-txt">Links</span>
+        </a>
+        <a class="stp" href="avisos.html" id="navChat">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
+            <path d="M6 13a2 2 0 0 0 4 0"/>
+          </svg>
+          <span class="stp-txt">Avisos</span>
+          <span class="chat-nav-badge" id="chatNavBadge"></span>
+        </a>
+        <a class="stp" href="chat.html" id="navChatDM">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/>
+          </svg>
+          <span class="stp-txt">Chat</span>
+          <span class="chat-nav-badge" id="chatDmNavBadge"></span>
+        </a>
+        <a class="stp" href="pagamentos.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="1" y="3" width="14" height="10" rx="2"/>
+            <line x1="1" y1="7" x2="15" y2="7"/>
+            <line x1="4" y1="10" x2="6" y2="10"/>
+          </svg>
+          <span class="stp-txt">Pagamentos</span>
+        </a>
+        
+      </nav>
+
+      <!-- Espaço Admin -->
+      <div class="sidebar-label" id="labelAdmin" style="margin-top:12px;margin-bottom:4px;padding-left:8px;display:none;">Espaço Admin</div>
+      <nav class="steps" id="navAdminGroup" style="margin-bottom:6px;display:none;">
+        <a class="stp active" href="relacao-projetos.html" id="navRelacaoProjetos" style="display:none">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="3" y="3" width="10" height="10" rx="1"/>
+            <line x1="3" y1="6" x2="13" y2="6"/>
+            <line x1="3" y1="9" x2="13" y2="9"/>
+            <line x1="6" y1="3" x2="6" y2="13"/>
+          </svg>
+          <span class="stp-txt">Relação</span>
+        </a>
+
+        <a class="stp" href="lojas-piscinas.html" id="navLojasPiscinas" style="display:none">
+          <svg class="sdb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span class="stp-txt">Lojas/Piscinas</span>
+        </a>
+
+        <a class="stp" href="admin.html" id="navAdmin" style="display:none">
+          <svg class="sdb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="stp-txt">Configuração</span>
+          <span class="admin-nav-badge" id="adminNavBadge"></span>
+        </a>
+      </nav>
+
+      <div class="sdb-divider"></div>
+      
+      <div class="sidebar-user-card">
+        <div class="su-avatar" id="userAvatar">?</div>
+        <div class="su-info">
+          <span class="su-name" id="hdrUser" title="Usuário logado">—</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <button class="su-signout" onclick="sbSignOut()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3"/><path d="M10 5l3 3-3 3M13 8H6"/></svg>
+              Sair
+            </button>
+            <button class="su-settings" onclick="abrirModalSenha()" title="Alterar Senha" style="background:none; border:none; padding:0; cursor:pointer; color:#7f8c8d; opacity:0.75; transition:opacity 0.15s; display:inline-flex; align-items:center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px; height:13px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="proj-page-wrap">
+      
+      <!-- Tab selectors -->
+      <div class="tabs">
+        <button class="tab active" id="tabPlanilhaBtn" onclick="abaPlanilha()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+          Planilha Geral
+        </button>
+        <button class="tab" id="tabAndamentoBtn" onclick="abaAndamento()">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Em Andamento
+          <span class="tab-badge" id="andamentoBadge">0</span>
+        </button>
+        <div class="tabs-spacer"></div>
+        <button class="tab" id="tabResumoBtn" onclick="abaResumo()">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Resumo por Projetista
+        </button>
+        <button class="tab" id="tabLojaBtn" onclick="abaLoja()">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/><line x1="15" y1="15" x2="19" y2="15"/><line x1="15" y1="18" x2="19" y2="18"/></svg>
+          Resumo por Loja
+        </button>
+      </div>
+
+      <!-- ABA 1: PLANILHA GERAL -->
+      <div class="tab-pane active" id="panePlanilha">
+        <div class="card active" style="border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: var(--radius); overflow: hidden; background: #fff; display: block;">
+          <div class="card-hd" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div class="card-ico" style="background: var(--blue); color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-family: 'Inter Tight', sans-serif; font-size: 15px; font-weight: 700; color: #fff;">Planilha Geral</div>
+                <div class="card-sub" style="font-size: 10px; color: #8090a0; margin-top: 2px;">Lançamento e controle de projetos enviados</div>
+              </div>
+            </div>
+            <!-- Auto-save status indicator in card header -->
+            <div id="saveStatus" style="font-size: 11.5px; color: #4ade80; font-weight: 600; display: flex; align-items: center; gap: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none;">
+              <span>✓</span> Salvo automaticamente
+            </div>
+          </div>
+          <div class="card-bd" style="padding: 20px;">
+            <!-- Action Toolbar inside card body -->
+            <div style="margin-bottom: 16px; display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;">
+              <div class="tool-field">
+                <label>Ano</label>
+                <select id="exercicioAno" onchange="alterarExercicio()">
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                </select>
+              </div>
+
+              <div class="tool-field">
+                <label>Buscar</label>
+                <input type="text" id="filtroGrid" placeholder="Loja, ID ou Projetista..." oninput="renderGrid()">
+              </div>
+
+              <div class="tool-field">
+                <label>Status Pago</label>
+                <select id="filtroPago" onchange="renderGrid()">
+                  <option value="nao_pagos" selected>Não Pagos</option>
+                  <option value="pagos">Pagos</option>
+                  <option value="todos">Todos</option>
+                </select>
+              </div>
+
+              <button class="btn-action add" onclick="adicionarLinha()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adicionar Linha
+              </button>
+
+              <div style="margin-left: auto; display: flex; gap: 6px; align-items: center;">
+                <button class="btn-icon-export" onclick="exportarPlanilhaCSV()" title="Exportar CSV" aria-label="Exportar CSV">
+                  <!-- CSV: linhas horizontais com seta para baixo -->
+                  <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+                </button>
+                <button class="btn-icon-export" onclick="exportarPlanilhaPDF()" title="Exportar PDF" aria-label="Exportar PDF">
+                  <!-- PDF: arquivo simples -->
+                  <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Table View Grid -->
+            <div class="grid-container">
+              <table class="grid-table">
+                <colgroup>
+                  <col style="width: 55px;">  <!-- # -->
+                  <col style="width: 110px;"> <!-- Franquia -->
+                  <col style="width: 190px;"> <!-- Loja -->
+                  <col style="width: 90px;">  <!-- ID Projeto -->
+                  <col style="width: 120px;"> <!-- Entrada -->
+                  <col style="width: 120px;"> <!-- Saída -->
+                  <col style="width: 170px;"> <!-- Projetista -->
+                  <col style="width: 180px;"> <!-- Tipo Projeto -->
+                  <col style="width: 50px;">  <!-- Pago -->
+                  <col style="width: 45px;">  <!-- Ações -->
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th style="text-align: center;">#</th>
+                    <th>Franquia</th>
+                    <th>Loja</th>
+                    <th>ID Projeto</th>
+                    <th>Entrada</th>
+                    <th>Saída</th>
+                    <th>Projetista</th>
+                    <th>Tipo Projeto</th>
+                    <th style="text-align: center;">Pago</th>
+                    <th style="text-align: center;"></th>
+                  </tr>
+                </thead>
+                <tbody id="gridBody">
+                  <!-- Loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 2: EM ANDAMENTO -->
+      <div class="tab-pane" id="paneAndamento" style="display:none;">
+        <div class="card active" style="border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden;background:#fff;display:block;">
+          <div class="card-hd" style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div class="card-ico" style="background:#f59e0b;color:#fff;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </div>
+              <div>
+                <div class="card-title" style="font-family:'Inter Tight',sans-serif;font-size:15px;font-weight:700;color:#fff;">Projetos em Andamento</div>
+                <div class="card-sub" style="font-size:10px;color:#8090a0;margin-top:2px;">Projetos com entrada mas sem data de saída</div>
+              </div>
+            </div>
+            <!-- Legenda de status -->
+            <div style="display:flex;gap:12px;align-items:center;">
+              <span class="status-badge prazo"><span class="status-dot"></span>No Prazo (≤1 dia)</span>
+              <span class="status-badge atencao"><span class="status-dot"></span>Atenção (2 dias)</span>
+              <span class="status-badge atrasado"><span class="status-dot"></span>Atrasado (≥3 dias)</span>
+            </div>
+          </div>
+          <div style="padding:0;">
+            <div style="overflow-x:auto;">
+              <table id="andamentoTabela">
+                <colgroup>
+                  <col style="width:50px;">
+                  <col style="width:110px;">
+                  <col style="width:200px;">
+                  <col style="width:95px;">
+                  <col style="width:115px;">
+                  <col style="width:60px;">
+                  <col style="width:170px;">
+                  <col style="width:170px;">
+                  <col style="width:140px;">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Franquia</th>
+                    <th>Loja</th>
+                    <th>ID Projeto</th>
+                    <th>Entrada</th>
+                    <th>Dias</th>
+                    <th>Projetista</th>
+                    <th>Tipo Projeto</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="andamentoCorpo">
+                  <tr><td colspan="9" style="text-align:center;padding:32px;color:#94a3b8;font-size:13px;">Carregando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 3: RESUMO PROJETISTAS -->
+      <div class="tab-pane" id="paneResumo" style="display: none;">
+        <div class="card active" style="border: 1px solid var(--border); box-shadow: var(--shadow); border-radius: var(--radius); overflow: hidden; background: #fff; display: block;">
+          <div class="card-hd" style="display: flex; align-items: center; gap: 12px;">
+            <div class="card-ico" style="background: var(--blue); color: #fff; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <div class="card-title" style="font-family: 'Inter Tight', sans-serif; font-size: 15px; font-weight: 700; color: #fff;">Resumo por Projetista</div>
+              <div class="card-sub" style="font-size: 10px; color: #8090a0; margin-top: 2px;">Detalhamento financeiro e de produtividade</div>
+            </div>
+          </div>
+          <div class="card-bd" style="padding: 20px;">
+            <!-- Filters Toolbar for Resumo -->
+            <div class="toolbar" style="margin-bottom: 20px; border: none; padding: 0; background: transparent; display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <div class="tool-field">
+                <label>Projetista</label>
+                <select id="resumoProjetista" onchange="atualizarResumoProjetista()">
+                  <!-- Loaded dynamically -->
+                </select>
+              </div>
+              <div class="tool-field">
+                <label>Mês</label>
+                <select id="resumoMes" onchange="atualizarResumoProjetista()">
+                  <option value="0">Janeiro</option>
+                  <option value="1">Fevereiro</option>
+                  <option value="2">Março</option>
+                  <option value="3">Abril</option>
+                  <option value="4" selected>Maio</option>
+                  <option value="5">Junho</option>
+                  <option value="6">Julho</option>
+                  <option value="7">Agosto</option>
+                  <option value="8">Setembro</option>
+                  <option value="9">Outubro</option>
+                  <option value="10">Novembro</option>
+                  <option value="11">Dezembro</option>
+                </select>
+              </div>
+              <div class="tool-field">
+                <label>Ano</label>
+                <select id="resumoAno" onchange="atualizarResumoProjetista()">
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                </select>
+              </div>
+
+              <div class="tool-field">
+                <label>Status Pago</label>
+                <select id="resumoFiltroPago" onchange="atualizarResumoProjetista()">
+                  <option value="nao_pagos" selected>Não Pagos</option>
+                  <option value="pagos">Pagos</option>
+                  <option value="todos">Todos</option>
+                </select>
+              </div>
+              <div class="toolbar-right" style="margin-left:auto;">
+                <button class="btn-icon-export" onclick="exportarResumoCSV()" title="Exportar CSV" aria-label="Exportar CSV">
+                  <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                </button>
+                <button class="btn-icon-export" onclick="exportarResumoPDF()" title="Exportar PDF" aria-label="Exportar PDF">
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6"/><path d="M9 18h6"/><path d="M9 12h2"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Grid Layout matching pagamentos.html -->
+            <div class="pag-grid">
+              
+              <!-- LEFT PANEL: Projects List -->
+              <div class="pag-card" style="padding: 16px;">
+                <h4 style="font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 12px; border-bottom: 1.5px solid var(--border); padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Projetos Relacionados</h4>
+                <div style="overflow-x:auto;">
+                  <table class="grid-table" style="table-layout: auto;">
+                    <thead>
+                      <tr style="background: #f1f5f9;">
+                        <th style="padding: 6px 10px; text-align: center;">#</th>
+                        <th style="padding: 6px 10px;">Franquia</th>
+                        <th style="padding: 6px 10px;">Loja</th>
+                        <th style="padding: 6px 10px;">ID Projeto</th>
+                        <th style="padding: 6px 10px;">Entrada</th>
+                        <th style="padding: 6px 10px;">Saída</th>
+                        <th style="padding: 6px 10px;">Tipo Projeto</th>
+                        <th style="text-align: center; padding: 6px 10px;">Pago</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resumoTabelaProjetosCorpo">
+                      <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Selecione um projetista para ver a listagem.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- RIGHT PANEL: Financial breakdown card -->
+              <div class="pag-card" style="height: fit-content;">
+                <div class="summary-title-bar">
+                  Detalhamento Financeiro
+                </div>
+                <div style="padding: 16px;">
+                  <table class="summary-table" style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <thead>
+                      <tr style="background: #edf7fd;">
+                        <th style="text-align: left; padding: 8px;">Tipo</th>
+                        <th style="text-align: center; padding: 8px; width: 60px;">Qtd</th>
+                        <th style="text-align: right; padding: 8px; width: 85px;">Unit.</th>
+                        <th style="text-align: right; padding: 8px; width: 95px;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody id="resumoFinanceiroCorpo">
+                      <!-- Loaded dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Payment registration -->
+                <div class="pay-box" id="payBox">
+                  <div class="pay-box-info">
+                    <div class="pay-box-label">Total a Receber</div>
+                    <div class="pay-box-total" id="payTotal">R$ 0,00</div>
+                    <div class="pay-box-sub" id="paySubtitle">Nenhum projeto pendente</div>
+                  </div>
+                  <button class="btn-pay" id="btnPay" onclick="registrarPagamento()" disabled>
+                    ✓ Registrar Pagamento
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Histórico de Pagamentos -->
+            <div class="hist-section">
+              <div class="hist-header">
+                <div class="hist-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Histórico de Pagamentos
+                  <span class="hist-badge" id="histBadge">0 períodos</span>
+                </div>
+              </div>
+              <div style="border:1.5px solid var(--border);border-radius:10px;overflow:hidden;">
+                <table class="hist-table">
+                  <thead>
+                    <tr>
+                      <th>Período</th>
+                      <th style="text-align:center;">Projetos</th>
+                      <th style="text-align:right;">Total Pago</th>
+                      <th>Data do Registro</th>
+                      <th style="text-align:center;">Status</th>
+                      <th style="text-align:center;">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="histBody">
+                    <tr><td colspan="5" class="hist-empty">Selecione um projetista para ver o histórico.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ABA 3: RESUMO POR LOJA -->
+      <div class="tab-pane" id="paneLoja" style="display:none;">
+        <div class="card active" style="border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--radius);overflow:hidden;background:#fff;display:block;">
+          <div class="card-hd" style="display:flex;align-items:center;gap:12px;">
+            <div class="card-ico" style="background:#7c3aed;color:#fff;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <div>
+              <div class="card-title" style="font-family:'Inter Tight',sans-serif;font-size:15px;font-weight:700;color:#fff;">Resumo por Loja</div>
+              <div class="card-sub" style="font-size:10px;color:#8090a0;margin-top:2px;">Volume de projetos por loja e franquia</div>
+            </div>
+          </div>
+          <div class="card-bd" style="padding:20px;">
+            <!-- Filters -->
+            <div class="toolbar" style="margin-bottom:20px;border:none;padding:0;background:transparent;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+              <div class="tool-field">
+                <label>Mês</label>
+                <select id="lojaResumoMes" onchange="atualizarResumoLoja()">
+                  <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option>
+                  <option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option>
+                  <option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option>
+                  <option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option>
+                </select>
+              </div>
+              <div class="tool-field">
+                <label>Ano</label>
+                <select id="lojaResumoAno" onchange="atualizarResumoLoja()">
+                  <option value="2025">2025</option><option value="2026" selected>2026</option>
+                  <option value="2027">2027</option><option value="2028">2028</option>
+                </select>
+              </div>
+              <div class="tool-field">
+                <label>Franquia</label>
+                <select id="lojaResumoFranquia" onchange="lojaResumoFranquiaChange()">
+                  <option value="">Todas</option>
+                  <option value="iGUi">iGUi</option>
+                  <option value="Conceito">Conceito</option>
+                  <option value="Splash">Splash</option>
+                  <option value="Internacional">Internacional</option>
+                </select>
+              </div>
+              <div class="tool-field">
+                <label>Loja</label>
+                <select id="lojaResumoLoja" onchange="atualizarResumoLoja()">
+                  <option value="">Todas</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-row" id="lojaKpiRow">
+              <div class="kpi-card"><div class="kpi-label">Total de Projetos</div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-sub">no período</div></div>
+              <div class="kpi-card"><div class="kpi-label">Lojas Ativas</div><div class="kpi-value" id="kpiLojas">—</div><div class="kpi-sub">solicitaram projeto</div></div>
+              <div class="kpi-card"><div class="kpi-label">Franquia Líder</div><div class="kpi-value" id="kpiFranquia" style="font-size:18px;">—</div><div class="kpi-sub" id="kpiFranquiaSub"></div></div>
+              <div class="kpi-card"><div class="kpi-label">Loja Mais Ativa</div><div class="kpi-value" id="kpiTopLoja" style="font-size:16px;">—</div><div class="kpi-sub" id="kpiTopLojaSub"></div></div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+              <!-- Bar: Top 10 lojas -->
+              <div class="chart-card" style="min-height:280px;">
+                <div class="chart-title">Projetos por Loja <span id="chartLojasSpan" style="color:#00aefe;font-weight:700;"></span></div>
+                <div style="position:relative;height:240px;">
+                  <canvas id="chartLojas"></canvas>
+                </div>
+              </div>
+              <!-- Donut: por franquia -->
+              <div class="chart-card" style="min-height:280px;">
+                <div class="chart-title">Distribuição por Franquia</div>
+                <div style="position:relative;height:240px;">
+                  <canvas id="chartFranquia"></canvas>
+                </div>
+              </div>
+
+
+              <!-- Bar: tipos de projeto -->
+              <div class="chart-card" style="min-height:280px;">
+                <div class="chart-title">Tipos de Projeto</div>
+                <div style="position:relative;height:240px;">
+                  <canvas id="chartTipo"></canvas>
+                </div>
+              </div>
+              <!-- Donut: prazo médio por franquia -->
+              <div class="chart-card" style="min-height:280px;">
+                <div class="chart-title">Prazo Médio de Entrega <span style="font-size:10px;color:#94a3b8;">(dias)</span></div>
+                <div style="position:relative;height:240px;">
+                  <canvas id="chartPrazo"></canvas>
+                </div>
+              </div>
+              <!-- Bar: evolução mensal (full width) -->
+              <div class="chart-card full">
+                <div class="chart-title">Evolução Mensal <span id="chartMensalSpan" style="color:#00aefe;font-weight:700;"></span></div>
+                <div style="position:relative;height:150px;">
+                  <canvas id="chartMensal"></canvas>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Loja Autocomplete Global -->
+<div id="lojaAcGlobal"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- LOGIC -->
+<script>
+  (function() {
+    const cachedName = localStorage.getItem('igui_user_name');
+    const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
+    if (cachedName) {
+      const el = document.getElementById('hdrUser');
+      if (el) el.textContent = cachedName;
+      const av = document.getElementById('userAvatar');
+      if (av) {
+        const pts = cachedName.trim().split(/\s+/);
+        av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
+      }
+    }
+    if (cachedIsAdmin) {
+      document.querySelectorAll('#navRelacaoProjetos, #navLojasPiscinas, #navAdmin, #labelAdmin, #navAdminGroup').forEach(el => el.style.display = 'flex');
+    }
+  })();
+
+  let toastTimer;
+  function showToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    t.innerHTML = `<span style="flex:1;">${msg}</span>`;
+    t.className = `toast ${tipo} show`;
+    toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  window.onerror = function(msg, url, line, col, error) {
+    showToast('Erro de Script: ' + msg + ' (linha ' + line + ')', 'err');
+    return false;
+  };
+
+  // Loaded metadata structures
+  let metadataLojas = [];
+  let metadataPiscinas = [];
+  let listaProjetistas = [];
+  let projectRelations = [];
+  let rowsDeleted = new Set();
+  let debounceTimers = {};
+  let _resumoCurrentProjects = []; // projetos atuais do resumo projetista
+  let _chartLojas = null, _chartFranquia = null, _chartMensal = null,
+      _chartTipo = null, _chartPrazo = null; // Chart.js instances
+
+  let precosGlobais = {
+    val_ate2: 70,
+    val_3a4: 80,
+    val_mais5: 95,
+    val_360: 90,
+    val_360_3mod: 105,
+    val_conceito: 150,
+    val_alt_grandes: 60
+  };
+
+  async function carregarPrecosProjeto() {
+    try {
+      const precos = await sbGetPrecosProjeto();
+      if (precos) {
+        precosGlobais = {
+          val_ate2: precos.val_ate2 ?? 70,
+          val_3a4: precos.val_3a4 ?? 80,
+          val_mais5: precos.val_mais5 ?? 95,
+          val_360: precos.val_360 ?? 90,
+          val_360_3mod: precos.val_360_3mod ?? 105,
+          val_conceito: precos.val_conceito ?? 150,
+          val_alt_grandes: precos.val_alt_grandes ?? 60
+        };
+      }
+    } catch(e) {
+      console.error('Erro ao carregar preços:', e);
+    }
+  }
+
+  // ── Controle de Abas ──────────────────────────────────
+  function _setTab(active) {
+    ['Planilha','Andamento','Resumo','Loja'].forEach(t => {
+      const btn = document.getElementById(`tab${t}Btn`);
+      const pane = document.getElementById(`pane${t}`);
+      if (!btn || !pane) return;
+      const isActive = t === active;
+      btn.classList.toggle('active', isActive);
+      pane.style.display = isActive ? 'block' : 'none';
+    });
+  }
+
+  function abaPlanilha() { _setTab('Planilha'); }
+
+  function abaAndamento() {
+    _setTab('Andamento');
+    renderAndamento();
+  }
+
+  function _atualizarBadgeAndamento(emAndamento, hoje) {
+    const badge = document.getElementById('andamentoBadge');
+    if (!badge) return;
+    badge.textContent = emAndamento.length;
+    const temAtrasado = emAndamento.some(p => {
+      const d = Math.floor((hoje - parseLocalDate(p.data_entrada)) / 86400000);
+      return d >= 3;
+    });
+    badge.classList.toggle('danger', temAtrasado);
+  }
+
+  function _statusAndamento(diasStr) {
+    const dias = parseInt(diasStr) || 0;
+    if (dias <= 1) return { cls: 'prazo',    label: 'No Prazo' };
+    if (dias <= 2) return { cls: 'atencao',  label: 'Atenção'  };
+    return              { cls: 'atrasado', label: 'Atrasado' };
+  }
+
+  // Parseia "YYYY-MM-DD" como data local (sem deslocamento UTC)
+  function parseLocalDate(str) {
+    if (!str) return null;
+    const [y, m, d] = str.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    dt.setHours(0, 0, 0, 0);
+    return dt;
+  }
+  function formatLocalDate(str) {
+    const dt = parseLocalDate(str);
+    if (!dt) return '—';
+    return dt.toLocaleDateString('pt-BR');
+  }
+
+  function renderAndamento() {
+    const tbody = document.getElementById('andamentoCorpo');
+    if (!tbody) return;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+    const emAndamento = projectRelations.filter(p =>
+      p.data_entrada && !p.data_saida
+    ).sort((a,b) => new Date(b.data_entrada) - new Date(a.data_entrada));
+
+    // Atualiza badge
+    _atualizarBadgeAndamento(emAndamento, hoje);
+
+    if (!emAndamento.length) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:#94a3b8;font-size:13px;">Nenhum projeto em andamento no momento.</td></tr>';
+      return;
+    }
+
+    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed'};
+    const esc = v => String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+    tbody.innerHTML = '';
+    emAndamento.forEach((p, idx) => {
+      const num = emAndamento.length - idx;
+      const entrada = parseLocalDate(p.data_entrada);
+      const dias = entrada ? Math.floor((hoje - entrada) / 86400000) : '—';
+      const st = _statusAndamento(dias);
+      const fColor = franquiaColors[p.franquia] || '#64748b';
+      const classFr = {iGUi:'fr-igui',Conceito:'fr-conceito',Splash:'fr-splash',Internacional:'fr-internacional'}[p.franquia]||'';
+
+      // Linha principal (clicável)
+      const tr = document.createElement('tr');
+      tr.id = `and-row-${p.id}`;
+      tr.className = `main-row ${classFr}`;
+      tr.style.cursor = 'pointer';
+      tr.innerHTML = `
+        <td style="border-bottom:none;"><span class="row-num-badge">${num}</span></td>
+        <td style="border-bottom:none;"><span style="font-weight:700;color:${fColor};font-size:11px;">${p.franquia||'—'}</span></td>
+        <td style="text-align:left;font-weight:700;border-bottom:none;">${p.loja||'—'}</td>
+        <td style="font-weight:700;border-bottom:none;">${p.project_code||'—'}</td>
+        <td style="border-bottom:none;">${formatLocalDate(p.data_entrada)}</td>
+        <td style="border-bottom:none;"><span class="dias-badge ${st.cls}">${dias}</span></td>
+        <td style="border-bottom:none;"><span style="color:${getProjetistaColors(p.projetista).color};font-weight:700;">${p.projetista||'—'}</span></td>
+        <td style="font-size:11px;border-bottom:none;"><span style="color:${getTipoColor(p.tipo_projeto)};font-weight:${p.tipo_projeto?'700':'400'};">${p.tipo_projeto||'—'}</span></td>
+        <td style="border-bottom:none;">
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span class="status-badge ${st.cls}"><span class="status-dot"></span>${st.label}</span>
+            <svg id="and-chevron-${p.id}" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </td>`;
+      tr.onclick = () => toggleAndamentoEdit(p.id);
+
+      // Linha de edição (colapsada)
+      const trEdit = document.createElement('tr');
+      trEdit.id = `and-edit-${p.id}`;
+      trEdit.className = `details-row ${classFr}`;
+      trEdit.style.display = 'none';
+
+      const franquias = ['iGUi','Conceito','Internacional','Splash'];
+      const optsFr = franquias.map(f => `<option value="${f}" ${p.franquia===f?'selected':''}>${f}</option>`).join('');
+      const isSplash = p.franquia === 'Splash';
+      const piscinasFiltradas = metadataPiscinas.filter(pi => isSplash ? pi.marca==='Splash' : pi.marca==='iGUi');
+
+      const renderPoolSelectA = (fieldVal, poolIndex) => {
+        let opts = piscinasFiltradas.map(pi => `<option value="${pi.modelo}" ${fieldVal===pi.modelo?'selected':''}>${pi.modelo}</option>`);
+        if (fieldVal && !piscinasFiltradas.some(pi => pi.modelo===fieldVal)) opts.unshift(`<option value="${fieldVal}" selected>${fieldVal}</option>`);
+        return `<select class="details-pool-select" data-field="modelo" data-pool-index="${poolIndex}" onchange="updateRowField('${p.id}',this);setTimeout(()=>renderAndamento(),300)">
+          <option value="">--</option>${opts.join('')}</select>`;
+      };
+      const pools = [p.modelo_01,p.modelo_02,p.modelo_03,p.modelo_04,p.modelo_05];
+      let showCount = 1;
+      for (let i=4;i>=0;i--) { if(pools[i]){showCount=i+2;break;} }
+      showCount = Math.min(showCount,5);
+      let poolsHtml = '';
+      for (let i=0;i<showCount;i++) poolsHtml += renderPoolSelectA(pools[i], i+1);
+      const poolsSection = `<div class="pools-container" id="and-pools-${p.id}" data-id="${p.id}" data-count="${showCount}">
+        ${poolsHtml}
+        ${showCount<5?`<button class="btn-add-pool" onclick="addPoolAndamento('${p.id}')" title="Adicionar modelo">+</button>`:''}
+      </div>`;
+
+      const optsProj = '<option value="">-- Selecione --</option>' + listaProjetistas.map(u=>`<option value="${u.name||u.email}" data-uid="${u.id}" ${p.projetista===(u.name||u.email)?'selected':''}>${u.name||u.email}</option>`).join('');
+      const TIPOS_P = ['Até 02 Projetos','03 a 4 Projetos','05 a 8 Projetos','09 a 12 Projetos','13 ou mais Projetos','Alterações GRANDES','Alterações PEQUENAS','Projeto 360','Projeto 360 + 3 modelos'];
+      const optsTipo = '<option value="">-- Selecione --</option>' + TIPOS_P.map(t=>`<option value="${t}" ${p.tipo_projeto===t?'selected':''}>${t}</option>`).join('');
+      const projColors = getProjetistaColors(p.projetista);
+      const projStyle = p.projetista ? `style="color:${projColors.color};font-weight:700;"` : '';
+
+      const L = 'font-weight:700;color:#94a3b8;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;flex-shrink:0;';
+
+      trEdit.innerHTML = `<td colspan="9" style="padding:6px 14px;">
+        <div style="display:flex;gap:14px;align-items:center;width:100%;flex-wrap:nowrap;">
+
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="${L}color:#16a34a;">Saída:</span>
+            <input type="date" class="cell-input" value="${p.data_saida||''}" onchange="updateRowField('${p.id}',this);setTimeout(()=>renderAndamento(),600)" data-field="data_saida" style="border-color:#16a34a;border-width:1.5px;width:145px;">
+          </div>
+
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="${L}">Pago:</span>
+            <div class="cell-check"><input type="checkbox" ${p.pago?'checked':''} onchange="onPagoChange('${p.id}',this.checked)"></div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="${L}">Modelos:</span>
+            ${poolsSection}
+          </div>
+
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span style="${L}">Fábrica:</span>
+            <input type="text" id="fabrica-${p.id}" value="${esc(p.fabrica)}" readonly class="details-fabrica-input" title="Preenchido automaticamente" style="width:200px;">
+          </div>
+
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+            <span style="${L}">Obs:</span>
+            <input type="text" class="details-obs-input" value="${esc(p.obs)}" onchange="updateRowField('${p.id}',this)" data-field="obs" placeholder="Observações..." style="flex:1;min-width:0;">
+          </div>
+
+        </div>
+      </td>`;
+
+      tbody.appendChild(tr);
+      tbody.appendChild(trEdit);
+    });
+  }
+
+  function toggleGridRow(id) {
+    const trDetails = document.getElementById(`row-details-${id}`);
+    const chevron   = document.getElementById(`grid-chevron-${id}`);
+    if (!trDetails) return;
+    const open = trDetails.style.display === 'none' || trDetails.style.display === '';
+    trDetails.style.display = open ? 'table-row' : 'none';
+    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+  }
+
+  function toggleAndamentoEdit(id) {
+    const trEdit = document.getElementById(`and-edit-${id}`);
+    const chevron = document.getElementById(`and-chevron-${id}`);
+    if (!trEdit) return;
+    const open = trEdit.style.display === 'none' || trEdit.style.display === '';
+    trEdit.style.display = open ? 'table-row' : 'none';
+    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : '';
+  }
+
+
+  function addPoolAndamento(id) {
+    const container = document.getElementById(`and-pools-${id}`);
+    if (!container) return;
+    const count = parseInt(container.dataset.count);
+    if (count >= 5) return;
+    const newCount = count + 1;
+    container.dataset.count = newCount;
+    const row = projectRelations.find(x => x.id === id);
+    const isSplash = row && row.franquia === 'Splash';
+    const piscinasFiltradas = metadataPiscinas.filter(pi => isSplash ? pi.marca==='Splash' : pi.marca==='iGUi');
+    const fieldVal = (row && row[`modelo_0${newCount}`]) || '';
+    const opts = piscinasFiltradas.map(pi => `<option value="${pi.modelo}" ${fieldVal===pi.modelo?'selected':''}>${pi.modelo}</option>`).join('');
+    const sel = document.createElement('select');
+    sel.className = 'details-pool-select';
+    sel.dataset.field = 'modelo';
+    sel.dataset.poolIndex = newCount;
+    sel.onchange = function() { updateRowField(id, this); setTimeout(()=>renderAndamento(), 300); };
+    sel.innerHTML = `<option value="">--</option>${opts}`;
+    if (fieldVal) sel.value = fieldVal;
+    const btn = container.querySelector('.btn-add-pool');
+    container.insertBefore(sel, btn);
+    if (newCount >= 5 && btn) btn.remove();
+  }
+
+  function abaResumo() {
+    _setTab('Resumo');
+    const hoje = new Date();
+    const elMes = document.getElementById('resumoMes');
+    if (elMes) elMes.value = hoje.getMonth();
+    const elAno = document.getElementById('resumoAno');
+    if (elAno) elAno.value = document.getElementById('exercicioAno').value;
+    popularFiltrosResumo();
+    atualizarResumoProjetista();
+  }
+
+  function abaLoja() {
+    _setTab('Loja');
+    // Reset loja select so it repopulates with current data
+    const sel = document.getElementById('lojaResumoLoja');
+    if (sel) { delete sel.dataset.populated; sel.innerHTML = '<option value="">Todas</option>'; }
+    const hoje = new Date();
+    const elMes = document.getElementById('lojaResumoMes');
+    if (elMes) elMes.value = hoje.getMonth();
+    const elAno = document.getElementById('lojaResumoAno');
+    if (elAno) elAno.value = document.getElementById('exercicioAno').value;
+    atualizarResumoLoja();
+  }
+
+  function popularFiltrosResumo() {
+    const sel = document.getElementById('resumoProjetista');
+    if (!sel) return;
+
+    const curVal = sel.value;
+    sel.innerHTML = '';
+    
+    const designersSet = new Set();
+    listaProjetistas.forEach(u => designersSet.add(u.name || u.email));
+    projectRelations.forEach(r => {
+      if (r.projetista) designersSet.add(r.projetista);
+    });
+
+    const sortedDesigners = Array.from(designersSet).sort();
+    if (sortedDesigners.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '-- Sem projetistas --';
+      sel.appendChild(opt);
+      return;
+    }
+
+    sortedDesigners.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      sel.appendChild(opt);
+    });
+
+    if (curVal && sortedDesigners.includes(curVal)) {
+      sel.value = curVal;
+    } else if (sortedDesigners.length > 0) {
+      sel.value = sortedDesigners[0];
+    }
+  }
+
+  function atualizarResumoProjetista() {
+    const proj = document.getElementById('resumoProjetista').value;
+    const mesIdx = parseInt(document.getElementById('resumoMes').value);
+    const ano = parseInt(document.getElementById('resumoAno').value);
+
+    const filteredProjects = getResumoFilteredProjects();
+
+    const tbodyLeft = document.getElementById('resumoTabelaProjetosCorpo');
+    tbodyLeft.innerHTML = '';
+
+    if (filteredProjects.length === 0) {
+      tbodyLeft.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Nenhum projeto registrado para este projetista no período selecionado.</td></tr>`;
+    } else {
+      filteredProjects.forEach((p, idx) => {
+        const franquiaVal = p.franquia || 'iGUi';
+        const rowNum = filteredProjects.length - idx;
+        const tr = document.createElement('tr');
+        tr.className = 'row-enter';
+        tr.style.animationDelay = `${idx * 45}ms`;
+        tr.innerHTML = `
+          <td style="font-size:10px; font-weight:700; color:#94a3b8;">${rowNum}</td>
+          <td><span class="brand-badge fr-${franquiaVal.toLowerCase()}" style="padding: 2px 6px; font-size: 10px; border-radius: 4px;">${franquiaVal}</span></td>
+          <td><b>${esc(p.loja)}</b></td>
+          <td>${esc(p.project_code || '—')}</td>
+          <td>${p.data_entrada ? new Date(p.data_entrada + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+          <td>${p.data_saida ? new Date(p.data_saida + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+          <td>${esc(p.tipo_projeto || '—')}</td>
+          <td style="text-align: center;">${p.pago ? '✅' : '❌'}</td>
+        `;
+        tbodyLeft.appendChild(tr);
+
+        const pools = getProjectPools(p);
+        const detail = document.createElement('tr');
+        detail.className = 'project-pools-row row-enter';
+        detail.style.animationDelay = `${idx * 45 + 18}ms`;
+        detail.innerHTML = `
+          <td colspan="8">
+            <div class="project-pools">
+              <span class="project-pools-label">Piscinas</span>
+              ${pools.length ? pools.map(pool => `<span class="pool-chip">${esc(pool)}</span>`).join('') : '<span class="project-note">Nenhum modelo informado</span>'}
+              ${p.fabrica ? `<span class="project-note"><b>Fabrica:</b> ${esc(p.fabrica)}</span>` : ''}
+              ${p.obs ? `<span class="project-note"><b>Obs:</b> ${esc(p.obs)}</span>` : ''}
+            </div>
+          </td>
+        `;
+        tbodyLeft.appendChild(detail);
+      });
+    }
+
+    const counts = {
+      'Até 02 Projetos': 0,
+      '03 a 4 Projetos': 0,
+      'Mais que 05 Projetos': 0,
+      'Projeto 360º': 0,
+      'Projeto 360º (3 Modificações)': 0,
+      'Conceito': 0,
+      'Alterações GRANDES': 0
+    };
+
+    filteredProjects.forEach(p => {
+      if (counts[p.tipo_projeto] !== undefined) {
+        counts[p.tipo_projeto]++;
+      }
+    });
+
+    const pricingMap = {
+      'Até 02 Projetos': precosGlobais.val_ate2,
+      '03 a 4 Projetos': precosGlobais.val_3a4,
+      'Mais que 05 Projetos': precosGlobais.val_mais5,
+      'Projeto 360º': precosGlobais.val_360,
+      'Projeto 360º (3 Modificações)': precosGlobais.val_360_3mod,
+      'Conceito': precosGlobais.val_conceito,
+      'Alterações GRANDES': precosGlobais.val_alt_grandes
+    };
+
+    const tbodyRight = document.getElementById('resumoFinanceiroCorpo');
+    tbodyRight.innerHTML = '';
+
+    let grandTotalQty = 0;
+    let grandTotalPrice = 0;
+
+    Object.keys(counts).forEach(type => {
+      const qty = counts[type];
+      const unitVal = pricingMap[type];
+      const total = qty * unitVal;
+
+      grandTotalQty += qty;
+      grandTotalPrice += total;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding: 8px;">${type}</td>
+        <td style="text-align: center; padding: 8px;">${qty}</td>
+        <td style="text-align: right; padding: 8px;">R$ ${unitVal.toFixed(2)}</td>
+        <td style="text-align: right; padding: 8px; font-weight: 600;">R$ ${total.toFixed(2)}</td>
+      `;
+      tbodyRight.appendChild(tr);
+    });
+
+    const trTotal = document.createElement('tr');
+    trTotal.className = 'total-row';
+    trTotal.innerHTML = `
+      <td style="padding: 8px;">TOTAL A PAGAR</td>
+      <td style="text-align: center; padding: 8px;">${grandTotalQty}</td>
+      <td style="text-align: right; padding: 8px;">—</td>
+      <td style="text-align: right; padding: 8px;">R$ ${grandTotalPrice.toFixed(2)}</td>
+    `;
+    tbodyRight.appendChild(trTotal);
+
+    // ── Pay box ──────────────────────────────────────────
+    _resumoCurrentProjects = filteredProjects;
+    const pendentes = filteredProjects.filter(p => !p.pago);
+    const payTotal  = document.getElementById('payTotal');
+    const paySub    = document.getElementById('paySubtitle');
+    const btnPay    = document.getElementById('btnPay');
+
+    const filterPagoVal = document.getElementById('resumoFiltroPago').value;
+    if (payTotal) payTotal.textContent = `R$ ${grandTotalPrice.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+
+    if (filterPagoVal === 'pagos') {
+      if (paySub) paySub.textContent = `${filteredProjects.length} projeto(s) já pagos neste período`;
+      if (btnPay) { btnPay.disabled = true; btnPay.textContent = '✓ Já Pagos'; }
+    } else if (pendentes.length === 0) {
+      if (paySub) paySub.textContent = 'Nenhum projeto pendente de pagamento';
+      if (btnPay) { btnPay.disabled = true; btnPay.textContent = '✓ Registrar Pagamento'; }
+    } else {
+      if (paySub) paySub.textContent = `${pendentes.length} projeto(s) pendente(s) de pagamento`;
+      if (btnPay) { btnPay.disabled = false; btnPay.textContent = '✓ Registrar Pagamento'; }
+    }
+
+    // Atualiza histórico
+    renderHistoricoPagamentos(proj);
+  }
+
+  // ── Registrar Pagamento ──────────────────────────────
+  async function registrarPagamento() {
+    const pendentes = _resumoCurrentProjects.filter(p => !p.pago);
+    if (!pendentes.length) return;
+    const proj = document.getElementById('resumoProjetista').value;
+    const mes  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][parseInt(document.getElementById('resumoMes').value)];
+    const ano  = document.getElementById('resumoAno').value;
+
+    if (!confirm(`Confirmar pagamento de ${pendentes.length} projeto(s) de ${proj} — ${mes}/${ano}?\n\nEssa ação marcará todos como PAGO no sistema.`)) return;
+
+    const btn = document.getElementById('btnPay');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Registrando...'; }
+
+    try {
+      const ids = pendentes.map(p => p.id);
+      const { error } = await sb.from('project_relations')
+        .update({ pago: true, updated_at: new Date().toISOString() })
+        .in('id', ids);
+
+      if (error) throw error;
+
+      // Update local state
+      ids.forEach(id => {
+        const r = projectRelations.find(x => x.id === id);
+        if (r) r.pago = true;
+      });
+
+      showToast(`✓ ${pendentes.length} projeto(s) marcados como pagos!`, 'ok');
+      atualizarResumoProjetista();
+      renderGrid();
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao registrar pagamento: ' + e.message, 'err');
+      if (btn) { btn.disabled = false; btn.textContent = '✓ Registrar Pagamento'; }
+    }
+  }
+
+  // Auto-Salvar no Supabase
+  async function salvarLinhaNoDB(id) {
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    const statusEl = document.getElementById('saveStatus');
+    if (statusEl) {
+      statusEl.style.opacity = '1';
+      statusEl.innerHTML = '<span>⏳</span> Salvando...';
+      statusEl.style.color = '#3b82f6';
+    }
+
+    try {
+      const payload = { ...row };
+
+      // PostgreSQL compatibility mapping
+      if (payload.data_entrada === '') payload.data_entrada = null;
+      if (payload.data_saida === '') payload.data_saida = null;
+      if (payload.projetista_id === '') payload.projetista_id = null;
+
+      const { error } = await sb.from('project_relations').upsert(payload);
+      if (error) throw error;
+
+      if (statusEl) {
+        statusEl.innerHTML = '<span>✓</span> Salvo automaticamente';
+        statusEl.style.color = '#16a34a';
+        setTimeout(() => {
+          if (statusEl.innerHTML.includes('Salvo')) {
+            statusEl.style.opacity = '0';
+          }
+        }, 2000);
+      }
+    } catch(e) {
+      console.error(e);
+      if (statusEl) {
+        statusEl.innerHTML = '<span>⚠️</span> Erro ao salvar';
+        statusEl.style.color = '#ef4444';
+      }
+    }
+  }
+
+  // Options for dropdowns
+  const TIPOS_PROJETO = [
+    "Até 02 Projetos",
+    "03 a 4 Projetos",
+    "Mais que 05 Projetos",
+    "Projeto 360º",
+    "Projeto 360º (3 Modificações)",
+    "Conceito",
+    "Alterações GRANDES"
+  ];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    const session = await sbRequireAuth();
+    if (!session) return;
+
+    const profile = await sbGetProfile().catch(() => null);
+    if (!profile || profile.role !== 'admin') {
+      location.href = 'index.html';
+      return;
+    }
+
+    const displayName = profile.name || profile.email || '—';
+    document.getElementById('hdrUser').textContent = displayName;
+    const av = document.getElementById('userAvatar');
+    if (av) {
+      const pts = displayName.trim().split(/\s+/);
+      av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
+    }
+
+    document.querySelectorAll('#navRelacaoProjetos, #navLojasPiscinas, #navAdmin, #labelAdmin, #navAdminGroup').forEach(el => el.style.display = 'flex');
+
+    await carregarMetadados();
+    await carregarPrecosProjeto();
+    await carregarRelacaoProjetos();
+  });
+
+  async function carregarMetadados() {
+    try {
+      const [lojasRes, piscinasRes, usersRes] = await Promise.all([
+        sb.from('metadata_lojas').select('*').order('loja'),
+        sb.from('metadata_piscinas').select('*').order('modelo'),
+        sb.from('profiles').select('id, name, email').eq('active', true).eq('role', 'user').order('name')
+      ]);
+
+      if (lojasRes.error) throw lojasRes.error;
+      if (piscinasRes.error) throw piscinasRes.error;
+      if (usersRes.error) throw usersRes.error;
+
+      metadataLojas = lojasRes.data || [];
+      metadataPiscinas = piscinasRes.data || [];
+      listaProjetistas = usersRes.data || [];
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao carregar cadastros: ' + e.message, 'err');
+    }
+  }
+
+  async function carregarRelacaoProjetos() {
+    const ano = document.getElementById('exercicioAno').value;
+    const bannerEl = document.getElementById('bannerTitle');
+    if (bannerEl) bannerEl.textContent = `Relação Projetos ${ano}`;
+    const gridBody = document.getElementById('gridBody');
+    gridBody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:30px">Carregando relação...</td></tr>';
+    renderLoadingRows(gridBody, 10, 6);
+    rowsDeleted.clear();
+
+    try {
+      // Busca todas as relações cujo ano da data de entrada seja o selecionado
+      const { data, error } = await sb.from('project_relations')
+        .select('*')
+        .gte('data_entrada', `${ano}-01-01`)
+        .lte('data_entrada', `${ano}-12-31`)
+        .order('data_entrada', { ascending: false });
+
+      if (error) throw error;
+
+      projectRelations = data || [];
+      renderGrid();
+      // Atualiza badge da aba Em Andamento
+      (function() {
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        const em = projectRelations.filter(p => p.data_entrada && !p.data_saida);
+        _atualizarBadgeAndamento(em, hoje);
+      })();
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao carregar relação de projetos: ' + e.message, 'err');
+    }
+  }
+
+  function alterarExercicio() {
+    carregarRelacaoProjetos();
+  }
+
+  // Dynamic designer coloring helper
+  const TIPO_COLORS = {
+    'Até 02 Projetos':        '#0369a1',
+    '03 a 4 Projetos':        '#166534',
+    '05 a 8 Projetos':        '#854d0e',
+    '09 a 12 Projetos':       '#c2410c',
+    '13 ou mais Projetos':    '#991b1b',
+    'Mais que 05 Projetos':   '#854d0e',
+    'Alterações GRANDES':     '#7c3aed',
+    'Alterações PEQUENAS':    '#6b21a8',
+    'Projeto 360':            '#0f766e',
+    'Projeto 360 + 3 modelos':'#0f766e',
+    'Conceito':               '#1d4ed8',
+  };
+  function getTipoColor(tipo) {
+    return TIPO_COLORS[tipo] || '#475569';
+  }
+
+  function applyTipoStyle(selectEl) {
+    const color = getTipoColor(selectEl.value);
+    selectEl.style.color = selectEl.value ? color : '#475569';
+    selectEl.style.fontWeight = selectEl.value ? '700' : '';
+  }
+
+  function getProjetistaColors(name) {
+    if (!name) return { color: '#475569' };
+    const nameStr = String(name);
+    const colors = [
+      '#991b1b', // Red
+      '#c2410c', // Orange
+      '#854d0e', // Yellow-brown
+      '#166534', // Green
+      '#0f766e', // Teal
+      '#0369a1', // Sky Blue
+      '#3730a3', // Indigo
+      '#6b21a8', // Purple
+      '#86198f', // Fuchsia
+      '#9f1239'  // Rose
+    ];
+    let hash = 0;
+    for (let i = 0; i < nameStr.length; i++) {
+      hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return { color: colors[index] };
+  }
+
+  function getProjectPools(row) {
+    return [row.modelo_01, row.modelo_02, row.modelo_03, row.modelo_04, row.modelo_05]
+      .map(v => String(v || '').trim())
+      .filter(Boolean);
+  }
+
+  function getFilteredGridRows() {
+    const filterVal = document.getElementById('filtroGrid').value.toLowerCase().trim();
+    const filterPago = document.getElementById('filtroPago').value;
+    let filtered = projectRelations.filter(r => !rowsDeleted.has(r.id));
+
+    if (filterPago === 'nao_pagos') {
+      filtered = filtered.filter(p => !p.pago);
+    } else if (filterPago === 'pagos') {
+      filtered = filtered.filter(p => p.pago);
+    }
+
+    if (filterVal) {
+      filtered = filtered.filter(p =>
+        (p.loja || '').toLowerCase().includes(filterVal) ||
+        (p.project_code || '').toLowerCase().includes(filterVal) ||
+        (p.projetista || '').toLowerCase().includes(filterVal) ||
+        (p.fabrica || '').toLowerCase().includes(filterVal) ||
+        getProjectPools(p).join(' ').toLowerCase().includes(filterVal)
+      );
+    }
+
+    return filtered;
+  }
+
+  function getResumoFilteredProjects() {
+    const proj = document.getElementById('resumoProjetista')?.value || '';
+    const mesIdx = parseInt(document.getElementById('resumoMes')?.value || '0');
+    const ano = parseInt(document.getElementById('resumoAno')?.value || new Date().getFullYear());
+    const filterPago = document.getElementById('resumoFiltroPago')?.value || 'nao_pagos';
+
+    return projectRelations.filter(p => {
+      if (!p.projetista || p.projetista !== proj) return false;
+      if (!p.data_saida) return false;
+      const parts = p.data_saida.split('-');
+      const pAno = parseInt(parts[0]);
+      const pMes = parseInt(parts[1]) - 1;
+      if (pAno !== ano || pMes !== mesIdx) return false;
+      if (filterPago === 'nao_pagos') return !p.pago;
+      if (filterPago === 'pagos') return p.pago;
+      return true;
+    });
+  }
+
+  function renderLoadingRows(tbody, colspan, count = 5) {
+    tbody.innerHTML = Array.from({ length: count }, (_, idx) => `
+      <tr class="loading-row row-enter" style="animation-delay:${idx * 35}ms">
+        <td colspan="${colspan}">
+          <span class="sk-line" style="width:${88 - (idx % 3) * 12}%"></span>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderGrid() {
+    const gridBody = document.getElementById('gridBody');
+    gridBody.innerHTML = '';
+    const filtered = getFilteredGridRows();
+
+    if (filtered.length === 0) {
+      gridBody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">Nenhum projeto encontrado. Adicione uma linha para começar.</td></tr>';
+      return;
+    }
+
+    filtered.forEach((p, idx) => {
+      try {
+        const franquiaVal = p.franquia || 'iGUi';
+        const classFranquia = `fr-${franquiaVal.toLowerCase()}`;
+
+        const tr = document.createElement('tr');
+        tr.id = `row-${p.id}`;
+        tr.className = `main-row row-enter ${classFranquia}`;
+        tr.style.animationDelay = `${idx * 35}ms`;
+        if (rowsDeleted.has(p.id)) {
+          tr.classList.add('deleted-row');
+        }
+
+        const trDetails = document.createElement('tr');
+        trDetails.id = `row-details-${p.id}`;
+        trDetails.className = `details-row row-enter ${classFranquia}`;
+        trDetails.style.animationDelay = `${idx * 35 + 18}ms`;
+        if (rowsDeleted.has(p.id)) {
+          trDetails.classList.add('deleted-row');
+        }
+
+        // Franquias Dropdown
+        const franquias = ['iGUi', 'Conceito', 'Internacional', 'Splash'];
+        let optionsFranquia = franquias.map(f => `<option value="${f}" ${franquiaVal === f ? 'selected' : ''}>${f}</option>`).join('');
+
+        // (autocomplete replaces dropdown — keep variable for compat)
+
+        // Pool models lists based on row's current franquia (iGUI models for iGUI/Conceito/Int, Splash models for Splash)
+        const isSplash = franquiaVal === 'Splash';
+        const piscinasFiltradas = metadataPiscinas.filter(pi => isSplash ? pi.marca === 'Splash' : pi.marca === 'iGUi');
+
+        // Render individual pool select
+        const renderPoolSelect = (fieldVal, poolIndex) => {
+          let opts = piscinasFiltradas.map(pi => `<option value="${pi.modelo}" ${fieldVal === pi.modelo ? 'selected' : ''}>${pi.modelo}</option>`);
+          if (fieldVal && !piscinasFiltradas.some(pi => pi.modelo === fieldVal)) {
+            opts.unshift(`<option value="${fieldVal}" selected>${fieldVal}</option>`);
+          }
+          return `<select class="details-pool-select" data-field="modelo" data-pool-index="${poolIndex}" onchange="updateRowField('${p.id}', this)">
+            <option value="">--</option>
+            ${opts.join('')}
+          </select>`;
+        };
+
+        // Render pools container dynamically (show only filled + 1 empty, + button to add more)
+        const pools = [p.modelo_01, p.modelo_02, p.modelo_03, p.modelo_04, p.modelo_05];
+        let showCount = 1;
+        for (let i = 4; i >= 0; i--) { if (pools[i]) { showCount = i + 2; break; } }
+        showCount = Math.min(showCount, 5);
+        let poolsHtml = '';
+        for (let i = 0; i < showCount; i++) poolsHtml += renderPoolSelect(pools[i], i + 1);
+        const renderPoolsSection = () => `
+          <div class="pools-container" id="pools-${p.id}" data-id="${p.id}" data-count="${showCount}">
+            ${poolsHtml}
+            ${showCount < 5 ? `<button class="btn-add-pool" onclick="addPool('${p.id}')" title="Adicionar modelo">+</button>` : ''}
+          </div>`;
+
+        // Designers Dropdown
+        let optionsProjetista = listaProjetistas.map(u => `<option value="${u.name || u.email}" data-uid="${u.id}" ${p.projetista === (u.name || u.email) ? 'selected' : ''}>${u.name || u.email}</option>`).join('');
+        optionsProjetista = '<option value="">-- Selecione --</option>' + optionsProjetista;
+
+        // Project types dropdown
+        let optionsTipo = TIPOS_PROJETO.map(t => `<option value="${t}" ${p.tipo_projeto === t ? 'selected' : ''}>${t}</option>`).join('');
+        optionsTipo = '<option value="">-- Selecione --</option>' + optionsTipo;
+
+        // Designer Dynamic Styling
+        const projColors = getProjetistaColors(p.projetista);
+        const projStyle = p.projetista ? `style="color:${projColors.color};font-weight:700;"` : '';
+
+        const rowNum = filtered.length - idx;
+
+        // ── Linha principal: inputs editáveis ───────────
+        tr.innerHTML = `
+          <td style="text-align:center;padding:0 4px;border-bottom:none;" onclick="toggleGridRow('${p.id}')" title="Abrir/fechar detalhes"><span class="row-num-badge" style="cursor:pointer;">${rowNum}</span></td>
+          <td style="border-bottom:none;">
+            <div class="cell-select-wrap">
+              <select class="cell-select" onchange="onFranquiaChange('${p.id}',this.value)">${optionsFranquia}</select>
+            </div>
+          </td>
+          <td style="overflow:visible;border-bottom:none;">
+            <input type="text" class="cell-input" id="loja-input-${p.id}" value="${esc(p.loja)}" placeholder="Buscar loja..." autocomplete="off"
+              oninput="openLojaAc('${p.id}',this,'${franquiaVal}')"
+              onfocus="openLojaAc('${p.id}',this,'${franquiaVal}')"
+              onkeydown="lojaAcKey(event,'${p.id}')"
+              onblur="setTimeout(()=>closeLojaAc(),150)">
+          </td>
+          <td style="border-bottom:none;">
+            <input type="text" class="cell-input" value="${esc(p.project_code)}" onchange="updateRowField('${p.id}',this)" data-field="project_code" placeholder="Ex: 805672">
+          </td>
+          <td style="border-bottom:none;">
+            <input type="date" class="cell-input" value="${p.data_entrada||''}" onchange="updateRowField('${p.id}',this)" data-field="data_entrada">
+          </td>
+          <td style="border-bottom:none;">
+            <input type="date" class="cell-input" value="${p.data_saida||''}" onchange="updateRowField('${p.id}',this)" data-field="data_saida">
+          </td>
+          <td style="border-bottom:none;">
+            <div class="cell-select-wrap">
+              <select class="cell-select cell-select-projetista" data-field="projetista" onchange="onProjetistaChange('${p.id}',this)" ${projStyle}>${optionsProjetista}</select>
+            </div>
+          </td>
+          <td style="border-bottom:none;">
+            <div class="cell-select-wrap">
+              <select class="cell-select" data-field="tipo_projeto" onchange="updateRowField('${p.id}',this);applyTipoStyle(this)" style="color:${getTipoColor(p.tipo_projeto)};${p.tipo_projeto?'font-weight:700;':''}">${optionsTipo}</select>
+            </div>
+          </td>
+          <td style="border-bottom:none;">
+            <div class="cell-check">
+              <input type="checkbox" ${p.pago?'checked':''} onchange="onPagoChange('${p.id}',this.checked)">
+            </div>
+          </td>
+          <td style="border-right:none;border-bottom:none;text-align:center;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:5px;">
+              <button class="btn-row-del" id="del-btn-${p.id}" onclick="toggleDeletar('${p.id}')" title="Excluir linha">✕</button>
+              <svg id="grid-chevron-${p.id}" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;cursor:pointer;transition:transform .2s;" onclick="toggleGridRow('${p.id}')"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+          </td>
+        `;
+
+        // ── Detail row: apenas Modelos + Fábrica + Obs ──
+        const isNewRow = idx === 0 && !p.data_saida && !p.loja;
+        trDetails.style.display = isNewRow ? 'table-row' : 'none';
+        if (isNewRow) {
+          const ch = document.getElementById(`grid-chevron-${p.id}`);
+          // chevron set after DOM insert — use dataset flag
+          trDetails.dataset.open = '1';
+        }
+
+        trDetails.innerHTML = `
+          <td colspan="10" style="padding:5px 14px;">
+            <div style="display:flex;gap:20px;align-items:center;width:100%;">
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <span style="font-weight:700;color:#94a3b8;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;">Modelos:</span>
+                ${renderPoolsSection()}
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;width:310px;">
+                <span style="font-weight:700;color:#94a3b8;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;">Fábrica:</span>
+                <input type="text" id="fabrica-${p.id}" value="${esc(p.fabrica)}" readonly class="details-fabrica-input" title="Preenchido automaticamente">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex:1;">
+                <span style="font-weight:700;color:#94a3b8;font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;">Obs:</span>
+                <input type="text" class="details-obs-input" value="${esc(p.obs)}" onchange="updateRowField('${p.id}',this)" data-field="obs" placeholder="Observações...">
+              </div>
+            </div>
+          </td>
+        `;
+
+        gridBody.appendChild(tr);
+        gridBody.appendChild(trDetails);
+      } catch (err) {
+        console.error("Erro renderizando linha:", p, err);
+        showToast("Erro ao renderizar linha: " + err.message, "err");
+      }
+    });
+  }
+
+  // ── Pool dinâmico ─────────────────────────────────────
+  function addPool(id) {
+    const container = document.getElementById(`pools-${id}`);
+    if (!container) return;
+    const count = parseInt(container.dataset.count);
+    if (count >= 5) return;
+    const newCount = count + 1;
+    container.dataset.count = newCount;
+
+    const row = projectRelations.find(x => x.id === id);
+    const isSplash = row && row.franquia === 'Splash';
+    const piscinasFiltradas = metadataPiscinas.filter(pi => isSplash ? pi.marca === 'Splash' : pi.marca === 'iGUi');
+    const fieldVal = (row && row[`modelo_0${newCount}`]) || '';
+
+    const opts = piscinasFiltradas.map(pi =>
+      `<option value="${pi.modelo}" ${fieldVal === pi.modelo ? 'selected' : ''}>${pi.modelo}</option>`
+    ).join('');
+
+    const sel = document.createElement('select');
+    sel.className = 'details-pool-select';
+    sel.dataset.field = 'modelo';
+    sel.dataset.poolIndex = newCount;
+    sel.onchange = function() { updateRowField(id, this); };
+    sel.innerHTML = `<option value="">--</option>${opts}`;
+    if (fieldVal) sel.value = fieldVal;
+
+    const btn = container.querySelector('.btn-add-pool');
+    container.insertBefore(sel, btn);
+
+    if (newCount >= 5 && btn) btn.remove();
+  }
+
+  // ── Loja Autocomplete ──────────────────────────────────
+  let _acId = null;
+
+  function hlAc(text, q) {
+    const i = text.toLowerCase().indexOf(q.toLowerCase());
+    if (i === -1) return text.replace(/</g,'&lt;');
+    const before = text.slice(0, i).replace(/</g,'&lt;');
+    const match  = text.slice(i, i + q.length).replace(/</g,'&lt;');
+    const after  = text.slice(i + q.length).replace(/</g,'&lt;');
+    return `${before}<mark>${match}</mark>${after}`;
+  }
+
+  function openLojaAc(id, inputEl, franquia) {
+    _acId = id;
+    const q = inputEl.value.trim();
+    const list = document.getElementById('lojaAcGlobal');
+
+    if (q.length < 3) { list.style.display = 'none'; return; }
+
+    const pool = metadataLojas.filter(l => l.franquia === franquia);
+    const matches = pool.filter(l => l.loja.toLowerCase().includes(q.toLowerCase())).slice(0, 10);
+
+    if (!matches.length) { list.style.display = 'none'; return; }
+
+    const rect = inputEl.getBoundingClientRect();
+    list.style.top  = (rect.bottom + 2) + 'px';
+    list.style.left = rect.left + 'px';
+    list.style.width = Math.max(rect.width, 220) + 'px';
+    list.style.display = 'block';
+
+    list.innerHTML = matches.map(l =>
+      `<div class="loja-ac-item" data-id="${l.id}" data-loja="${l.loja.replace(/"/g,'&quot;')}" data-rowid="${id}" onclick="selectLojaAc(this)">
+        <span>${hlAc(l.loja, q)}</span>
+        <span class="ac-fab">${l.fabrica}</span>
+       </div>`
+    ).join('');
+  }
+
+  function selectLojaAc(el) {
+    const rowId = el.dataset.rowid;
+    const loja  = el.dataset.loja;
+    const inp = document.getElementById(`loja-input-${rowId}`);
+    if (inp) inp.value = loja;
+    closeLojaAc();
+    onLojaChange(rowId, loja);
+  }
+
+  function closeLojaAc() {
+    const list = document.getElementById('lojaAcGlobal');
+    if (list) list.style.display = 'none';
+  }
+
+  function lojaAcKey(e, id) {
+    const list = document.getElementById('lojaAcGlobal');
+    if (!list || list.style.display === 'none') return;
+    const items = list.querySelectorAll('.loja-ac-item');
+    const focused = list.querySelector('.loja-ac-item.focused');
+    if (e.key === 'Escape') { closeLojaAc(); }
+    else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focused ? focused.nextElementSibling : items[0];
+      if (focused) focused.classList.remove('focused');
+      if (next) next.classList.add('focused');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focused ? focused.previousElementSibling : null;
+      if (focused) focused.classList.remove('focused');
+      if (prev) prev.classList.add('focused');
+    } else if (e.key === 'Enter') {
+      if (focused) { e.preventDefault(); focused.click(); }
+    }
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#lojaAcGlobal') && !e.target.matches('[id^="loja-input-"]')) {
+      closeLojaAc();
+    }
+  });
+
+  // Row update hooks
+  function updateRowField(id, el) {
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    const field = el.dataset.field;
+    if (field === 'modelo') {
+      const idx = el.dataset.poolIndex;
+      row[`modelo_0${idx}`] = el.value;
+      salvarLinhaNoDB(row.id);
+    } else {
+      row[field] = el.value;
+      
+      if (field === 'project_code' || field === 'obs') {
+        clearTimeout(debounceTimers[id]);
+        debounceTimers[id] = setTimeout(() => {
+          salvarLinhaNoDB(row.id);
+        }, 500); // 500ms debounce
+      } else {
+        salvarLinhaNoDB(row.id);
+      }
+    }
+  }
+
+  function onPagoChange(id, val) {
+    const row = projectRelations.find(x => x.id === id);
+    if (row) {
+      row.pago = val;
+      salvarLinhaNoDB(id);
+    }
+  }
+
+  function onProjetistaChange(id, selectEl) {
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    row.projetista = selectEl.value;
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    row.projetista_id = selectedOption.dataset.uid || null;
+
+    const colors = getProjetistaColors(selectEl.value);
+    selectEl.style.backgroundColor = '';
+    selectEl.style.color = colors.color;
+    selectEl.style.borderColor = '';
+    selectEl.style.fontWeight = '700';
+
+    salvarLinhaNoDB(id);
+  }
+
+  function onFranquiaChange(id, franquia) {
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    row.franquia = franquia;
+    row.loja = '';
+    row.fabrica = '';
+    
+    renderGrid();
+    salvarLinhaNoDB(id);
+  }
+
+  function onLojaChange(id, loja) {
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    row.loja = loja;
+    
+    const matchingLoja = metadataLojas.find(l => l.franquia === row.franquia && l.loja === loja);
+    if (matchingLoja) {
+      row.fabrica = matchingLoja.fabrica;
+      const elFab = document.getElementById(`fabrica-${id}`);
+      if (elFab) elFab.value = matchingLoja.fabrica;
+    } else {
+      row.fabrica = '';
+      const elFab = document.getElementById(`fabrica-${id}`);
+      if (elFab) elFab.value = '';
+    }
+
+    salvarLinhaNoDB(id);
+  }
+
+  // Row operations
+  function adicionarLinha() {
+    const ano = document.getElementById('exercicioAno').value;
+    
+    const tempId = crypto.randomUUID();
+    const novaLinha = {
+      id: tempId,
+      loja: '',
+      project_code: '',
+      data_entrada: `${ano}-01-01`, 
+      data_saida: '',
+      modelo_01: '',
+      modelo_02: '',
+      modelo_03: '',
+      modelo_04: '',
+      modelo_05: '',
+      franquia: 'iGUi',
+      fabrica: '',
+      projetista: '',
+      projetista_id: null,
+      tipo_projeto: 'Até 02 Projetos',
+      pago: false,
+      obs: ''
+    };
+
+    projectRelations.unshift(novaLinha);
+    renderGrid();
+    // Abre o detail row da nova linha automaticamente
+    setTimeout(() => {
+      const trD = document.getElementById(`row-details-${tempId}`);
+      const ch  = document.getElementById(`grid-chevron-${tempId}`);
+      if (trD) trD.style.display = 'table-row';
+      if (ch)  ch.style.transform = 'rotate(180deg)';
+    }, 50);
+    salvarLinhaNoDB(tempId);
+  }
+
+  let _deleteTimers = {};
+
+  function toggleDeletar(id) {
+    if (rowsDeleted.has(id)) {
+      // Segundo clique no ✕ — cancela a exclusão
+      desfazerDelecao(id);
+    } else {
+      // Primeiro clique — marca para deletar
+      _marcarDeletar(id);
+    }
+  }
+
+  function _marcarDeletar(id) {
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    rowsDeleted.add(id);
+    const trMain = document.getElementById(`row-${id}`);
+    const trDet  = document.getElementById(`row-details-${id}`);
+    const btn    = document.getElementById(`del-btn-${id}`);
+    if (trMain) trMain.classList.add('deleted-row');
+    if (trDet)  trDet.classList.add('deleted-row');
+    if (btn) { btn.textContent = '↩'; btn.title = 'Cancelar exclusão'; btn.style.background = '#fca5a5'; btn.style.color = '#7f1d1d'; }
+
+    // Toast com botão desfazer
+    const t = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    clearTimeout(_deleteTimers[id]);
+    t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;opacity:.7;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      Projeto removido.
+      <button onclick="desfazerDelecao('${id}')" style="margin-left:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:5px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">↩ Desfazer</button>`;
+    t.className = 'toast err show';
+    toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+
+    // Confirma exclusão no DB após 5s
+    _deleteTimers[id] = setTimeout(async () => {
+      if (!rowsDeleted.has(id)) return;
+      try {
+        await sb.from('project_relations').delete().eq('id', id);
+        projectRelations = projectRelations.filter(x => x.id !== id);
+        rowsDeleted.delete(id);
+        renderGrid();
+      } catch(e) {
+        console.error(e);
+        showToast('Erro ao excluir: ' + e.message, 'err');
+        desfazerDelecao(id);
+      }
+    }, 5000);
+  }
+
+  function desfazerDelecao(id) {
+    clearTimeout(_deleteTimers[id]);
+    rowsDeleted.delete(id);
+    const trMain = document.getElementById(`row-${id}`);
+    const trDet  = document.getElementById(`row-details-${id}`);
+    const btn    = document.getElementById(`del-btn-${id}`);
+    if (trMain) trMain.classList.remove('deleted-row');
+    if (trDet)  trDet.classList.remove('deleted-row');
+    if (btn) { btn.textContent = '✕'; btn.title = 'Excluir linha'; btn.style.background = ''; btn.style.color = ''; }
+    const t = document.getElementById('toast');
+    t.classList.remove('show');
+    showToast('Exclusão cancelada.', 'ok');
+  }
+
+  // Compatibility stub
+  async function salvarAlteracoes() {
+    showToast('Salvo em tempo real automaticamente!', 'ok');
+  }
+
+  // Export spreadsheet as CSV
+  function exportarCSV() {
+    if (projectRelations.length === 0) {
+      showToast('Nenhum dado para exportar!', 'err');
+      return;
+    }
+
+    try {
+      const headers = ['Franquia', 'Loja', 'ID Projeto', 'Entrada', 'Saida', 'Modelo 01', 'Modelo 02', 'Modelo 03', 'Modelo 04', 'Modelo 05', 'Fabrica', 'Projetista', 'Tipo Projeto', 'Pago', 'Observacoes'];
+      
+      const csvRows = [headers.join(';')];
+
+      projectRelations
+        .filter(r => !rowsDeleted.has(r.id))
+        .forEach(r => {
+          const rowValues = [
+            r.franquia,
+            r.loja,
+            r.project_code,
+            r.data_entrada || '',
+            r.data_saida || '',
+            r.modelo_01 || '',
+            r.modelo_02 || '',
+            r.modelo_03 || '',
+            r.modelo_04 || '',
+            r.modelo_05 || '',
+            r.fabrica || '',
+            r.projetista || '',
+            r.tipo_projeto || '',
+            r.pago ? 'Sim' : 'Nao',
+            (r.obs || '').replace(/;/g, ',').replace(/\n/g, ' ')
+          ];
+          csvRows.push(rowValues.map(v => `"${v}"`).join(';'));
+        });
+
+      const csvString = '\ufeff' + csvRows.join('\r\n'); // BOM para Excel em PT-BR
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ano = document.getElementById('exercicioAno').value;
+      a.href = url;
+      a.download = `Relacao_Projetos_${ano}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showToast('CSV exportado com sucesso!', 'ok');
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao exportar CSV: ' + e.message, 'err');
+    }
+  }
+
+  // ── Resumo por Loja ──────────────────────────────────
+  // Atualiza select de loja quando franquia muda
+  function csvDownload(rows, filename) {
+    if (!rows.length || rows.length <= 1) {
+      showToast('Nenhum dado para exportar!', 'err');
+      return;
+    }
+    const csvString = '\ufeff' + rows.map(row =>
+      row.map(v => `"${String(v ?? '').replace(/"/g, '""').replace(/\r?\n/g, ' ')}"`).join(';')
+    ).join('\r\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('CSV exportado com sucesso!', 'ok');
+  }
+
+  function buildPlanilhaRows() {
+    const headers = ['#', 'Franquia', 'Loja', 'ID Projeto', 'Entrada', 'Saida', 'Piscinas', 'Fabrica', 'Projetista', 'Tipo Projeto', 'Pago', 'Observacoes'];
+    const filtered = getFilteredGridRows();
+    const rows = filtered.map((r, idx) => [
+      filtered.length - idx,
+      r.franquia || '',
+      r.loja || '',
+      r.project_code || '',
+      r.data_entrada || '',
+      r.data_saida || '',
+      getProjectPools(r).join(' | '),
+      r.fabrica || '',
+      r.projetista || '',
+      r.tipo_projeto || '',
+      r.pago ? 'Sim' : 'Nao',
+      r.obs || ''
+    ]);
+    return [headers, ...rows];
+  }
+
+  function buildResumoRows() {
+    const headers = ['#', 'Franquia', 'Loja', 'ID Projeto', 'Entrada', 'Saida', 'Piscinas', 'Tipo Projeto', 'Pago', 'Fabrica', 'Observacoes'];
+    const projetista = document.getElementById('resumoProjetista')?.value || '';
+    const mes = document.getElementById('resumoMes')?.selectedOptions?.[0]?.textContent || '';
+    const ano = document.getElementById('resumoAno')?.value || '';
+    const filtered = getResumoFilteredProjects();
+    const rows = filtered.map((r, idx) => [
+      filtered.length - idx,
+      r.franquia || '',
+      r.loja || '',
+      r.project_code || '',
+      r.data_entrada || '',
+      r.data_saida || '',
+      getProjectPools(r).join(' | '),
+      r.tipo_projeto || '',
+      r.pago ? 'Sim' : 'Nao',
+      r.fabrica || '',
+      r.obs || ''
+    ]);
+    return [headers, ...rows];
+  }
+
+  function cleanFilePart(value) {
+    return String(value || '').replace(/[<>:"/\\|?*]/g, '').trim() || 'Relatorio';
+  }
+
+  function exportarPlanilhaCSV() {
+    const ano = document.getElementById('exercicioAno').value;
+    csvDownload(buildPlanilhaRows(), `Relacao_Projetos_${ano}.csv`);
+  }
+
+  function exportarResumoCSV() {
+    const projetista = cleanFilePart(document.getElementById('resumoProjetista')?.value || 'Projetista');
+    const ano = document.getElementById('resumoAno')?.value || '';
+    const mes = cleanFilePart(document.getElementById('resumoMes')?.selectedOptions?.[0]?.textContent || '');
+    csvDownload(buildResumoRows(), `Resumo_${projetista}_${mes}_${ano}.csv`);
+  }
+
+  // colWeights: array of relative weights (optional). If omitted, equal widths.
+  function exportRowsPDF(title, rows, filename, colWeights) {
+    if (!rows || rows.length <= 1) {
+      showToast('Nenhum dado para exportar!', 'err');
+      return;
+    }
+    if (!window.jspdf?.jsPDF) {
+      showToast('Biblioteca PDF nao carregada.', 'err');
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const usableW = pageW - margin * 2;
+
+    // Compute per-column widths from weights
+    const weights = (colWeights && colWeights.length === headers.length)
+      ? colWeights
+      : headers.map(() => 1);
+    const totalW = weights.reduce((a, b) => a + b, 0);
+    const colWidths = weights.map(w => (w / totalW) * usableW);
+    // Precompute x offsets
+    const colX = colWidths.reduce((acc, w, i) => { acc.push(i === 0 ? margin : acc[i-1] + colWidths[i-1]); return acc; }, []);
+
+    let y = 18;
+
+    const drawHeader = () => {
+      doc.setFillColor(26, 42, 58);
+      doc.rect(0, 0, pageW, 12, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, margin, 8);
+      doc.setTextColor(26, 42, 58);
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'bold');
+      y = 18;
+      headers.forEach((h, i) => {
+        doc.setFillColor(237, 247, 253);
+        doc.rect(colX[i], y - 5, colWidths[i], 7, 'F');
+        doc.text(String(h).slice(0, 18), colX[i] + 1, y);
+      });
+      y += 6;
+      doc.setFont('helvetica', 'normal');
+    };
+
+    drawHeader();
+    doc.setFontSize(6.6);
+    dataRows.forEach((row, rowIdx) => {
+      const lineHeight = Math.max(...row.map((v, i) => doc.splitTextToSize(String(v || ''), colWidths[i] - 2).length)) * 3.2;
+      if (y + lineHeight > pageH - 10) {
+        doc.addPage();
+        drawHeader();
+        doc.setFontSize(6.6);
+      }
+      if (rowIdx % 2 === 0) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y - 4, usableW, lineHeight + 2, 'F');
+      }
+      row.forEach((v, i) => {
+        const text = doc.splitTextToSize(String(v || ''), colWidths[i] - 2);
+        doc.text(text, colX[i] + 1, y);
+      });
+      y += lineHeight + 2;
+    });
+    doc.save(filename);
+    showToast('PDF exportado com sucesso!', 'ok');
+  }
+
+  // Planilha: ['#','Franquia','Loja','ID Projeto','Entrada','Saida','Piscinas','Fabrica','Projetista','Tipo Projeto','Pago','Observacoes']
+  const _wPlanilha = [0.35, 0.85, 1.4, 0.8, 0.85, 0.85, 1.6, 1.1, 1.1, 1.1, 0.45, 1.4];
+
+  function exportarPlanilhaPDF() {
+    const ano = document.getElementById('exercicioAno').value;
+    exportRowsPDF(`Relacao de Projetos ${ano}`, buildPlanilhaRows(), `Relacao_Projetos_${ano}.pdf`, _wPlanilha);
+  }
+
+  // Resumo: ['#','Franquia','Loja','ID Projeto','Entrada','Saida','Piscinas','Tipo Projeto','Pago','Fabrica','Observacoes']
+  const _wResumo = [0.35, 0.85, 1.4, 0.8, 0.85, 0.85, 1.6, 1.1, 0.45, 1.1, 1.4];
+
+  function exportarResumoPDF() {
+    if (!window.jspdf?.jsPDF) { showToast('Biblioteca PDF nao carregada.', 'err'); return; }
+
+    const projetista = document.getElementById('resumoProjetista')?.value || '';
+    const mesNome = document.getElementById('resumoMes')?.selectedOptions?.[0]?.textContent || '';
+    const ano = document.getElementById('resumoAno')?.value || '';
+    const title = `Resumo por Projetista - ${projetista} - ${mesNome}/${ano}`;
+    const filename = `Resumo_${cleanFilePart(projetista)}_${cleanFilePart(mesNome)}_${ano}.pdf`;
+
+    const rows = buildResumoRows();
+    if (!rows || rows.length <= 1) { showToast('Nenhum dado para exportar!', 'err'); return; }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const margin = 10;
+    const usableW = pageW - margin * 2;
+
+    // ── Cabeçalho ──
+    doc.setFillColor(26, 42, 58);
+    doc.rect(0, 0, pageW, 12, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11); doc.setFont('helvetica', 'bold');
+    doc.text(title, margin, 8);
+    doc.setTextColor(26, 42, 58);
+
+    // ── Tabela de projetos ──
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+    const weights = _wResumo;
+    const totalW = weights.reduce((a, b) => a + b, 0);
+    const colWidths = weights.map(w => (w / totalW) * usableW);
+    const colX = colWidths.reduce((acc, w, i) => { acc.push(i === 0 ? margin : acc[i-1] + colWidths[i-1]); return acc; }, []);
+
+    let y = 18;
+    const drawTableHeader = () => {
+      doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      headers.forEach((h, i) => {
+        doc.setFillColor(237, 247, 253);
+        doc.rect(colX[i], y - 5, colWidths[i], 7, 'F');
+        doc.text(String(h), colX[i] + 1, y);
+      });
+      y += 6; doc.setFont('helvetica', 'normal');
+    };
+    drawTableHeader();
+    doc.setFontSize(6.6);
+    dataRows.forEach((row, rowIdx) => {
+      const lineH = Math.max(...row.map((v, i) => doc.splitTextToSize(String(v || ''), colWidths[i] - 2).length)) * 3.2;
+      if (y + lineH > pageH - 10) { doc.addPage(); doc.setFontSize(6.6); }
+      if (rowIdx % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(margin, y - 4, usableW, lineH + 2, 'F'); }
+      row.forEach((v, i) => { doc.text(doc.splitTextToSize(String(v || ''), colWidths[i] - 2), colX[i] + 1, y); });
+      y += lineH + 2;
+    });
+
+    // ── Detalhamento Financeiro ──
+    y += 8;
+    if (y + 80 > pageH - 10) { doc.addPage(); y = 18; }
+
+    doc.setFontSize(9); doc.setFont('helvetica', 'bold');
+    doc.setFillColor(26, 42, 58);
+    doc.rect(margin, y - 5, 120, 7, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.text('DETALHAMENTO FINANCEIRO', margin + 2, y);
+    doc.setTextColor(26, 42, 58);
+    y += 6;
+
+    // Header da tabela financeira
+    const fCols = [70, 15, 18, 17]; // Tipo | Qtd | Unit. | Total
+    const fHeaders = ['Tipo', 'Qtd', 'Unit.', 'Total'];
+    const fX = [margin, margin+70, margin+85, margin+103];
+    doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+    fHeaders.forEach((h, i) => {
+      doc.setFillColor(237, 247, 253);
+      doc.rect(fX[i], y - 5, fCols[i], 6, 'F');
+      doc.text(h, fX[i] + 1, y);
+    });
+    y += 5; doc.setFont('helvetica', 'normal'); doc.setFontSize(6.8);
+
+    const filtered = getResumoFilteredProjects();
+    const counts = { 'Até 02 Projetos':0,'03 a 4 Projetos':0,'Mais que 05 Projetos':0,'Projeto 360º':0,'Projeto 360º (3 Modificações)':0,'Conceito':0,'Alterações GRANDES':0 };
+    filtered.forEach(p => { if (counts[p.tipo_projeto] !== undefined) counts[p.tipo_projeto]++; });
+    const pricingMap = {
+      'Até 02 Projetos': precosGlobais.val_ate2, '03 a 4 Projetos': precosGlobais.val_3a4,
+      'Mais que 05 Projetos': precosGlobais.val_mais5, 'Projeto 360º': precosGlobais.val_360,
+      'Projeto 360º (3 Modificações)': precosGlobais.val_360_3mod, 'Conceito': precosGlobais.val_conceito,
+      'Alterações GRANDES': precosGlobais.val_alt_grandes
+    };
+
+    let grandQty = 0, grandTotal = 0;
+    Object.keys(counts).forEach((type, rowIdx) => {
+      const qty = counts[type];
+      const unit = pricingMap[type];
+      const total = qty * unit;
+      grandQty += qty; grandTotal += total;
+      if (rowIdx % 2 === 0) { doc.setFillColor(248, 250, 252); doc.rect(margin, y - 3.5, 120, 6, 'F'); }
+      doc.text(type,                              fX[0] + 1, y);
+      doc.text(String(qty),                       fX[1] + fCols[1] - 2, y, { align: 'right' });
+      doc.text(`R$ ${unit.toFixed(2)}`,           fX[2] + fCols[2] - 2, y, { align: 'right' });
+      doc.text(`R$ ${total.toFixed(2)}`,          fX[3] + fCols[3] - 2, y, { align: 'right' });
+      y += 6;
+    });
+
+    // Total
+    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(26, 42, 58); doc.rect(margin, y - 3.5, 120, 6.5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.text('TOTAL A PAGAR',                     fX[0] + 1, y);
+    doc.text(String(grandQty),                    fX[1] + fCols[1] - 2, y, { align: 'right' });
+    doc.text('—',                                 fX[2] + fCols[2] - 2, y, { align: 'right' });
+    doc.text(`R$ ${grandTotal.toFixed(2)}`,       fX[3] + fCols[3] - 2, y, { align: 'right' });
+    doc.setTextColor(26, 42, 58);
+
+    doc.save(filename);
+    showToast('PDF exportado com sucesso!', 'ok');
+  }
+
+  function lojaResumoFranquiaChange() {
+    const franquia = document.getElementById('lojaResumoFranquia').value;
+    const sel = document.getElementById('lojaResumoLoja');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todas</option>';
+    const lojas = [...new Set(
+      projectRelations
+        .filter(p => p.loja && (!franquia || p.franquia === franquia))
+        .map(p => p.loja)
+    )].sort();
+    lojas.forEach(l => {
+      const o = document.createElement('option');
+      o.value = l; o.textContent = l;
+      if (l === cur) o.selected = true;
+      sel.appendChild(o);
+    });
+    atualizarResumoLoja();
+  }
+
+  function atualizarResumoLoja() {
+    const mesIdx   = parseInt(document.getElementById('lojaResumoMes').value);
+    const ano      = parseInt(document.getElementById('lojaResumoAno').value);
+    const franquia = document.getElementById('lojaResumoFranquia').value;
+    const lojaFil  = document.getElementById('lojaResumoLoja')?.value || '';
+    const MESES    = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+    // Populate loja select with lojas from current data (preserving selection)
+    const sel = document.getElementById('lojaResumoLoja');
+    if (sel && !sel.dataset.populated) {
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">Todas</option>';
+      const lojas = [...new Set(
+        projectRelations.filter(p => p.loja && (!franquia || p.franquia === franquia)).map(p => p.loja)
+      )].sort();
+      lojas.forEach(l => {
+        const o = document.createElement('option');
+        o.value = l; o.textContent = l;
+        if (l === cur) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.dataset.populated = '1';
+    }
+
+    // Filter projects by month of data_saida
+    const base = projectRelations.filter(p => {
+      if (!p.data_saida) return false;
+      const parts = p.data_saida.split('-');
+      if (parseInt(parts[0]) !== ano || parseInt(parts[1]) - 1 !== mesIdx) return false;
+      if (franquia && p.franquia !== franquia) return false;
+      if (lojaFil && p.loja !== lojaFil) return false;
+      return true;
+    });
+
+    // ── KPIs ──────────────────────────────────────────
+    const totalProjetos = base.length;
+    const lojasSet = new Set(base.map(p => p.loja).filter(Boolean));
+    const totalLojas = lojasSet.size;
+
+    // Franquia líder
+    const countFr = {};
+    base.forEach(p => { if (p.franquia) countFr[p.franquia] = (countFr[p.franquia]||0)+1; });
+    const frLider = Object.entries(countFr).sort((a,b)=>b[1]-a[1])[0];
+
+    // Loja mais ativa
+    const countLoja = {};
+    base.forEach(p => { if (p.loja) countLoja[p.loja] = (countLoja[p.loja]||0)+1; });
+    const lojaTop = Object.entries(countLoja).sort((a,b)=>b[1]-a[1])[0];
+
+    document.getElementById('kpiTotal').textContent     = totalProjetos;
+    document.getElementById('kpiLojas').textContent     = totalLojas;
+    document.getElementById('kpiFranquia').textContent  = frLider ? frLider[0] : '—';
+    document.getElementById('kpiFranquiaSub').textContent = frLider ? `${frLider[1]} projeto(s)` : '';
+    document.getElementById('kpiTopLoja').textContent   = lojaTop ? lojaTop[0] : '—';
+    document.getElementById('kpiTopLojaSub').textContent= lojaTop ? `${lojaTop[1]} projeto(s)` : '';
+
+    // ── Destroy all existing charts ────────────────────
+    [_chartLojas,_chartFranquia,_chartMensal,_chartTipo,_chartPrazo].forEach(c => { if(c) c.destroy(); });
+    _chartLojas = _chartFranquia = _chartMensal = _chartTipo = _chartPrazo = null;
+
+    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed'};
+
+    document.getElementById('chartLojasSpan').textContent = 'TOP 10';
+    document.getElementById('chartMensalSpan').textContent = `${ano}`;
+
+    if (totalProjetos === 0) return; // nada para renderizar
+
+    // ── Chart 1: Top 10 lojas (horizontal bar) ─────────
+    const sortedLojas = Object.entries(countLoja).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const lojaLabels = sortedLojas.map(([l]) => l.length > 20 ? l.slice(0,18)+'…' : l);
+    const lojaData   = sortedLojas.map(([,v]) => v);
+    const lojaColors = sortedLojas.map(([loja]) => {
+      const row = projectRelations.find(p => p.loja === loja);
+      return franquiaColors[row?.franquia] || '#64748b';
+    });
+
+    _chartLojas = new Chart(document.getElementById('chartLojas'), {
+      type: 'bar',
+      data: { labels: lojaLabels, datasets: [{ label: 'Projetos', data: lojaData, backgroundColor: lojaColors, borderRadius: 5, borderSkipped: false }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} projeto(s)` } } },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+          y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    // ── Chart 2: Distribuição por Franquia (donut) ─────
+    const frLabels = Object.keys(countFr);
+    const frData   = Object.values(countFr);
+    const frColors = frLabels.map(f => franquiaColors[f] || '#94a3b8');
+
+    _chartFranquia = new Chart(document.getElementById('chartFranquia'), {
+      type: 'doughnut',
+      data: { labels: frLabels, datasets: [{ data: frData, backgroundColor: frColors, borderWidth: 2, borderColor: '#fff', hoverOffset: 6 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '62%',
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12, usePointStyle: true, pointStyle: 'circle' } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} projeto(s)` } }
+        }
+      }
+    });
+
+    // ── Chart 3: Tipos de Projeto (bar horizontal) ────
+    const countTipo = {};
+    base.forEach(p => { if (p.tipo_projeto) countTipo[p.tipo_projeto] = (countTipo[p.tipo_projeto]||0)+1; });
+    const sortedTipo = Object.entries(countTipo).sort((a,b)=>b[1]-a[1]);
+    const tipoColors = ['#7c3aed','#00aefe','#d97706','#10b981','#e91e8c','#f59e0b'];
+
+    _chartTipo = new Chart(document.getElementById('chartTipo'), {
+      type: 'bar',
+      data: {
+        labels: sortedTipo.map(([t]) => t.length > 18 ? t.slice(0,16)+'…' : t),
+        datasets: [{ label: 'Projetos', data: sortedTipo.map(([,v])=>v), backgroundColor: sortedTipo.map((_,i)=>tipoColors[i%tipoColors.length]), borderRadius: 5, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { title: ctx => sortedTipo[ctx[0].dataIndex][0], label: ctx => ` ${ctx.raw} projeto(s)` } } },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+          y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    // ── Chart 6: Prazo médio por franquia (bar) ────────
+    const prazoFr = {};
+    base.forEach(p => {
+      if (!p.data_entrada || !p.data_saida) return;
+      const diff = (new Date(p.data_saida) - new Date(p.data_entrada)) / 86400000;
+      if (diff < 0) return;
+      const fr = p.franquia || 'Outra';
+      if (!prazoFr[fr]) prazoFr[fr] = { sum: 0, n: 0 };
+      prazoFr[fr].sum += diff; prazoFr[fr].n++;
+    });
+    const prazoLabels = Object.keys(prazoFr);
+    const prazoData   = prazoLabels.map(f => +(prazoFr[f].sum / prazoFr[f].n).toFixed(1));
+    const prazoColors = prazoLabels.map(f => franquiaColors[f] || '#94a3b8');
+
+    _chartPrazo = new Chart(document.getElementById('chartPrazo'), {
+      type: 'bar',
+      data: { labels: prazoLabels, datasets: [{ label: 'Dias', data: prazoData, backgroundColor: prazoColors, borderRadius: 5, borderSkipped: false }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} dias em média` } } },
+        scales: {
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: '#f1f5f9' } }
+        }
+      }
+    });
+
+    // ── Chart 7: Evolução mensal ───────────────────────
+    const countByMonth = Array(12).fill(0);
+    projectRelations.filter(p => {
+      if (!p.data_saida) return false;
+      const parts = p.data_saida.split('-');
+      if (parseInt(parts[0]) !== ano) return false;
+      if (franquia && p.franquia !== franquia) return false;
+      return true;
+    }).forEach(p => { countByMonth[parseInt(p.data_saida.split('-')[1]) - 1]++; });
+
+    const barColors = countByMonth.map((_, i) => i === mesIdx ? '#1a2a3a' : '#bfdbfe');
+    _chartMensal = new Chart(document.getElementById('chartMensal'), {
+      type: 'bar',
+      data: { labels: MESES, datasets: [{ label: 'Projetos', data: countByMonth, backgroundColor: barColors, borderRadius: 4, borderSkipped: false }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.raw} projeto(s)` } } },
+        scales: {
+          x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: '#f1f5f9' } }
+        }
+      }
+    });
+  }
+
+  // Histórico de Pagamentos
+  const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+  function renderHistoricoPagamentos(projetista) {
+    const tbody = document.getElementById('histBody');
+    const badge = document.getElementById('histBadge');
+    if (!projetista) {
+      tbody.innerHTML = '<tr><td colspan="5" class="hist-empty">Selecione um projetista para ver o histórico.</td></tr>';
+      if (badge) badge.textContent = '0 períodos';
+      return;
+    }
+
+    const pagos = projectRelations.filter(p => p.projetista === projetista && p.pago && p.data_saida);
+    if (!pagos.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="hist-empty">Nenhum pagamento registrado para este projetista.</td></tr>';
+      if (badge) badge.textContent = '0 períodos';
+      return;
+    }
+
+    const grupos = {};
+    pagos.forEach(p => {
+      const parts = p.data_saida.split('-');
+      const key = `${parts[0]}-${parts[1].padStart(2,'0')}`;
+      if (!grupos[key]) grupos[key] = { projetos: [], updated_at: null };
+      grupos[key].projetos.push(p);
+      if (p.updated_at) {
+        const d = new Date(p.updated_at);
+        if (!grupos[key].updated_at || d > grupos[key].updated_at) grupos[key].updated_at = d;
+      }
+    });
+
+    const keys = Object.keys(grupos).sort((a, b) => b.localeCompare(a));
+    tbody.innerHTML = '';
+    let grandTotal = 0, grandQty = 0;
+
+    keys.forEach(key => {
+      const [ano, mes] = key.split('-');
+      const g = grupos[key];
+      const qtd = g.projetos.length;
+      let total = 0;
+      g.projetos.forEach(p => {
+        const prices = {
+          'Até 02 Projetos': precosGlobais.val_ate2,
+          '03 a 4 Projetos': precosGlobais.val_3a4,
+          'Mais que 05 Projetos': precosGlobais.val_mais5,
+          'Projeto 360º': precosGlobais.val_360,
+          'Projeto 360º (3 Modificações)': precosGlobais.val_360_3mod,
+          'Conceito': precosGlobais.val_conceito,
+          'Alterações GRANDES': precosGlobais.val_alt_grandes
+        };
+        total += prices[p.tipo_projeto] || 0;
+      });
+      grandTotal += total;
+      grandQty   += qtd;
+      const dataRegistro = g.updated_at
+        ? g.updated_at.toLocaleDateString('pt-BR') + ' às ' + g.updated_at.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+        : '—';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="hist-period">${MESES_NOME[parseInt(mes)-1]} ${ano}</td>
+        <td style="text-align:center;"><b>${qtd}</b></td>
+        <td style="text-align:right;font-weight:700;color:#16a34a;">R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+        <td style="color:#64748b;font-size:11px;">${dataRegistro}</td>
+        <td style="text-align:center;"><span class="hist-tag pago">✓ Pago</span></td>
+        <td style="text-align:center;">
+          <button onclick="desfazerPagamento('${projetista}','${ano}','${mes}')"
+            style="background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;cursor:pointer;"
+            title="Desfazer pagamento deste período">✕ Desfazer</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+    const trTotal = document.createElement('tr');
+    trTotal.className = 'hist-total-row';
+    trTotal.innerHTML = `
+      <td>Total Geral</td>
+      <td style="text-align:center;">${grandQty}</td>
+      <td style="text-align:right;">R$ ${grandTotal.toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+      <td colspan="3"></td>`;
+    tbody.appendChild(trTotal);
+    if (badge) badge.textContent = `${keys.length} período${keys.length !== 1 ? 's' : ''}`;
+  }
+
+  async function desfazerPagamento(projetista, ano, mes) {
+    const nomeMes = MESES_NOME[parseInt(mes) - 1];
+    const ok = confirm(
+      'Desfazer pagamento de ' + projetista + ' — ' + nomeMes + ' ' + ano + '?\n\n' +
+      'Todos os projetos deste período voltarão para "Não Pago".\n\n' +
+      'Esta ação não pode ser desfeita automaticamente.'
+    );
+    if (!ok) return;
+
+    const ids = projectRelations
+      .filter(p => {
+        if (!p.pago || p.projetista !== projetista || !p.data_saida) return false;
+        const parts = p.data_saida.split('-');
+        return parts[0] === ano && parts[1].padStart(2,'0') === mes.padStart(2,'0');
+      })
+      .map(p => p.id);
+
+    if (!ids.length) return;
+
+    try {
+      const { error } = await sb.from('project_relations')
+        .update({ pago: false, updated_at: new Date().toISOString() })
+        .in('id', ids);
+      if (error) throw error;
+
+      projectRelations.forEach(p => {
+        if (ids.includes(p.id)) { p.pago = false; p.updated_at = new Date().toISOString(); }
+      });
+
+      atualizarResumoProjetista();
+      showToast('Pagamento de ' + nomeMes + '/' + ano + ' desfeito com sucesso.', 'ok');
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao desfazer pagamento: ' + e.message, 'erro');
+    }
+  }
+</script>
+</body>
+</html>

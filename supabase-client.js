@@ -35,6 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (cachedIsAdmin) {
     const navAdmin = document.getElementById('navAdmin');
     if (navAdmin) navAdmin.style.display = 'flex';
+    const labelAdmin = document.getElementById('labelAdmin');
+    if (labelAdmin) labelAdmin.style.display = 'flex';
+    const navAdminGroup = document.getElementById('navAdminGroup');
+    if (navAdminGroup) navAdminGroup.style.display = 'flex';
+    const navLojasPiscinas = document.getElementById('navLojasPiscinas');
+    if (navLojasPiscinas) navLojasPiscinas.style.display = 'flex';
+    const navRelacaoProjetos = document.getElementById('navRelacaoProjetos');
+    if (navRelacaoProjetos) navRelacaoProjetos.style.display = 'flex';
+
     const adminBadge = document.getElementById('adminBadge');
     if (adminBadge) adminBadge.style.display = 'inline-block';
 

@@ -7,7 +7,7 @@
 
 // ⚠️ AO FAZER DEPLOY com mudanças: incremente a versão abaixo (v2 → v3 → ...).
 // É isso que dispara o aviso "Nova versão disponível" nas abas abertas.
-const CACHE = 'ikatu-v32';
+const CACHE = 'ikatu-v34';
 
 // Arquivos básicos do app shell (pré-cacheados na instalação)
 const SHELL = [
@@ -64,6 +64,11 @@ self.addEventListener('fetch', e => {
   // Só intercepta GET do próprio site — Supabase/CDNs passam direto
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
+  // Páginas HTML não pré-cacheadas passam direto para o servidor
+  const pathname = url.pathname.replace(/^\//, '');
+  const isHtml = url.pathname.endsWith('.html') || url.pathname === '/';
+  if (isHtml && !SHELL.includes(pathname)) return;
+
   e.respondWith(
     fetch(e.request)
       .then(res => {
@@ -72,6 +77,11 @@ self.addEventListener('fetch', e => {
         caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
         return res;
       })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }))
+      .catch(() => caches.match(e.request, { ignoreSearch: true })
+        .then(cached => cached || new Response('Offline – arquivo não encontrado no cache.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        }))
+      )
   );
 });

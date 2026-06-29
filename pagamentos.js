@@ -997,16 +997,16 @@ function renderTabela() {
 
     let warningHtml = '';
     if (row.veio_anterior || recebidoDeMesAnterior(row, anoSelecionado)) {
-      warningHtml = `<div class="row-aviso anterior" title="Recebido neste mês e enviado no mês anterior">↩ mês anterior</div>`;
+      warningHtml = `<div class="row-aviso anterior" title="Recebido neste mês e enviado no mês anterior" style="text-align:center; line-height: 1.3;">↩ mês<br>anterior</div>`;
     } else if (obterDiferencaMeses(row, anoSelecionado)) {
-      warningHtml = `<div class="row-aviso seguinte" title="Projeto recebido neste mês e enviado no mês seguinte">→ mês seguinte</div>`;
+      warningHtml = `<div class="row-aviso seguinte" title="Projeto recebido neste mês e enviado no mês seguinte" style="text-align:center; line-height: 1.3;">→ mês<br>seguinte</div>`;
     }
 
     tr.innerHTML = `
-      <td style="text-align: center; vertical-align: middle; cursor: pointer;" onclick="toggleRowCheckboxFromCell(event, ${index})">
-        <div style="display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;">
-          <span class="row-num" style="font-weight: bold; color: var(--muted); font-size: 13px; user-select: none;">0</span>
-          <input type="checkbox" id="check-${index}" ${row.conf ? 'checked' : ''} onchange="atualizarCampo(${index}, 'conf', this.checked); toggleRowHighlight(this, ${index})" style="vertical-align: middle;" onclick="event.stopPropagation()">
+      <td style="text-align: center; vertical-align: middle; cursor: pointer; padding: 4px 2px; width: 48px; max-width: 48px;" onclick="toggleRowCheckboxFromCell(event, ${index})">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 3px;">
+          <span class="row-num" style="font-weight: bold; color: var(--muted); font-size: 12px; user-select: none;">0</span>
+          <input type="checkbox" id="check-${index}" ${row.conf ? 'checked' : ''} onchange="atualizarCampo(${index}, 'conf', this.checked); toggleRowHighlight(this, ${index})" style="vertical-align: middle; width: 13px; height: 13px; margin: 0;" onclick="event.stopPropagation()">
         </div>
         ${warningHtml}
       </td>
@@ -1016,13 +1016,13 @@ function renderTabela() {
             <button type="button" onclick="definirDataHoje(${index})" title="Usar data de hoje" style="background: none; border: none; padding: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#e2eaf3'" onmouseout="this.style.background='none'">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 13h10M8 2v8M4 7l4 4 4-4"/></svg>
             </button>
-            <input type="text" id="input-data-${index}" value="${esc(row.data || '')}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px;" oninput="atualizarCampo(${index}, 'data', this.value)">
+            <input type="text" id="input-data-${index}" value="${esc((row.data || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px;" oninput="atualizarCampo(${index}, 'data', this.value)">
           </div>
           <div style="display: flex; align-items: center; gap: 6px;">
             <div style="padding: 2px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; box-sizing: border-box; flex-shrink: 0;">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" title="Data de Envio" style="flex-shrink:0;"><path d="M3 3h10M8 14V6M4 9l4-4 4 4"/></svg>
             </div>
-            <input type="text" value="${esc(dtEnvio || '')}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px;" oninput="atualizarCampo(${index}, 'data_envio', this.value)">
+            <input type="text" value="${esc((dtEnvio || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px;" oninput="atualizarCampo(${index}, 'data_envio', this.value)">
           </div>
         </div>
       </td>

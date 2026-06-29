@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lojas & Piscinas — Admin — Ikatu</title>
+<script>if (window.innerWidth <= 768) { window.location.href = 'index.html'; }</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase-client.js?v=202606261041"></script>
+<meta name="theme-color" content="#1a2a3a">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css?v=202606261041">
+<style>
+  .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
+  .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+  .tab.active{color:#1a2a3a;border-bottom-color:#1a2a3a;}
+  .tab svg{width:16px;height:16px;stroke:currentColor;fill:none;}
+  .tab-pane{display:none;}
+  .tab-pane.active{display:block;}
+
+  /* Tables styling */
+  .table-wrap{background:#fff;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  .meta-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .meta-table th{background:#1a2a3a;color:#fff;padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-right:1px solid #263a4e;white-space:nowrap;}
+  .meta-table th:last-child{border-right:none;}
+  .meta-table td{padding:10px 14px;border-bottom:1px solid var(--border);border-right:1px solid #f1f5f9;vertical-align:middle;}
+  .meta-table td:last-child{border-right:none;}
+  .meta-table tr:last-child td{border-bottom:none;}
+  .meta-table tbody tr:hover td{background:#f0f7ff;}
+  .meta-table tbody tr:nth-child(even) td{background:#fafbfc;}
+  .meta-table tbody tr:nth-child(even):hover td{background:#f0f7ff;}
+
+  /* Autocomplete */
+  .ac-wrap{position:relative;}
+  .ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1.5px solid var(--blue);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:200;max-height:220px;overflow-y:auto;display:none;}
+  .ac-list.open{display:block;}
+  .ac-item{padding:9px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid #f1f5f9;color:#1a2a3a;display:flex;align-items:center;gap:8px;}
+  .ac-item:last-child{border-bottom:none;}
+  .ac-item:hover,.ac-item.focused{background:#e8f4fd;color:var(--blue);}
+  .ac-item mark{background:transparent;color:var(--blue);font-weight:700;}
+
+  /* Badges */
+  .brand-badge{padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;display:inline-block;}
+  .brand-badge.igui{background:#e8f6fd;color:#00aefe;}
+  .brand-badge.conceito{background:#fdf4e8;color:#d97706;}
+  .brand-badge.internacional{background:#f3e8ff;color:#7c3aed;}
+  .brand-badge.splash{background:#fde8f4;color:#e91e8c;}
+
+  .btn-sm{padding:4px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;line-height:1.2;}
+  .btn-sm:hover{border-color:#cbd5e1;background:#f1f5f9;color:#0f172a;}
+  .btn-sm.primary{padding:8px 14px;border-radius:6px;font-size:12px;background:#1a2a3a;color:#fff;border-color:#1a2a3a;}
+  .btn-sm.primary:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+  .btn-icon{width:28px;height:28px;padding:0;border-radius:6px;cursor:pointer;border:1px solid transparent;background:transparent;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .btn-icon.btn-edit:hover{background:#ede9fe;border-color:#ddd6fe;color:#7c3aed;}
+  .btn-icon.btn-del:hover{background:#fee2e2;border-color:#fecaca;color:#ef4444;}
+
+  .section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .section-hd h3{font-size:14px;font-weight:700;color:#1a2a3a;}
+
+  /* Sub-tabs (franquia/marca) */
+  .subtabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;}
+  .subtab{padding:6px 14px;border-radius:20px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:all .15s;outline:none;}
+  .subtab.active{background:#1a2a3a;color:#fff;border-color:#1a2a3a;}
+  .subtab:hover:not(.active){border-color:#94a3b8;color:#1a2a3a;}
+
+  /* Search bar */
+  .search-bar{margin-bottom:16px;}
+  .search-bar input{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:#fff;box-sizing:border-box;}
+  .search-bar input:focus{border-color:var(--blue);}
+
+  /* Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(18,30,42,.7);z-index:500;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal-box{background:#fff;border-radius:14px;padding:28px;width:100%;max-width:440px;box-shadow:0 8px 40px rgba(0,0,0,.15);}
+  .modal-title{font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:20px;}
+  .modal-field{margin-bottom:14px;}
+  .modal-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:5px;}
+  .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;box-sizing:border-box;}
+  .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);}
+  .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+  .btn-modal{padding:9px 20px;border-radius:7px;font-family:'Inter',sans-serif;font-weight:700;font-size:13px;cursor:pointer;border:none;}
+  .btn-modal.cancel{background:var(--gray);color:var(--muted);}
+  .btn-modal.confirm{background:#1a2a3a;color:#fff;}
+  .btn-modal.confirm:hover{background:var(--blue);}
+</style>
+</head>
+<body class="pg-projetos">
+
+<header>
+  <button id="btnMenuToggle" onclick="document.querySelector('.sidebar').classList.toggle('open')" class="btn-menu-toggle" style="background:none; border:none; color:#fff; font-size:24px; cursor:pointer; display:none; align-items:center; justify-content:center; padding: 0 12px 0 0; outline:none;">
+    ☰
+  </button>
+  <div>
+    <h1>LOJAS & PISCINAS <span>CADASTROS</span></h1>
+    <div class="hdr-sub">Ikatu</div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <img src="logo_site.png" style="width:160px;display:block;margin:4px auto 18px;" alt="iGUI">
+    <div class="sidebar-actions" style="margin-top:auto;">
+      <div class="sidebar-label" style="margin-top:6px;margin-bottom:4px;padding-left:8px;">Espaço Ikatu</div>
+      <nav class="steps" style="margin-bottom:6px;">
+        <a class="stp" href="index.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="2" y="3" width="12" height="10" rx="1.5"/>
+            <path d="M6 3v10M2 7h12"/>
+          </svg>
+          <span class="stp-txt">Gerador</span>
+        </a>
+        <a class="stp" href="projetos.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="2" y="2" width="5" height="5" rx="1"/>
+            <rect x="9" y="2" width="5" height="5" rx="1"/>
+            <rect x="2" y="9" width="5" height="5" rx="1"/>
+            <rect x="9" y="9" width="5" height="5" rx="1"/>
+          </svg>
+          <span class="stp-txt">Pranchas</span>
+        </a>
+        <a class="stp" href="links.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M7 9a3 3 0 004.24.1l2-2a3 3 0 00-4.24-4.24l-1.1 1.1"/>
+            <path d="M9 7a3 3 0 00-4.24-.1l-2 2a3 3 0 004.24 4.24l1.1-1.1"/>
+          </svg>
+          <span class="stp-txt">Links</span>
+        </a>
+        <a class="stp" href="avisos.html" id="navChat">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/>
+            <path d="M6 13a2 2 0 0 0 4 0"/>
+          </svg>
+          <span class="stp-txt">Avisos</span>
+          <span class="chat-nav-badge" id="chatNavBadge"></span>
+        </a>
+        <a class="stp" href="chat.html" id="navChatDM">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/>
+          </svg>
+          <span class="stp-txt">Chat</span>
+          <span class="chat-nav-badge" id="chatDmNavBadge"></span>
+        </a>
+        <a class="stp" href="pagamentos.html">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="1" y="3" width="14" height="10" rx="2"/>
+            <line x1="1" y1="7" x2="15" y2="7"/>
+            <line x1="4" y1="10" x2="6" y2="10"/>
+          </svg>
+          <span class="stp-txt">Pagamentos</span>
+        </a>
+        
+      </nav>
+
+      <!-- Espaço Admin -->
+      <div class="sidebar-label" id="labelAdmin" style="margin-top:12px;margin-bottom:4px;padding-left:8px;display:none;">Espaço Admin</div>
+      <nav class="steps" id="navAdminGroup" style="margin-bottom:6px;display:none;">
+        <a class="stp" href="relacao-projetos.html" id="navRelacaoProjetos" style="display:none">
+          <svg class="sdb-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <rect x="3" y="3" width="10" height="10" rx="1"/>
+            <line x1="3" y1="6" x2="13" y2="6"/>
+            <line x1="3" y1="9" x2="13" y2="9"/>
+            <line x1="6" y1="3" x2="6" y2="13"/>
+          </svg>
+          <span class="stp-txt">Relação</span>
+        </a>
+
+        <a class="stp active" href="lojas-piscinas.html" id="navLojasPiscinas" style="display:none">
+          <svg class="sdb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span class="stp-txt">Lojas/Piscinas</span>
+        </a>
+
+        <a class="stp" href="admin.html" id="navAdmin" style="display:none">
+          <svg class="sdb-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;opacity:0.85;">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span class="stp-txt">Configuração</span>
+          <span class="admin-nav-badge" id="adminNavBadge"></span>
+        </a>
+      </nav>
+
+      <div class="sdb-divider"></div>
+      
+      <div class="sidebar-user-card">
+        <div class="su-avatar" id="userAvatar">?</div>
+        <div class="su-info">
+          <span class="su-name" id="hdrUser" title="Usuário logado">—</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <button class="su-signout" onclick="sbSignOut()">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3H3a1 1 0 00-1 1v8a1 1 0 001 1h3"/><path d="M10 5l3 3-3 3M13 8H6"/></svg>
+              Sair
+            </button>
+            <button class="su-settings" onclick="abrirModalSenha()" title="Alterar Senha" style="background:none; border:none; padding:0; cursor:pointer; color:#7f8c8d; opacity:0.75; transition:opacity 0.15s; display:inline-flex; align-items:center;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:13px; height:13px;"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="proj-page-wrap">
+
+      <div class="tabs" style="display: flex; width: 100%;">
+        <button class="tab active" id="tabLojasBtn" onclick="abaLojas()">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Lojas e Fabricantes
+        </button>
+        <button class="tab" id="tabPiscinasBtn" onclick="abaPiscinas()">
+          <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          Modelos de Piscinas
+        </button>
+      </div>
+
+      <!-- ABA LOJAS -->
+      <div class="tab-pane active" id="paneLojas">
+        <div class="subtabs" id="subtabsLojas">
+          <button class="subtab active" data-franquia="" onclick="setSubtabLoja(this, '')">Todas</button>
+          <button class="subtab" data-franquia="iGUi" onclick="setSubtabLoja(this, 'iGUi')">iGUi</button>
+          <button class="subtab" data-franquia="Conceito" onclick="setSubtabLoja(this, 'Conceito')">Conceito</button>
+          <button class="subtab" data-franquia="Splash" onclick="setSubtabLoja(this, 'Splash')">Splash</button>
+          <button class="subtab" data-franquia="Internacional" onclick="setSubtabLoja(this, 'Internacional')">Internacional</button>
+        </div>
+        <div class="search-bar">
+          <div class="ac-wrap">
+            <input type="text" id="filtroLojaBusca" placeholder="Buscar loja ou fábrica..." oninput="handleAcLojas(this.value)" onkeydown="acKeyNav(event,'acLojas')" autocomplete="off">
+            <div class="ac-list" id="acLojas"></div>
+          </div>
+        </div>
+
+        <div class="section-hd">
+          <h3 id="lojasCount">Lojas Cadastradas</h3>
+          <button class="btn-sm primary" onclick="abrirModalLoja()">+ Nova Loja</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="meta-table">
+            <thead>
+              <tr>
+                <th style="width:140px;">Franquia</th>
+                <th>Nome da Loja</th>
+                <th>Fábrica / Mapeamento</th>
+                <th style="width:90px;text-align:right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="lojasBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ABA PISCINAS -->
+      <div class="tab-pane" id="panePiscinas">
+        <div class="subtabs" id="subtabsPiscinas">
+          <button class="subtab active" data-marca="" onclick="setSubtabPiscina(this, '')">Todas</button>
+          <button class="subtab" data-marca="iGUi" onclick="setSubtabPiscina(this, 'iGUi')">iGUi</button>
+          <button class="subtab" data-marca="Splash" onclick="setSubtabPiscina(this, 'Splash')">Splash</button>
+        </div>
+        <div class="search-bar">
+          <div class="ac-wrap">
+            <input type="text" id="filtroPiscinaBusca" placeholder="Buscar modelo de piscina..." oninput="handleAcPiscinas(this.value)" onkeydown="acKeyNav(event,'acPiscinas')" autocomplete="off">
+            <div class="ac-list" id="acPiscinas"></div>
+          </div>
+        </div>
+
+        <div class="section-hd">
+          <h3 id="piscinasCount">Modelos Cadastrados</h3>
+          <button class="btn-sm primary" onclick="abrirModalPiscina()">+ Novo Modelo</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="meta-table">
+            <thead>
+              <tr>
+                <th style="width:140px;">Marca</th>
+                <th>Modelo</th>
+                <th style="width:90px;text-align:right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="piscinasBody">
+              <tr><td colspan="3" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LOJA -->
+<div class="modal-overlay" id="modalLoja">
+  <div class="modal-box">
+    <div class="modal-title" id="modalLojaTitle">Nova Loja</div>
+    <input type="hidden" id="modalLojaId">
+    <div class="modal-field">
+      <label>Franquia</label>
+      <select id="modalLojaFranquia">
+        <option value="iGUi">iGUi (Padrão)</option>
+        <option value="Conceito">Conceito</option>
+        <option value="Internacional">Internacional</option>
+        <option value="Splash">Splash</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Nome da Loja</label>
+      <input type="text" id="modalLojaNome" placeholder="Ex: João Pessoa">
+    </div>
+    <div class="modal-field">
+      <label>Fábrica (Mapeamento)</label>
+      <input type="text" id="modalLojaFabrica" placeholder="Ex: Vitória de Santo Antão - PE">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharModalLoja()">Cancelar</button>
+      <button class="btn-modal confirm" onclick="salvarLoja()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PISCINA -->
+<div class="modal-overlay" id="modalPiscina">
+  <div class="modal-box">
+    <div class="modal-title" id="modalPiscinaTitle">Novo Modelo de Piscina</div>
+    <input type="hidden" id="modalPiscinaId">
+    <div class="modal-field">
+      <label>Marca</label>
+      <select id="modalPiscinaMarca">
+        <option value="iGUi">iGUi</option>
+        <option value="Splash">Splash</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Nome do Modelo</label>
+      <input type="text" id="modalPiscinaModelo" placeholder="Ex: Cetus">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-modal cancel" onclick="fecharModalPiscina()">Cancelar</button>
+      <button class="btn-modal confirm" onclick="salvarPiscina()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- JS LOGIC -->
+<script>
+  (function() {
+    const cachedName = localStorage.getItem('igui_user_name');
+    const cachedIsAdmin = localStorage.getItem('igui_is_admin') === 'true';
+    if (cachedName) {
+      const el = document.getElementById('hdrUser');
+      if (el) el.textContent = cachedName;
+      const av = document.getElementById('userAvatar');
+      if (av) {
+        const pts = cachedName.trim().split(/\s+/);
+        av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
+      }
+    }
+    if (cachedIsAdmin) {
+      document.querySelectorAll('#navRelacaoProjetos, #navLojasPiscinas, #navAdmin, #labelAdmin, #navAdminGroup').forEach(el => el.style.display = 'flex');
+    }
+  })();
+
+  let toastTimer;
+  function showToast(msg, tipo = 'ok') {
+    const t = document.getElementById('toast');
+    clearTimeout(toastTimer);
+    t.textContent = msg;
+    t.className = `toast ${tipo} show`;
+    toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
+  }
+
+  function esc(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // State
+  let todasLojas = [];
+  let todasPiscinas = [];
+  let filtroLojaFranquia = '';
+  let filtroPiscinaMarca = '';
+
+  // Sub-tab switching — Lojas
+  function setSubtabLoja(btn, franquia) {
+    filtroLojaFranquia = franquia;
+    document.querySelectorAll('#subtabsLojas .subtab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderLojas();
+  }
+
+  // Sub-tab switching — Piscinas
+  function setSubtabPiscina(btn, marca) {
+    filtroPiscinaMarca = marca;
+    document.querySelectorAll('#subtabsPiscinas .subtab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderPiscinas();
+  }
+
+  // Tab switching
+  function abaLojas() {
+    document.getElementById('tabLojasBtn').classList.add('active');
+    document.getElementById('tabPiscinasBtn').classList.remove('active');
+    document.getElementById('paneLojas').classList.add('active');
+    document.getElementById('panePiscinas').classList.remove('active');
+  }
+
+  function abaPiscinas() {
+    document.getElementById('tabLojasBtn').classList.remove('active');
+    document.getElementById('tabPiscinasBtn').classList.add('active');
+    document.getElementById('paneLojas').classList.remove('active');
+    document.getElementById('panePiscinas').classList.add('active');
+  }
+
+  // Boot & Auth
+  document.addEventListener('DOMContentLoaded', async () => {
+    const session = await sbRequireAuth();
+    if (!session) return;
+
+    const profile = await sbGetProfile().catch(() => null);
+    if (!profile || profile.role !== 'admin') {
+      location.href = 'index.html';
+      return;
+    }
+
+    const displayName = profile.name || profile.email || '—';
+    document.getElementById('hdrUser').textContent = displayName;
+    const av = document.getElementById('userAvatar');
+    if (av) {
+      const pts = displayName.trim().split(/\s+/);
+      av.textContent = ((pts[0]?.[0]||'') + (pts[1]?.[0]||'')).toUpperCase() || '?';
+    }
+
+    document.querySelectorAll('#navRelacaoProjetos, #navLojasPiscinas, #navAdmin, #labelAdmin, #navAdminGroup').forEach(el => el.style.display = 'flex');
+
+    await carregarDados();
+  });
+
+  async function carregarDados() {
+    try {
+      const [lojasRes, piscinasRes] = await Promise.all([
+        sb.from('metadata_lojas').select('*').order('franquia').order('loja'),
+        sb.from('metadata_piscinas').select('*').order('marca').order('modelo')
+      ]);
+
+      if (lojasRes.error) throw lojasRes.error;
+      if (piscinasRes.error) throw piscinasRes.error;
+
+      todasLojas = lojasRes.data || [];
+      todasPiscinas = piscinasRes.data || [];
+
+      renderLojas();
+      renderPiscinas();
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao carregar dados: ' + e.message, 'err');
+    }
+  }
+
+  // ── Autocomplete helpers ──────────────────────────────
+  function highlight(text, query) {
+    if (!query) return esc(text);
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return esc(text);
+    return esc(text.slice(0, idx)) + '<mark>' + esc(text.slice(idx, idx + query.length)) + '</mark>' + esc(text.slice(idx + query.length));
+  }
+
+  function closeAllAc() {
+    document.querySelectorAll('.ac-list').forEach(el => el.classList.remove('open'));
+  }
+
+  function acKeyNav(e, listId) {
+    const list = document.getElementById(listId);
+    const items = list.querySelectorAll('.ac-item');
+    const focused = list.querySelector('.ac-item.focused');
+    if (e.key === 'Escape') { closeAllAc(); return; }
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = focused ? focused.nextElementSibling : items[0];
+      if (focused) focused.classList.remove('focused');
+      if (next) next.classList.add('focused');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = focused ? focused.previousElementSibling : null;
+      if (focused) focused.classList.remove('focused');
+      if (prev) prev.classList.add('focused');
+    } else if (e.key === 'Enter') {
+      if (focused) { focused.click(); e.preventDefault(); }
+    }
+  }
+
+  function handleAcLojas(val) {
+    renderLojas();
+    const list = document.getElementById('acLojas');
+    const q = val.trim();
+    if (q.length < 3) { list.classList.remove('open'); return; }
+    const pool = todasLojas.filter(l => !filtroLojaFranquia || l.franquia === filtroLojaFranquia);
+    const matches = pool.filter(l =>
+      l.loja.toLowerCase().includes(q.toLowerCase()) ||
+      l.fabrica.toLowerCase().includes(q.toLowerCase())
+    ).slice(0, 8);
+    if (!matches.length) { list.classList.remove('open'); return; }
+    list.innerHTML = matches.map(l => `
+      <div class="ac-item" onclick="selectAcLoja('${esc(l.loja)}')">
+        <span class="brand-badge ${l.franquia.toLowerCase()}" style="flex-shrink:0;">${esc(l.franquia)}</span>
+        <span>${highlight(l.loja, q)}</span>
+        <span style="color:var(--muted);font-size:11px;margin-left:auto">${esc(l.fabrica)}</span>
+      </div>`).join('');
+    list.classList.add('open');
+  }
+
+  function selectAcLoja(nome) {
+    document.getElementById('filtroLojaBusca').value = nome;
+    closeAllAc();
+    renderLojas();
+  }
+
+  function handleAcPiscinas(val) {
+    renderPiscinas();
+    const list = document.getElementById('acPiscinas');
+    const q = val.trim();
+    if (q.length < 3) { list.classList.remove('open'); return; }
+    const pool = todasPiscinas.filter(p => !filtroPiscinaMarca || p.marca === filtroPiscinaMarca);
+    const matches = pool.filter(p => p.modelo.toLowerCase().includes(q.toLowerCase())).slice(0, 8);
+    if (!matches.length) { list.classList.remove('open'); return; }
+    list.innerHTML = matches.map(p => `
+      <div class="ac-item" onclick="selectAcPiscina('${esc(p.modelo)}')">
+        <span class="brand-badge ${p.marca.toLowerCase()}" style="flex-shrink:0;">${esc(p.marca)}</span>
+        <span>${highlight(p.modelo, q)}</span>
+      </div>`).join('');
+    list.classList.add('open');
+  }
+
+  function selectAcPiscina(modelo) {
+    document.getElementById('filtroPiscinaBusca').value = modelo;
+    closeAllAc();
+    renderPiscinas();
+  }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.ac-wrap')) closeAllAc();
+  });
+
+  // ── render Lojas ──────────────────────────────────────
+  function renderLojas() {
+    const tbody = document.getElementById('lojasBody');
+    tbody.innerHTML = '';
+
+    const filterBusca = document.getElementById('filtroLojaBusca').value.trim().toLowerCase();
+
+    let filtered = todasLojas;
+    if (filtroLojaFranquia) {
+      filtered = filtered.filter(l => l.franquia === filtroLojaFranquia);
+    }
+    if (filterBusca) {
+      filtered = filtered.filter(l =>
+        l.loja.toLowerCase().includes(filterBusca) ||
+        l.fabrica.toLowerCase().includes(filterBusca)
+      );
+    }
+
+    document.getElementById('lojasCount').textContent =
+      `Lojas Cadastradas${filtered.length !== todasLojas.length ? ' — ' + filtered.length + ' resultado' + (filtered.length !== 1 ? 's' : '') : ' (' + filtered.length + ')'}`;
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">Nenhuma loja encontrada</td></tr>';
+      return;
+    }
+
+    filtered.forEach(l => {
+      const tr = document.createElement('tr');
+      const franquiaClass = l.franquia.toLowerCase();
+      tr.innerHTML = `
+        <td><span class="brand-badge ${franquiaClass}">${esc(l.franquia)}</span></td>
+        <td><b>${esc(l.loja)}</b></td>
+        <td style="color:#475569;">${esc(l.fabrica)}</td>
+        <td style="text-align:right;">
+          <button class="btn-icon btn-edit" onclick="editarLoja('${l.id}')" title="Editar">✏️</button>
+          <button class="btn-icon btn-del" onclick="deletarLoja('${l.id}')" title="Excluir">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── render Piscinas ───────────────────────────────────
+  function renderPiscinas() {
+    const tbody = document.getElementById('piscinasBody');
+    tbody.innerHTML = '';
+
+    const filterBusca = document.getElementById('filtroPiscinaBusca').value.trim().toLowerCase();
+
+    let filtered = todasPiscinas;
+    if (filtroPiscinaMarca) {
+      filtered = filtered.filter(p => p.marca === filtroPiscinaMarca);
+    }
+    if (filterBusca) {
+      filtered = filtered.filter(p => p.modelo.toLowerCase().includes(filterBusca));
+    }
+
+    document.getElementById('piscinasCount').textContent =
+      `Modelos Cadastrados${filtered.length !== todasPiscinas.length ? ' — ' + filtered.length + ' resultado' + (filtered.length !== 1 ? 's' : '') : ' (' + filtered.length + ')'}`;
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:32px">Nenhum modelo encontrado</td></tr>';
+      return;
+    }
+
+    filtered.forEach(p => {
+      const tr = document.createElement('tr');
+      const marcaClass = p.marca.toLowerCase();
+      tr.innerHTML = `
+        <td><span class="brand-badge ${marcaClass}">${esc(p.marca)}</span></td>
+        <td><b>${esc(p.modelo)}</b></td>
+        <td style="text-align:right;">
+          <button class="btn-icon btn-edit" onclick="editarPiscina('${p.id}')" title="Editar">✏️</button>
+          <button class="btn-icon btn-del" onclick="deletarPiscina('${p.id}')" title="Excluir">🗑️</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Modal Loja CRUD
+  function abrirModalLoja() {
+    document.getElementById('modalLojaTitle').textContent = 'Nova Loja';
+    document.getElementById('modalLojaId').value = '';
+    document.getElementById('modalLojaNome').value = '';
+    document.getElementById('modalLojaNome').disabled = false;
+    document.getElementById('modalLojaFabrica').value = '';
+    document.getElementById('modalLojaFranquia').value = filtroLojaFranquia || 'iGUi';
+    document.getElementById('modalLojaFranquia').disabled = false;
+    document.getElementById('modalLoja').classList.add('show');
+  }
+
+  function fecharModalLoja() {
+    document.getElementById('modalLoja').classList.remove('show');
+  }
+
+  function editarLoja(id) {
+    const l = todasLojas.find(x => x.id === id);
+    if (!l) return;
+    document.getElementById('modalLojaTitle').textContent = 'Editar Loja';
+    document.getElementById('modalLojaId').value = l.id;
+    document.getElementById('modalLojaNome').value = l.loja;
+    // O nome da loja e franquia formam a chave única natural, ideal não editar para evitar quebras, mas se editar, ok.
+    document.getElementById('modalLojaNome').value = l.loja;
+    document.getElementById('modalLojaFabrica').value = l.fabrica;
+    document.getElementById('modalLojaFranquia').value = l.franquia;
+    document.getElementById('modalLoja').classList.add('show');
+  }
+
+  async function salvarLoja() {
+    const id = document.getElementById('modalLojaId').value;
+    const franquia = document.getElementById('modalLojaFranquia').value;
+    const loja = document.getElementById('modalLojaNome').value.trim();
+    const fabrica = document.getElementById('modalLojaFabrica').value.trim();
+
+    if (!loja || !fabrica) {
+      showToast('Preencha todos os campos obrigatórios!', 'err');
+      return;
+    }
+
+    try {
+      let res;
+      if (id) {
+        // Edit
+        res = await sb.from('metadata_lojas')
+          .update({ franquia, loja, fabrica, updated_at: new Date().toISOString() })
+          .eq('id', id);
+      } else {
+        // Insert
+        res = await sb.from('metadata_lojas')
+          .insert({ franquia, loja, fabrica });
+      }
+
+      if (res.error) throw res.error;
+
+      showToast('Loja salva com sucesso!', 'ok');
+      fecharModalLoja();
+      await carregarDados();
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao salvar: ' + e.message, 'err');
+    }
+  }
+
+  async function deletarLoja(id) {
+    if (!confirm('Deseja realmente excluir esta loja? Isto afetará o autopreenchimento futuro.')) return;
+    try {
+      const { error } = await sb.from('metadata_lojas').delete().eq('id', id);
+      if (error) throw error;
+
+      showToast('Loja excluída com sucesso!', 'ok');
+      await carregarDados();
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao excluir: ' + e.message, 'err');
+    }
+  }
+
+  // Modal Piscina CRUD
+  function abrirModalPiscina() {
+    document.getElementById('modalPiscinaTitle').textContent = 'Novo Modelo';
+    document.getElementById('modalPiscinaId').value = '';
+    document.getElementById('modalPiscinaModelo').value = '';
+    document.getElementById('modalPiscinaMarca').value = filtroPiscinaMarca || 'iGUi';
+    document.getElementById('modalPiscina').classList.add('show');
+  }
+
+  function fecharModalPiscina() {
+    document.getElementById('modalPiscina').classList.remove('show');
+  }
+
+  function editarPiscina(id) {
+    const p = todasPiscinas.find(x => x.id === id);
+    if (!p) return;
+    document.getElementById('modalPiscinaTitle').textContent = 'Editar Modelo';
+    document.getElementById('modalPiscinaId').value = p.id;
+    document.getElementById('modalPiscinaModelo').value = p.modelo;
+    document.getElementById('modalPiscinaMarca').value = p.marca;
+    document.getElementById('modalPiscina').classList.add('show');
+  }
+
+  async function salvarPiscina() {
+    const id = document.getElementById('modalPiscinaId').value;
+    const marca = document.getElementById('modalPiscinaMarca').value;
+    const modelo = document.getElementById('modalPiscinaModelo').value.trim();
+
+    if (!modelo) {
+      showToast('Preencha o nome do modelo!', 'err');
+      return;
+    }
+
+    try {
+      let res;
+      if (id) {
+        res = await sb.from('metadata_piscinas')
+          .update({ marca, modelo, updated_at: new Date().toISOString() })
+          .eq('id', id);
+      } else {
+        res = await sb.from('metadata_piscinas')
+          .insert({ marca, modelo });
+      }
+
+      if (res.error) throw res.error;
+
+      showToast('Modelo salvo com sucesso!', 'ok');
+      fecharModalPiscina();
+      await carregarDados();
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao salvar: ' + e.message, 'err');
+    }
+  }
+
+  async function deletarPiscina(id) {
+    if (!confirm('Deseja realmente excluir este modelo?')) return;
+    try {
+      const { error } = await sb.from('metadata_piscinas').delete().eq('id', id);
+      if (error) throw error;
+
+      showToast('Modelo excluído com sucesso!', 'ok');
+      await carregarDados();
+    } catch(e) {
+      console.error(e);
+      showToast('Erro ao excluir: ' + e.message, 'err');
+    }
+  }
+</script>
+</body>
+</html>

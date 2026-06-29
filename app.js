@@ -1895,8 +1895,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hdrUser = document.getElementById('hdrUser');
     if (hdrUser) hdrUser.textContent = profileName;
     if (_profile?.role === 'admin') {
-      const navAdmin = document.getElementById('navAdmin');
-      if (navAdmin) navAdmin.style.display = 'flex';
+      document.querySelectorAll('#navRelacaoProjetos, #navLojasPiscinas, #navAdmin, #labelAdmin, #navAdminGroup').forEach(el => el.style.display = 'flex');
 
       // Converter campo de projetista em select para administradores
       const select = document.createElement('select');

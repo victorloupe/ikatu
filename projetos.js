@@ -628,9 +628,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     if (profile.role === 'admin') {
       const badge = document.getElementById('adminBadge');
-      const nav   = document.getElementById('navAdmin');
       if (badge) badge.style.display = 'inline-block';
-      if (nav)   nav.style.display   = 'flex';
+      document.querySelectorAll('#navRelacaoProjetos, #navLojasPiscinas, #navAdmin, #labelAdmin, #navAdminGroup').forEach(el => el.style.display = 'flex');
     }
   }
 
