@@ -6,7 +6,10 @@
 
 // ── Utilitários ───────────────────────────────────────────────────
 // escapeHtml → alias para esc() global (supabase-client.js)
-const escapeHtml = esc;
+// BUG-08: fallback inline caso supabase-client.js ainda não tenha executado
+const escapeHtml = typeof esc === 'function'
+  ? esc
+  : s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 let toastTimer;
 function showToast(msg, tipo = 'ok') {

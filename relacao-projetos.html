@@ -310,10 +310,11 @@
   /* Details row inputs & selectors */
   .details-fabrica-input {
     width: 100%;
+    height: 28px;
     background: #e2e8f0;
     border: 1.5px solid #cbd5e1;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 0 8px;
     font-size: 12px;
     color: #475569;
     cursor: not-allowed;
@@ -322,10 +323,11 @@
   }
   .details-obs-input {
     width: 100%;
+    height: 28px;
     background: #fff;
     border: 1.5px solid #cbd5e1;
     border-radius: 4px;
-    padding: 4px 8px;
+    padding: 0 8px;
     font-size: 12px;
     color: #1e293b;
     box-sizing: border-box;
@@ -362,6 +364,16 @@
   .loja-ac-item .ac-fab{color:#94a3b8;font-size:10px;margin-left:auto;white-space:nowrap;}
 
   /* Franchise Theme Colors */
+  /* Linha sem projetista */
+  @keyframes pulseSemProjetista {
+    0%, 100% { background-color: transparent; }
+    50%       { background-color: #fef9c3; }
+  }
+  tr.sem-projetista .cell-sem-projetista {
+    animation: pulseSemProjetista 1.6s ease-in-out infinite;
+    border-radius: 4px;
+  }
+
   tr.fr-igui td { background-color: #f0f7ff !important; }
   tr.fr-igui:hover td { background-color: #dbeafe !important; }
   tr.fr-igui.details-row td { background-color: #f8fbff !important; border-top: 1px solid #dbeafe !important; border-bottom: 3px solid #1e293b !important; }
@@ -560,6 +572,33 @@
   .chart-card.full{grid-column:1/-1;}
   .chart-title{font-size:11px;font-weight:700;color:#1a2a3a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
   .chart-title span{background:#e8f4fd;color:var(--blue);border-radius:4px;padding:2px 7px;font-size:10px;}
+
+  #dupBadge:hover {
+    background: rgba(249,115,22,0.22) !important;
+    border-color: #f97316 !important;
+    transform: translateY(-1px);
+  }
+  #dupBadge.active-filter {
+    background: rgba(249,115,22,0.85) !important;
+    border-color: #ea6000 !important;
+    color: #fff !important;
+  }
+  #dupBadge.active-filter:hover {
+    background: #f97316 !important;
+  }
+
+  /* Linhas com ID duplicado */
+  tr.dup-id-row td {
+    background-color: #fff7ed !important;
+  }
+  tr.dup-id-row:hover td {
+    background-color: #ffedd5 !important;
+  }
+  tr.dup-id-row.details-row td {
+    background-color: #fffbf5 !important;
+    border-top: 1px solid #fed7aa !important;
+    border-bottom: 3px solid #f97316 !important;
+  }
 
   /* Full Width override */
   .proj-page-wrap {
@@ -783,7 +822,7 @@
         <div class="tabs-spacer"></div>
         <button class="tab" id="tabResumoBtn" onclick="abaResumo()">
           <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          Resumo por Projetista
+          Financeiro Projetista
         </button>
         <button class="tab" id="tabLojaBtn" onclick="abaLoja()">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/><line x1="15" y1="15" x2="19" y2="15"/><line x1="15" y1="18" x2="19" y2="18"/></svg>
@@ -823,16 +862,17 @@
               </div>
 
               <div class="tool-field">
-                <label>Buscar</label>
+                <label>Buscar </label>
                 <input type="text" id="filtroGrid" placeholder="Loja, ID ou Projetista..." oninput="renderGrid()">
               </div>
 
               <div class="tool-field">
-                <label>Status Pago</label>
-                <select id="filtroPago" onchange="renderGrid()">
+                <label>Status  </label>
+                <select id="filtroPago" onchange="renderGrid();_updateDupHighlights()">
                   <option value="nao_pagos" selected>Não Pagos</option>
                   <option value="pagos">Pagos</option>
                   <option value="todos">Todos</option>
+                  <option value="duplicados">IDs Duplicados</option>
                 </select>
               </div>
 
@@ -841,13 +881,20 @@
                 Adicionar Linha
               </button>
 
-              <div style="margin-left: auto; display: flex; gap: 6px; align-items: center;">
+              <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+                <!-- Badge de IDs duplicados -->
+                <div id="dupBadge" onclick="filtrarDuplicados()" title="Clique para filtrar IDs duplicados"
+                  style="display:none;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;
+                         background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.3);
+                         color:#f97316;font-size:11px;font-weight:700;cursor:pointer;
+                         transition:all .15s;user-select:none;white-space:nowrap;">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <span id="dupBadgeCount">0</span> IDs duplicados
+                </div>
                 <button class="btn-icon-export" onclick="exportarPlanilhaCSV()" title="Exportar CSV" aria-label="Exportar CSV">
-                  <!-- CSV: linhas horizontais com seta para baixo -->
                   <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
                 </button>
                 <button class="btn-icon-export" onclick="exportarPlanilhaPDF()" title="Exportar PDF" aria-label="Exportar PDF">
-                  <!-- PDF: arquivo simples -->
                   <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
                 </button>
               </div>
@@ -870,14 +917,14 @@
                 </colgroup>
                 <thead>
                   <tr>
-                    <th style="text-align: center;">#</th>
-                    <th>Franquia</th>
-                    <th>Loja</th>
-                    <th>ID Projeto</th>
-                    <th>Entrada</th>
-                    <th>Saída</th>
-                    <th>Projetista</th>
-                    <th>Tipo Projeto</th>
+                    <th data-sort="_num" onclick="setGridSort('_num')" style="text-align:center;cursor:pointer;user-select:none;">#<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
+                    <th data-sort="franquia" onclick="setGridSort('franquia')" style="cursor:pointer;user-select:none;">Franquia<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
+                    <th data-sort="loja" onclick="setGridSort('loja')" style="cursor:pointer;user-select:none;">Loja<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
+                    <th data-sort="project_code" onclick="setGridSort('project_code')" style="cursor:pointer;user-select:none;">ID Projeto<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
+                    <th data-sort="data_entrada" onclick="setGridSort('data_entrada')" style="cursor:pointer;user-select:none;">Entrada<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
+                    <th data-sort="data_saida" onclick="setGridSort('data_saida')" style="cursor:pointer;user-select:none;">Saída<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
+                    <th data-sort="projetista" onclick="setGridSort('projetista')" style="cursor:pointer;user-select:none;">Projetista<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
+                    <th data-sort="tipo_projeto" onclick="setGridSort('tipo_projeto')" style="cursor:pointer;user-select:none;">Tipo Projeto<span class="sort-arrow" style="opacity:.55;font-size:9px;"> ↕</span></th>
                     <th style="text-align: center;">Pago</th>
                     <th style="text-align: center;"></th>
                   </tr>
@@ -1126,6 +1173,7 @@
               <div class="tool-field">
                 <label>Mês</label>
                 <select id="lojaResumoMes" onchange="atualizarResumoLoja()">
+                  <option value="-1">Todo o Ano</option>
                   <option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option>
                   <option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option>
                   <option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option>
@@ -1159,8 +1207,22 @@
 
             <!-- KPI Cards -->
             <div class="kpi-row" id="lojaKpiRow">
-              <div class="kpi-card"><div class="kpi-label">Total de Projetos</div><div class="kpi-value" id="kpiTotal">—</div><div class="kpi-sub">no período</div></div>
-              <div class="kpi-card"><div class="kpi-label">Lojas Ativas</div><div class="kpi-value" id="kpiLojas">—</div><div class="kpi-sub">solicitaram projeto</div></div>
+              <div class="kpi-card">
+                <div class="kpi-label">Total de Projetos</div>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <div class="kpi-value" id="kpiTotal">—</div>
+                  <span id="kpiTotalDelta" style="font-size:11px;font-weight:700;"></span>
+                </div>
+                <div class="kpi-sub" id="kpiTotalSub">no período</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">Lojas Ativas</div>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                  <div class="kpi-value" id="kpiLojas">—</div>
+                  <span id="kpiLojasDelta" style="font-size:11px;font-weight:700;"></span>
+                </div>
+                <div class="kpi-sub">solicitaram projeto</div>
+              </div>
               <div class="kpi-card"><div class="kpi-label">Franquia Líder</div><div class="kpi-value" id="kpiFranquia" style="font-size:18px;">—</div><div class="kpi-sub" id="kpiFranquiaSub"></div></div>
               <div class="kpi-card"><div class="kpi-label">Loja Mais Ativa</div><div class="kpi-value" id="kpiTopLoja" style="font-size:16px;">—</div><div class="kpi-sub" id="kpiTopLojaSub"></div></div>
             </div>
@@ -1264,6 +1326,34 @@
   let _chartLojas = null, _chartFranquia = null, _chartMensal = null,
       _chartTipo = null, _chartPrazo = null; // Chart.js instances
 
+  // Sort state
+  let _gridSortField = null; // null = ordem natural (por #)
+  let _gridSortDir   = 'desc'; // 'asc' | 'desc'
+
+  function setGridSort(field) {
+    if (field === '_num') {
+      // Clicar em # reseta para ordem natural
+      _gridSortField = null;
+    } else if (_gridSortField === field) {
+      _gridSortDir = _gridSortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      _gridSortField = field;
+      _gridSortDir = field === 'data_entrada' || field === 'data_saida' ? 'desc' : 'asc';
+    }
+    _renderSortHeaders();
+    renderGrid();
+  }
+
+  function _renderSortHeaders() {
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      const f = th.dataset.sort;
+      const isActive = f === '_num' ? _gridSortField === null : f === _gridSortField;
+      const arrow = isActive ? (f === '_num' ? ' ↓' : (_gridSortDir === 'asc' ? ' ↑' : ' ↓')) : ' ↕';
+      th.querySelector('.sort-arrow').textContent = arrow;
+      th.style.color = isActive ? '#00aefe' : '#e2e8f0';
+    });
+  }
+
   let precosGlobais = {
     val_ate2: 70,
     val_3a4: 80,
@@ -1277,17 +1367,9 @@
   async function carregarPrecosProjeto() {
     try {
       const precos = await sbGetPrecosProjeto();
-      if (precos) {
-        precosGlobais = {
-          val_ate2: precos.val_ate2 ?? 70,
-          val_3a4: precos.val_3a4 ?? 80,
-          val_mais5: precos.val_mais5 ?? 95,
-          val_360: precos.val_360 ?? 90,
-          val_360_3mod: precos.val_360_3mod ?? 105,
-          val_conceito: precos.val_conceito ?? 150,
-          val_alt_grandes: precos.val_alt_grandes ?? 60
-        };
-      }
+      precosGlobais = window.sbNormalizarPrecosProjeto
+        ? window.sbNormalizarPrecosProjeto(precos)
+        : { ...precosGlobais, ...(precos || {}) };
     } catch(e) {
       console.error('Erro ao carregar preços:', e);
     }
@@ -1321,6 +1403,12 @@
       return d >= 3;
     });
     badge.classList.toggle('danger', temAtrasado);
+  }
+
+  function refreshAndamentoBadge() {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const em = projectRelations.filter(p => p.data_entrada && !p.data_saida);
+    _atualizarBadgeAndamento(em, hoje);
   }
 
   function _statusAndamento(diasStr) {
@@ -1528,7 +1616,7 @@
     if (sel) { delete sel.dataset.populated; sel.innerHTML = '<option value="">Todas</option>'; }
     const hoje = new Date();
     const elMes = document.getElementById('lojaResumoMes');
-    if (elMes) elMes.value = hoje.getMonth();
+    if (elMes) elMes.value = '-1';
     const elAno = document.getElementById('lojaResumoAno');
     if (elAno) elAno.value = document.getElementById('exercicioAno').value;
     atualizarResumoLoja();
@@ -1860,6 +1948,7 @@
 
       projectRelations = data || [];
       renderGrid();
+      _updateDupHighlights();
       // Atualiza badge da aba Em Andamento
       (function() {
         const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -1938,6 +2027,16 @@
       filtered = filtered.filter(p => !p.pago);
     } else if (filterPago === 'pagos') {
       filtered = filtered.filter(p => p.pago);
+    } else if (filterPago === 'duplicados') {
+      const codeCount = {};
+      projectRelations.forEach(p => {
+        const code = (p.project_code || '').trim().toLowerCase();
+        if (code) codeCount[code] = (codeCount[code] || 0) + 1;
+      });
+      filtered = filtered.filter(p => {
+        const code = (p.project_code || '').trim().toLowerCase();
+        return code && codeCount[code] > 1;
+      });
     }
 
     if (filterVal) {
@@ -1948,6 +2047,22 @@
         (p.fabrica || '').toLowerCase().includes(filterVal) ||
         getProjectPools(p).join(' ').toLowerCase().includes(filterVal)
       );
+    }
+
+    // Sort — null = ordem natural (por #, como vem do banco)
+    if (_gridSortField !== null) {
+      filtered = [...filtered].sort((a, b) => {
+        const f = _gridSortField;
+        const va = (a[f] || '');
+        const vb = (b[f] || '');
+        let cmp;
+        if (f === 'data_entrada' || f === 'data_saida') {
+          cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        } else {
+          cmp = va.toString().localeCompare(vb.toString(), 'pt-BR', { sensitivity: 'base' });
+        }
+        return _gridSortDir === 'asc' ? cmp : -cmp;
+      });
     }
 
     return filtered;
@@ -1983,9 +2098,17 @@
   }
 
   function renderGrid() {
+    _renderSortHeaders();
     const gridBody = document.getElementById('gridBody');
     gridBody.innerHTML = '';
     const filtered = getFilteredGridRows();
+
+    // Pré-calcula quais IDs são duplicados em toda a base (não só no filtrado)
+    const _dupCodes = {};
+    projectRelations.forEach(p => {
+      const code = (p.project_code || '').trim().toLowerCase();
+      if (code) _dupCodes[code] = (_dupCodes[code] || 0) + 1;
+    });
 
     if (filtered.length === 0) {
       gridBody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">Nenhum projeto encontrado. Adicione uma linha para começar.</td></tr>';
@@ -1996,6 +2119,7 @@
       try {
         const franquiaVal = p.franquia || 'iGUi';
         const classFranquia = `fr-${franquiaVal.toLowerCase()}`;
+        const isDup = _dupCodes[(p.project_code || '').trim().toLowerCase()] > 1;
 
         const tr = document.createElement('tr');
         tr.id = `row-${p.id}`;
@@ -2004,10 +2128,12 @@
         if (rowsDeleted.has(p.id)) {
           tr.classList.add('deleted-row');
         }
+        if (!p.projetista) tr.classList.add('sem-projetista');
+        if (isDup) tr.classList.add('dup-id-row');
 
         const trDetails = document.createElement('tr');
         trDetails.id = `row-details-${p.id}`;
-        trDetails.className = `details-row row-enter ${classFranquia}`;
+        trDetails.className = `details-row row-enter ${classFranquia}${isDup ? ' dup-id-row' : ''}`;
         trDetails.style.animationDelay = `${idx * 35 + 18}ms`;
         if (rowsDeleted.has(p.id)) {
           trDetails.classList.add('deleted-row');
@@ -2062,23 +2188,36 @@
 
         const rowNum = filtered.length - idx;
 
+        // Badge de andamento: calcula status se projeto estiver em andamento
+        let badgeStyle = 'cursor:pointer;';
+        if (p.data_entrada && !p.data_saida) {
+          const hoje = new Date(); hoje.setHours(0,0,0,0);
+          const dias = Math.floor((hoje - parseLocalDate(p.data_entrada)) / 86400000);
+          if (dias <= 1)      badgeStyle += 'background:#dcfce7;color:#16a34a;';
+          else if (dias <= 2) badgeStyle += 'background:#fef9c3;color:#b45309;';
+          else                badgeStyle += 'background:#fee2e2;color:#dc2626;';
+        }
+
         // ── Linha principal: inputs editáveis ───────────
         tr.innerHTML = `
-          <td style="text-align:center;padding:0 4px;border-bottom:none;" onclick="toggleGridRow('${p.id}')" title="Abrir/fechar detalhes"><span class="row-num-badge" style="cursor:pointer;">${rowNum}</span></td>
+          <td style="text-align:center;padding:0 4px;border-bottom:none;" onclick="toggleGridRow('${p.id}')" title="Abrir/fechar detalhes"><span class="row-num-badge" style="${badgeStyle}">${rowNum}</span></td>
           <td style="border-bottom:none;">
             <div class="cell-select-wrap">
               <select class="cell-select" onchange="onFranquiaChange('${p.id}',this.value)">${optionsFranquia}</select>
             </div>
           </td>
-          <td style="overflow:visible;border-bottom:none;">
+          <td style="overflow:visible;border-bottom:none;padding:4px 6px;">
             <input type="text" class="cell-input" id="loja-input-${p.id}" value="${esc(p.loja)}" placeholder="Buscar loja..." autocomplete="off"
+              style="height:auto;padding:4px 8px;border:1.5px solid #cbd5e1;border-radius:4px;background:#fff;"
               oninput="openLojaAc('${p.id}',this,'${franquiaVal}')"
               onfocus="openLojaAc('${p.id}',this,'${franquiaVal}')"
               onkeydown="lojaAcKey(event,'${p.id}')"
               onblur="setTimeout(()=>closeLojaAc(),150)">
           </td>
-          <td style="border-bottom:none;">
-            <input type="text" class="cell-input" value="${esc(p.project_code)}" onchange="updateRowField('${p.id}',this)" data-field="project_code" placeholder="Ex: 805672">
+          <td style="border-bottom:none;padding:4px 6px;">
+            <input type="text" class="cell-input" value="${esc(p.project_code)}" oninput="updateRowField('${p.id}',this)" data-field="project_code"
+              style="height:auto;padding:4px 8px;border:1.5px solid ${isDup ? '#f97316' : '#cbd5e1'};border-radius:4px;background:${isDup ? '#fff7ed' : '#fff'};"
+              title="${isDup ? '⚠ ID duplicado' : ''}">
           </td>
           <td style="border-bottom:none;">
             <input type="date" class="cell-input" value="${p.data_entrada||''}" onchange="updateRowField('${p.id}',this)" data-field="data_entrada">
@@ -2086,8 +2225,8 @@
           <td style="border-bottom:none;">
             <input type="date" class="cell-input" value="${p.data_saida||''}" onchange="updateRowField('${p.id}',this)" data-field="data_saida">
           </td>
-          <td style="border-bottom:none;">
-            <div class="cell-select-wrap">
+          <td style="border-bottom:none;padding:${p.projetista ? '0' : '3px 6px'};">
+            <div class="cell-select-wrap${p.projetista ? '' : ' cell-sem-projetista'}">
               <select class="cell-select cell-select-projetista" data-field="projetista" onchange="onProjetistaChange('${p.id}',this)" ${projStyle}>${optionsProjetista}</select>
             </div>
           </td>
@@ -2144,6 +2283,7 @@
         showToast("Erro ao renderizar linha: " + err.message, "err");
       }
     });
+
   }
 
   // ── Pool dinâmico ─────────────────────────────────────
@@ -2258,6 +2398,59 @@
   });
 
   // Row update hooks
+  function _updateDupHighlights() {
+    // Calcula contagem de cada project_code em toda a base
+    const codeCount = {};
+    projectRelations.forEach(p => {
+      const code = (p.project_code || '').trim().toLowerCase();
+      if (code) codeCount[code] = (codeCount[code] || 0) + 1;
+    });
+
+    // Atualiza cada linha visível no DOM
+    projectRelations.forEach(p => {
+      const code = (p.project_code || '').trim().toLowerCase();
+      const isDup = code && codeCount[code] > 1;
+
+      // Linha principal e details
+      const tr = document.getElementById(`row-${p.id}`);
+      const trD = document.getElementById(`row-details-${p.id}`);
+      if (tr) tr.classList.toggle('dup-id-row', isDup);
+      if (trD) trD.classList.toggle('dup-id-row', isDup);
+
+      // Input do project_code
+      const input = tr ? tr.querySelector('input[data-field="project_code"]') : null;
+      if (input) {
+        input.style.borderColor = isDup ? '#f97316' : '#cbd5e1';
+        input.style.background  = isDup ? '#fff7ed' : '#fff';
+        input.title = isDup ? '⚠ ID duplicado' : '';
+      }
+    });
+
+    // Atualiza badge de duplicados no header
+    const dupCodes = Object.values(codeCount).filter(c => c > 1).length;
+    const badge = document.getElementById('dupBadge');
+    const badgeCount = document.getElementById('dupBadgeCount');
+    if (badge && badgeCount) {
+      badgeCount.textContent = dupCodes;
+      badge.style.display = dupCodes > 0 ? 'flex' : 'none';
+      const isActive = document.getElementById('filtroPago')?.value === 'duplicados';
+      badge.classList.toggle('active-filter', isActive);
+    }
+  }
+
+  function filtrarDuplicados() {
+    const filtroPago = document.getElementById('filtroPago');
+    if (!filtroPago) return;
+    if (filtroPago.value === 'duplicados') {
+      // Clicou de novo: volta para "todos"
+      filtroPago.value = 'todos';
+    } else {
+      filtroPago.value = 'duplicados';
+    }
+    renderGrid();
+    _updateDupHighlights();
+  }
+
   function updateRowField(id, el) {
     const row = projectRelations.find(x => x.id === id);
     if (!row) return;
@@ -2269,8 +2462,19 @@
       salvarLinhaNoDB(row.id);
     } else {
       row[field] = el.value;
-      
+
+      if (field === 'data_entrada' || field === 'data_saida') {
+        refreshAndamentoBadge();
+      }
+
       if (field === 'project_code' || field === 'obs') {
+        if (field === 'project_code') {
+          _updateDupHighlights();
+          // Se o filtro de duplicados estiver ativo, re-renderiza para incluir/excluir linhas
+          if (document.getElementById('filtroPago')?.value === 'duplicados') {
+            renderGrid();
+          }
+        }
         clearTimeout(debounceTimers[id]);
         debounceTimers[id] = setTimeout(() => {
           salvarLinhaNoDB(row.id);
@@ -2347,7 +2551,7 @@
       id: tempId,
       loja: '',
       project_code: '',
-      data_entrada: `${ano}-01-01`, 
+      data_entrada: new Date().toISOString().slice(0, 10),
       data_saida: '',
       modelo_01: '',
       modelo_02: '',
@@ -2365,6 +2569,7 @@
 
     projectRelations.unshift(novaLinha);
     renderGrid();
+    refreshAndamentoBadge();
     // Abre o detail row da nova linha automaticamente
     setTimeout(() => {
       const trD = document.getElementById(`row-details-${tempId}`);
@@ -2392,6 +2597,7 @@
     if (!row) return;
 
     rowsDeleted.add(id);
+    refreshAndamentoBadge();
     const trMain = document.getElementById(`row-${id}`);
     const trDet  = document.getElementById(`row-details-${id}`);
     const btn    = document.getElementById(`del-btn-${id}`);
@@ -2417,6 +2623,7 @@
         projectRelations = projectRelations.filter(x => x.id !== id);
         rowsDeleted.delete(id);
         renderGrid();
+        refreshAndamentoBadge();
       } catch(e) {
         console.error(e);
         showToast('Erro ao excluir: ' + e.message, 'err');
@@ -2824,10 +3031,12 @@
     }
 
     // Filter projects by month of data_saida
+    const todoAno = mesIdx === -1;
     const base = projectRelations.filter(p => {
       if (!p.data_saida) return false;
       const parts = p.data_saida.split('-');
-      if (parseInt(parts[0]) !== ano || parseInt(parts[1]) - 1 !== mesIdx) return false;
+      if (parseInt(parts[0]) !== ano) return false;
+      if (!todoAno && parseInt(parts[1]) - 1 !== mesIdx) return false;
       if (franquia && p.franquia !== franquia) return false;
       if (lojaFil && p.loja !== lojaFil) return false;
       return true;
@@ -2848,12 +3057,44 @@
     base.forEach(p => { if (p.loja) countLoja[p.loja] = (countLoja[p.loja]||0)+1; });
     const lojaTop = Object.entries(countLoja).sort((a,b)=>b[1]-a[1])[0];
 
+    // ── Período anterior ──────────────────────────────
+    const anoAnt = todoAno ? ano - 1 : (mesIdx === 0 ? ano - 1 : ano);
+    const mesAnt = todoAno ? -1      : (mesIdx === 0 ? 11      : mesIdx - 1);
+    const baseAnt = projectRelations.filter(p => {
+      if (!p.data_saida) return false;
+      const parts = p.data_saida.split('-');
+      if (parseInt(parts[0]) !== anoAnt) return false;
+      if (mesAnt !== -1 && parseInt(parts[1]) - 1 !== mesAnt) return false;
+      if (franquia && p.franquia !== franquia) return false;
+      if (lojaFil && p.loja !== lojaFil) return false;
+      return true;
+    });
+    const totalAnt  = baseAnt.length;
+    const lojasAnt  = new Set(baseAnt.map(p => p.loja).filter(Boolean)).size;
+
+    const MESES_CURTO = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const refLabel = todoAno ? `${anoAnt}` : (mesAnt === -1 ? `${anoAnt}` : MESES_CURTO[mesAnt]);
+
+    function renderDelta(el, atual, anterior) {
+      if (!el || anterior === 0) { if (el) el.textContent = ''; return; }
+      const diff = atual - anterior;
+      if (diff === 0) { el.textContent = `igual a ${refLabel}`; el.style.color = '#94a3b8'; return; }
+      const sinal = diff > 0 ? '▲' : '▼';
+      const direcao = diff > 0 ? 'acima' : 'abaixo';
+      el.textContent = `${sinal} ${Math.abs(diff)} ${direcao} de ${refLabel}`;
+      el.style.color = diff > 0 ? '#16a34a' : '#dc2626';
+    }
+
+    const periodoLabel = todoAno ? 'no ano' : 'no período';
     document.getElementById('kpiTotal').textContent     = totalProjetos;
     document.getElementById('kpiLojas').textContent     = totalLojas;
     document.getElementById('kpiFranquia').textContent  = frLider ? frLider[0] : '—';
     document.getElementById('kpiFranquiaSub').textContent = frLider ? `${frLider[1]} projeto(s)` : '';
     document.getElementById('kpiTopLoja').textContent   = lojaTop ? lojaTop[0] : '—';
     document.getElementById('kpiTopLojaSub').textContent= lojaTop ? `${lojaTop[1]} projeto(s)` : '';
+    document.getElementById('kpiTotalSub').textContent  = periodoLabel;
+    renderDelta(document.getElementById('kpiTotalDelta'), totalProjetos, totalAnt);
+    renderDelta(document.getElementById('kpiLojasDelta'), totalLojas,    lojasAnt);
 
     // ── Destroy all existing charts ────────────────────
     [_chartLojas,_chartFranquia,_chartMensal,_chartTipo,_chartPrazo].forEach(c => { if(c) c.destroy(); });
@@ -2964,7 +3205,7 @@
       return true;
     }).forEach(p => { countByMonth[parseInt(p.data_saida.split('-')[1]) - 1]++; });
 
-    const barColors = countByMonth.map((_, i) => i === mesIdx ? '#1a2a3a' : '#bfdbfe');
+    const barColors = countByMonth.map((_, i) => (!todoAno && i === mesIdx) ? '#1a2a3a' : '#bfdbfe');
     _chartMensal = new Chart(document.getElementById('chartMensal'), {
       type: 'bar',
       data: { labels: MESES, datasets: [{ label: 'Projetos', data: countByMonth, backgroundColor: barColors, borderRadius: 4, borderSkipped: false }] },

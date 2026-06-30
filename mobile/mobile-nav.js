@@ -152,7 +152,7 @@
           window.mSetAvisosBadge(cur + 1);
         })
         .subscribe();
-    } catch (_) {}
+    } catch (e) { console.warn('[mobile-nav] initAvisosBadge:', e); }
   }
 
   // ─── Pull-to-refresh ───────────────────────────────
@@ -263,7 +263,7 @@
         if (nav) nav.remove();
         renderNav(isAdmin);
       }
-    } catch (_) {}
+    } catch (e) { console.warn('[mobile-nav] refreshUser:', e); }
   }
 
   if (document.readyState === 'loading') {

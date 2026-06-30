@@ -75,21 +75,19 @@ function rgb(h) {
 
 function drawFooter(doc, includeLoja) {
   const PW = 297, PH = 210;
-  const FOOTER_H = 22;
+  const FOOTER_H = 26;
   const fy = PH - FOOTER_H;
 
   doc.setFillColor(...rgb(C.gray));
   doc.rect(0, fy, PW, FOOTER_H, 'F');
-  
-  // Faixa cinza escuro no topo do rodapé: deslocada ligeiramente para cima (fy - 0.8mm)
-  // com altura maior (2.3mm) para sobrepor as imagens e eliminar qualquer fresta de renderização (sub-pixel snapping)
+
   doc.setFillColor(...rgb(C.accent));
   doc.rect(0, fy - 0.8, PW, 2.3, 'F');
 
   doc.setTextColor(...rgb(C.text));
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
-  
+
   const form = window.getFormData ? window.getFormData() : {};
   const lojaStr = (includeLoja && form.loja) ? ' ' + String(form.loja).toUpperCase() : '';
   const marca = window.v ? window.v('loja_tipo') : '';
@@ -101,7 +99,7 @@ function drawFooter(doc, includeLoja) {
   doc.setTextColor(...rgb(C.muted));
   doc.text('CLIENTE:  ' + (form.cliente || ''), 10, fy + 11.5);
   doc.text('ID:  ' + (form.id_projeto || ''), 10, fy + 15.5);
-  
+
   let LW = 20;
   let ratio = 1.4638;
   if (marca === 'Splash') {
@@ -111,15 +109,34 @@ function drawFooter(doc, includeLoja) {
   }
   const LH = +(LW / ratio).toFixed(1);
 
-  if (form.obs) {
-    const isObsPadrao = form.obs.includes('NAO E RECOMENDACAO DA IGUI');
-    doc.setTextColor(...rgb(isObsPadrao ? '#C0392B' : C.muted));
-    doc.setFontSize(6.5);
-    doc.text('OBS:  ' + form.obs, 10, fy + 19.5, { maxWidth: PW - LW - 20 });
-  } else {
+  const maxW = PW - LW - 20;
+  const obsIlustrativo = window.obsIlustrativoAtivo !== false;
+  const OBS_ILUS = window.OBS_ILUSTRATIVO_TXT || '';
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.5);
+
+  if (obsIlustrativo) {
+    const labelTxt = 'OBS:  ';
+    const labelW = doc.getTextWidth(labelTxt);
     doc.setTextColor(...rgb(C.muted));
-    doc.setFontSize(7);
-    doc.text('OBS:', 10, fy + 19.5);
+    doc.text(labelTxt + OBS_ILUS, 10, fy + 19.5, { maxWidth: maxW });
+
+    if (form.obs) {
+      const isObsPadrao = form.obs.includes('NAO E RECOMENDACAO DA IGUI');
+      doc.setTextColor(...rgb(isObsPadrao ? '#C0392B' : C.muted));
+      // Segunda linha alinhada com o início do texto da primeira (após "OBS:  ")
+      doc.text(form.obs, 10 + labelW, fy + 23.5, { maxWidth: maxW - labelW });
+    }
+  } else {
+    if (form.obs) {
+      const isObsPadrao = form.obs.includes('NAO E RECOMENDACAO DA IGUI');
+      doc.setTextColor(...rgb(isObsPadrao ? '#C0392B' : C.muted));
+      doc.text('OBS:  ' + form.obs, 10, fy + 19.5, { maxWidth: maxW });
+    } else {
+      doc.setTextColor(...rgb(C.muted));
+      doc.text('OBS:', 10, fy + 19.5);
+    }
   }
 
   if (window.getLogoPranchaB64) {
@@ -221,7 +238,7 @@ export async function executarGerarPDF(preview = false) {
     };
 
     const PW = 297, PH = 210;
-    const FOOTER_H = 22;
+    const FOOTER_H = 26;
     const form = window.getFormData ? window.getFormData() : {};
     function U(s) { return s ? String(s).toUpperCase() : ''; }
 
@@ -312,9 +329,10 @@ export async function executarGerarPDF(preview = false) {
     doc.restoreGraphicsState();
     doc.setTextColor(...rgb(C.text));
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text('MEDIDAS INDICADAS SAO REFERENCIAIS, BASEADAS NAS INFORMACOES FORNECIDAS.', avX + 2, LBY + 3);
-    doc.text('RECOMENDA-SE A CONFERENCIA DAS MEDIDAS NO LOCAL ANTES DA EXECUCAO/INSTALACAO.', avX + 2, LBY + 7);
+    doc.setFontSize(6);
+    // Centralizado verticalmente no retângulo (avY = LBY-1.5, avH = 10.5mm → centro em LBY+3.75)
+    doc.text('MEDIDAS INDICADAS SAO REFERENCIAIS, BASEADAS NAS INFORMACOES FORNECIDAS.', avX + 2, LBY + 2.5);
+    doc.text('RECOMENDA-SE A CONFERENCIA DAS MEDIDAS NO LOCAL ANTES DA EXECUCAO/INSTALACAO.', avX + 2, LBY + 6);
 
     const DY = IMG2_H;
     lineH(doc, DY, 0, PW, C.accent, 0.6);

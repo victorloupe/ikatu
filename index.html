@@ -6,10 +6,10 @@
 <title>Prancha Técnica iGUI – Gerador</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202606261041"></script>
+<script src="supabase-client.js?v=202606291932"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=202606261041">
+<link rel="stylesheet" href="styles.css?v=202606291932">
 <style>
   /* Abas de prancha extra (2ª página por seção) */
   .prancha-tabs { display:flex; align-items:center; gap:6px; margin:6px 0 14px; flex-wrap:wrap; }
@@ -267,8 +267,14 @@
             </select>
           </div>
         </div>
+        <div class="obs-padrao-wrap">
+          <div style="padding:10px 16px;border:1.5px solid #27ae60;border-radius:8px;background:#f0faf0;">
+            <div class="obs-tog-label">📋 Observação padrão — Projeto Ilustrativo</div>
+            <div class="obs-tog-text" style="color:#27ae60;">"O projeto é meramente ilustrativo. A execução final poderá sofrer ajustes de medidas, níveis e posicionamentos, conforme avaliação da equipe técnica e condições do local de instalação."</div>
+          </div>
+        </div>
         <div class="row r1">
-          <div class="field"><label>Observações (rodapé da prancha)</label><textarea id="obs" placeholder="Ex: Conferir medidas antes da execução" oninput="autoSave()"></textarea></div>
+          <div class="field"><label>Observações adicionais (rodapé da prancha)</label><textarea id="obs" placeholder="Ex: Conferir medidas antes da execução" oninput="autoSave()"></textarea></div>
         </div>
         <div class="obs-padrao-wrap">
           <div class="obs-padrao-toggle" id="obsPadraoToggle" onclick="toggleObsPadrao()">
@@ -577,6 +583,6 @@
 </div>
 
 
-<script type="module" src="app.js?v=202606261041"></script>
+<script type="module" src="app.js?v=202606291932"></script>
 </body>
 </html>

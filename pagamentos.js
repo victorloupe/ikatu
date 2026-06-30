@@ -178,6 +178,71 @@ let filtroAtivo = "todos";
 let filtroTipoAtivo = "todos";
 let filtroLojaAtivo = "todos";
 let ultimoExcluido = null;
+// Defaults seguros no parse time; aplicarPrecosGlobais() sobrescreve com valores reais do Supabase
+// quando iniciarPagamentos() carregar (BUG-04: não depender de window.sbNormalizarPrecosProjeto aqui)
+let precosGlobais = { val_ate2: 70, val_3a4: 80, val_mais5: 95, val_360: 90, val_360_3mod: 105, val_conceito: 150, val_alt_grandes: 60 };
+let salvarPrecosDebounceTimer = null;
+
+const PRECO_INPUT_IDS = ['val_ate2', 'val_3a4', 'val_mais5', 'val_360', 'val_360_3mod', 'val_conceito', 'val_alt_grandes'];
+
+function normalizarPrecos(precos = {}) {
+  return window.sbNormalizarPrecosProjeto
+    ? window.sbNormalizarPrecosProjeto(precos)
+    : { ...precosGlobais, ...precos };
+}
+
+function aplicarPrecosGlobais(precos = {}) {
+  precosGlobais = normalizarPrecos(precos);
+  PRECO_INPUT_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = precosGlobais[id];
+  });
+}
+
+function lerPrecosDaTela() {
+  const precos = {};
+  PRECO_INPUT_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    precos[id] = parseFloat(el?.value || 0);
+  });
+  return normalizarPrecos(precos);
+}
+
+function getValorTipoProjeto(tipo) {
+  const map = {
+    'AtÃ© 02 Projetos': precosGlobais.val_ate2,
+    'Até 02 Projetos': precosGlobais.val_ate2,
+    '03 a 4 Projetos': precosGlobais.val_3a4,
+    'Mais que 05 Projetos': precosGlobais.val_mais5,
+    'Projeto 360Âº': precosGlobais.val_360,
+    'Projeto 360º': precosGlobais.val_360,
+    'Projeto 360Âº (3 ModificaÃ§Ãµes)': precosGlobais.val_360_3mod,
+    'Projeto 360º (3 Modificações)': precosGlobais.val_360_3mod,
+    'Conceito': precosGlobais.val_conceito,
+    'AlteraÃ§Ãµes GRANDES': precosGlobais.val_alt_grandes,
+    'Alterações GRANDES': precosGlobais.val_alt_grandes
+  };
+  return map[tipo] || 0;
+}
+
+function onPrecoGlobalChange() {
+  precosGlobais = lerPrecosDaTela();
+  recalcularFinanceiro();
+  if (!isAdminUser || typeof sbSalvarPrecosProjeto !== 'function') return;
+  setSaveStatus('saving');
+  clearTimeout(salvarPrecosDebounceTimer);
+  salvarPrecosDebounceTimer = setTimeout(async () => {
+    try {
+      precosGlobais = await sbSalvarPrecosProjeto(precosGlobais);
+      aplicarPrecosGlobais(precosGlobais);
+      recalcularFinanceiro();
+      setSaveStatus('saved');
+    } catch (e) {
+      console.error('Erro ao salvar preÃ§os globais:', e);
+      setSaveStatus('error');
+    }
+  }, 700);
+}
 
 const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -356,10 +421,11 @@ async function iniciarPagamentos() {
     }
     
     // Configurar campos de preço como readonly para usuários normais
-    const idsValores = ['val_ate2', 'val_3a4', 'val_mais5', 'val_360', 'val_360_3mod', 'val_conceito', 'val_alt_grandes'];
-    idsValores.forEach(id => {
+    PRECO_INPUT_IDS.forEach(id => {
       const el = document.getElementById(id);
       if (el) {
+        el.onchange = onPrecoGlobalChange;
+        el.oninput = isAdminUser ? onPrecoGlobalChange : null;
         if (!isAdminUser) {
           el.readOnly = true;
           el.style.background = '#f1f5f9';
@@ -448,6 +514,7 @@ async function carregarDados() {
     let globalPrecos = null;
     try {
       globalPrecos = await sbGetPrecosProjeto();
+      aplicarPrecosGlobais(globalPrecos);
     } catch (e) {
       console.warn('Erro ao carregar preços globais:', e);
     }
@@ -496,14 +563,8 @@ async function carregarDados() {
         document.getElementById('pagamentoMes').value = mesAtual;
         document.getElementById('pagamentoAno').value = anoAtual;
         
-        const v = globalPrecos || data.values_data || {};
-        document.getElementById('val_ate2').value = v.val_ate2 ?? 70;
-        document.getElementById('val_3a4').value = v.val_3a4 ?? 80;
-        document.getElementById('val_mais5').value = v.val_mais5 ?? 95;
-        document.getElementById('val_360').value = v.val_360 ?? 90;
-        document.getElementById('val_360_3mod').value = v.val_360_3mod ?? 105;
-        document.getElementById('val_conceito').value = v.val_conceito ?? 150;
-        document.getElementById('val_alt_grandes').value = v.val_alt_grandes ?? 60;
+        // Preços sempre vêm da configuração global (admin); values_data é ignorado
+        aplicarPrecosGlobais(globalPrecos);
         
         // Salva cabecalho com o novo mes/ano atualizado automaticamente
         salvarCabecalho();
@@ -521,14 +582,7 @@ async function carregarDados() {
         document.getElementById('pagamentoMes').value = mesAtual;
         document.getElementById('pagamentoAno').value = anoAtual;
         
-        const v = globalPrecos || {};
-        document.getElementById('val_ate2').value = v.val_ate2 ?? 70;
-        document.getElementById('val_3a4').value = v.val_3a4 ?? 80;
-        document.getElementById('val_mais5').value = v.val_mais5 ?? 95;
-        document.getElementById('val_360').value = v.val_360 ?? 90;
-        document.getElementById('val_360_3mod').value = v.val_360_3mod ?? 105;
-        document.getElementById('val_conceito').value = v.val_conceito ?? 150;
-        document.getElementById('val_alt_grandes').value = v.val_alt_grandes ?? 60;
+        aplicarPrecosGlobais(globalPrecos);
 
         await salvarTudoSupabase();
       }
@@ -627,15 +681,20 @@ function setSaveStatus(estado) {
 
 // Debounce: aguarda 800ms após a última edição antes de enviar ao Supabase.
 // (localStorage continua sendo salvo na hora, em atualizarCampo)
+// BUG-05: resolve array compartilhado — todas as Promises pendentes resolvem
+// quando o timer finalmente disparar, evitando awaits pendurados indefinidamente.
+let salvarPendingResolves = [];
 function salvarTudoSupabase() {
   const mostrarStatus = saveStatusAtivo;
   if (mostrarStatus) setSaveStatus('saving');
   clearTimeout(salvarDebounceTimer);
   return new Promise(resolve => {
+    salvarPendingResolves.push(resolve);
     salvarDebounceTimer = setTimeout(async () => {
       salvarDebounceTimer = null;
       await salvarSupabaseAgora(mostrarStatus);
-      resolve();
+      const cbs = salvarPendingResolves.splice(0);
+      cbs.forEach(r => r());
     }, 800);
   });
 }
@@ -693,21 +752,12 @@ async function salvarSupabaseAgora(mostrarStatus = true) {
       ano: document.getElementById('pagamentoAno').value
     };
     
-    const values = {
-      val_ate2: parseFloat(document.getElementById('val_ate2').value) || 70,
-      val_3a4: parseFloat(document.getElementById('val_3a4').value) || 80,
-      val_mais5: parseFloat(document.getElementById('val_mais5').value) || 95,
-      val_360: parseFloat(document.getElementById('val_360').value) || 90,
-      val_360_3mod: parseFloat(document.getElementById('val_360_3mod').value) || 105,
-      val_conceito: parseFloat(document.getElementById('val_conceito').value) || 150,
-      val_alt_grandes: parseFloat(document.getElementById('val_alt_grandes').value) || 60
-    };
-    
+    // Preços vêm sempre da global_prices (admin config), não salvamos no registro individual
     const payload = {
       user_id: alvoId,
       rows_data: rowsData,
       header_data: header,
-      values_data: values
+      values_data: {}
     };
 
     let res;
@@ -824,7 +874,7 @@ function renderTabela() {
         matchesLoja = getBrand(row.raw) === 'Splash';
       } else if (filtroLojaAtivo === 'Inter.') {
         matchesLoja = getBrand(row.raw) === 'Inter.';
-      } else if (filtroLojaAtivo === 'iGUi') {
+      } else if (filtroLojaAtivo === 'iGUI') {
         matchesLoja = getBrand(row.raw) === 'iGUI';
       }
     }
@@ -942,7 +992,7 @@ function renderTabela() {
         matchesLoja = getBrand(row.raw) === 'Splash';
       } else if (filtroLojaAtivo === 'Inter.') {
         matchesLoja = getBrand(row.raw) === 'Inter.';
-      } else if (filtroLojaAtivo === 'iGUi') {
+      } else if (filtroLojaAtivo === 'iGUI') {
         matchesLoja = getBrand(row.raw) === 'iGUI';
       }
     }
@@ -1335,13 +1385,13 @@ function recalcularFinanceiro() {
   salvarValoresConfig();
 
   // Valores Unitários
-  const val_ate2 = parseFloat(document.getElementById('val_ate2').value) || 0;
-  const val_3a4 = parseFloat(document.getElementById('val_3a4').value) || 0;
-  const val_mais5 = parseFloat(document.getElementById('val_mais5').value) || 0;
-  const val_360 = parseFloat(document.getElementById('val_360').value) || 0;
-  const val_360_3mod = parseFloat(document.getElementById('val_360_3mod').value) || 0;
-  const val_conceito = parseFloat(document.getElementById('val_conceito').value) || 0;
-  const val_alt_grandes = parseFloat(document.getElementById('val_alt_grandes').value) || 0;
+  const val_ate2 = getValorTipoProjeto('AtÃ© 02 Projetos');
+  const val_3a4 = getValorTipoProjeto('03 a 4 Projetos');
+  const val_mais5 = getValorTipoProjeto('Mais que 05 Projetos');
+  const val_360 = getValorTipoProjeto('Projeto 360Âº');
+  const val_360_3mod = getValorTipoProjeto('Projeto 360Âº (3 ModificaÃ§Ãµes)');
+  const val_conceito = getValorTipoProjeto('Conceito');
+  const val_alt_grandes = getValorTipoProjeto('AlteraÃ§Ãµes GRANDES');
 
   // Quantidades
   let qty_ate2 = 0;
@@ -1675,7 +1725,7 @@ function definirFiltroLoja(lojaVal) {
   let btnId = 'btnFiltroLojaTodos';
   if (lojaVal === 'Splash') btnId = 'btnFiltroLojaSplash';
   else if (lojaVal === 'Inter.') btnId = 'btnFiltroLojaInter';
-  else if (lojaVal === 'iGUi') btnId = 'btnFiltroLojaIgui';
+  else if (lojaVal === 'iGUI') btnId = 'btnFiltroLojaIgui';
   
   const activeBtn = document.getElementById(btnId);
   if (activeBtn) activeBtn.classList.add('active');
@@ -1762,7 +1812,7 @@ function marcarVisiveisComoConferidos() {
         matchesLoja = getBrand(row.raw) === 'Splash';
       } else if (filtroLojaAtivo === 'Inter.') {
         matchesLoja = getBrand(row.raw) === 'Inter.';
-      } else if (filtroLojaAtivo === 'iGUi') {
+      } else if (filtroLojaAtivo === 'iGUI') {
         matchesLoja = getBrand(row.raw) === 'iGUI';
       }
     }

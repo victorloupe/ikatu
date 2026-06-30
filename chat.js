@@ -31,8 +31,8 @@ async function init() {
     const session = await sbGetSession();
     if (!session) { location.href = 'login.html'; return; }
 
-    const profile = await sbGetProfile().catch(() => null);
     meId = session.user.id;
+    const profile = await sbGetProfile(meId).catch(() => null);
     meNome = (profile && profile.name) || localStorage.getItem('igui_user_name') || 'Você';
     isAdmin = !!(profile && profile.role === 'admin');
 
@@ -188,6 +188,12 @@ async function montarConversa(channel, titulo, subtitulo, avatarTxt) {
   const lista = document.getElementById('msgList');
   lista.innerHTML = skeletonMensagens();
 
+  // Zera canalAtual e esconde o botão enquanto o watch() do novo canal não resolve,
+  // evitando que carregarMais() rode contra o canal anterior (race condition BUG-03)
+  canalAtual = null;
+  const btnMoreReset = document.getElementById('btnLoadMore');
+  if (btnMoreReset) btnMoreReset.style.display = 'none';
+
   if (listenerCanal) { try { listenerCanal.unsubscribe(); } catch (_) {} listenerCanal = null; }
 
   try {
@@ -286,7 +292,7 @@ function renderAnexos(attachments) {
 
 // ── Carregar histórico ──────────────────────────────────────────────────
 async function carregarMais() {
-  if (!canalAtual) return;
+  if (!canalAtual?.state) return;
   const msgs = canalAtual.state.messages || [];
   if (!msgs.length) return;
   const btn = document.getElementById('btnLoadMore');

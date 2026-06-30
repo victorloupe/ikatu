@@ -50,6 +50,8 @@
   .btn-sm:hover{border-color:#cbd5e1;background:#f1f5f9;color:#0f172a;}
   .btn-sm.primary{padding:8px 14px;border-radius:6px;font-size:12px;background:#1a2a3a;color:#fff;border-color:#1a2a3a;}
   .btn-sm.primary:hover{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .btn-sm.danger{padding:8px 14px;border-radius:6px;font-size:12px;background:#ef4444;color:#fff;border-color:#ef4444;}
+  .btn-sm.danger:hover{background:#dc2626;border-color:#dc2626;color:#fff;}
 
   .btn-icon{width:28px;height:28px;padding:0;border-radius:6px;cursor:pointer;border:1px solid transparent;background:transparent;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
   .btn-icon.btn-edit:hover{background:#ede9fe;border-color:#ddd6fe;color:#7c3aed;}
@@ -351,6 +353,25 @@
 </div>
 
 <!-- Toast -->
+<!-- Modal de Confirmação -->
+<div class="modal-overlay" id="modalConfirm">
+  <div class="modal-box" style="max-width:380px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="width:38px;height:38px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <div>
+        <div id="confirmTitle" style="font-size:14px;font-weight:700;color:#1a2a3a;"></div>
+        <div id="confirmMsg" style="font-size:12px;color:#64748b;margin-top:2px;line-height:1.5;"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="margin-top:16px;">
+      <button class="btn-sm" onclick="fecharConfirm()">Cancelar</button>
+      <button class="btn-sm danger" id="confirmOkBtn">Excluir</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- JS LOGIC -->
@@ -380,6 +401,26 @@
     t.className = `toast ${tipo} show`;
     toastTimer = setTimeout(() => t.classList.remove('show'), 4000);
   }
+
+  let _confirmCallback = null;
+  function pedirConfirmacao(titulo, mensagem, callback) {
+    document.getElementById('confirmTitle').textContent = titulo;
+    document.getElementById('confirmMsg').textContent = mensagem;
+    _confirmCallback = callback;
+    document.getElementById('modalConfirm').classList.add('show');
+    document.getElementById('confirmOkBtn').onclick = () => {
+      fecharConfirm();
+      callback();
+    };
+  }
+  function fecharConfirm() {
+    document.getElementById('modalConfirm').classList.remove('show');
+    _confirmCallback = null;
+  }
+  // Fecha ao clicar no overlay
+  document.getElementById('modalConfirm').addEventListener('click', e => {
+    if (e.target === e.currentTarget) fecharConfirm();
+  });
 
   function esc(s) {
     return String(s ?? '')
@@ -701,18 +742,21 @@
     }
   }
 
-  async function deletarLoja(id) {
-    if (!confirm('Deseja realmente excluir esta loja? Isto afetará o autopreenchimento futuro.')) return;
-    try {
-      const { error } = await sb.from('metadata_lojas').delete().eq('id', id);
-      if (error) throw error;
-
-      showToast('Loja excluída com sucesso!', 'ok');
-      await carregarDados();
-    } catch(e) {
-      console.error(e);
-      showToast('Erro ao excluir: ' + e.message, 'err');
-    }
+  function deletarLoja(id) {
+    pedirConfirmacao(
+      'Excluir Loja',
+      'Deseja realmente excluir esta loja? Isso afetará o autopreenchimento futuro.',
+      async () => {
+        try {
+          const { error } = await sb.from('metadata_lojas').delete().eq('id', id);
+          if (error) throw error;
+          showToast('Loja excluída com sucesso!', 'ok');
+          await carregarDados();
+        } catch(e) {
+          showToast('Erro ao excluir: ' + e.message, 'err');
+        }
+      }
+    );
   }
 
   // Modal Piscina CRUD
@@ -770,18 +814,21 @@
     }
   }
 
-  async function deletarPiscina(id) {
-    if (!confirm('Deseja realmente excluir este modelo?')) return;
-    try {
-      const { error } = await sb.from('metadata_piscinas').delete().eq('id', id);
-      if (error) throw error;
-
-      showToast('Modelo excluído com sucesso!', 'ok');
-      await carregarDados();
-    } catch(e) {
-      console.error(e);
-      showToast('Erro ao excluir: ' + e.message, 'err');
-    }
+  function deletarPiscina(id) {
+    pedirConfirmacao(
+      'Excluir Modelo',
+      'Deseja realmente excluir este modelo de piscina?',
+      async () => {
+        try {
+          const { error } = await sb.from('metadata_piscinas').delete().eq('id', id);
+          if (error) throw error;
+          showToast('Modelo excluído com sucesso!', 'ok');
+          await carregarDados();
+        } catch(e) {
+          showToast('Erro ao excluir: ' + e.message, 'err');
+        }
+      }
+    );
   }
 </script>
 </body>

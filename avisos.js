@@ -65,13 +65,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Secundário, em segundo plano (não atrasa as mensagens):
-  sbProcessarPinsExpirados().catch(() => {});
+  sbProcessarPinsExpirados().catch(e => console.warn('[avisos] processarPinsExpirados:', e));
   sbCarregarStatusDMs().then(map => {
     dmUnread = map;
     renderDMList();
     subscribeAllDMsNotify();
     atualizarNavBadge();
-  }).catch(() => {});
+  }).catch(e => console.warn('[avisos] carregarStatusDMs:', e));
 
   // Escuta novas mensagens no canal público geral: atualiza o alerta do menu e,
   // como o notificador global (supabase-client.js) fica desligado nesta página,
@@ -191,7 +191,7 @@ function notificarDM(remetente, contentHtml) {
       tag: 'igui-dm',
     });
     n.onclick = () => { window.focus(); n.close(); };
-  } catch {}
+  } catch (e) { console.warn('[avisos] notificação nativa falhou:', e); }
 }
 
 function getInitials(name) {

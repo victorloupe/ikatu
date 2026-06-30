@@ -6,10 +6,10 @@
 <title>Admin — Ikatu</title>
 <script>if (window.innerWidth <= 768) { window.location.href = 'mobile/admin.html'; }</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202606261041"></script>
+<script src="supabase-client.js?v=202606291932"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=202606261041">
+<link rel="stylesheet" href="styles.css?v=202606291932">
 <style>
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
   .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
@@ -75,10 +75,53 @@
   .invite-form input:focus{border-color:var(--blue);}
 
   /* Links in admin */
-  .links-table{width:100%;border-collapse:collapse;font-size:13px;}
-  .links-table th{background:#f0f4f8;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
-  .links-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
-  .links-table tr:last-child td{border-bottom:none;}
+  /* Links por categoria */
+  .links-group-header {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 10px; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 6px;
+  }
+  .links-group-header .cat-line {
+    flex: 1; height: 1px; background: var(--border);
+  }
+  .links-group-header .cat-count {
+    background: #e2e8f0; color: #64748b;
+    border-radius: 10px; padding: 1px 7px;
+    font-size: 10px; font-weight: 700;
+  }
+  /* Links por categoria */
+  .link-card {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px 18px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    transition: box-shadow .15s, border-color .15s;
+    margin-bottom: 8px;
+  }
+  .link-card:last-child { margin-bottom: 0; }
+  .link-card:hover { border-color: #93c5fd; box-shadow: 0 3px 12px rgba(0,0,0,.07); }
+  .link-card-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: #edf7fd; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .link-card-icon svg { width: 17px; height: 17px; stroke: var(--blue); fill: none; }
+  .link-card-body { flex: 1; min-width: 0; }
+  .link-card-title { font-weight: 700; font-size: 13.5px; color: #1e293b; margin-bottom: 4px; }
+  .link-card-desc {
+    font-size: 11.5px; color: var(--muted); line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; max-width: 560px;
+  }
+  .link-card-url {
+    font-size: 11px; color: var(--blue); text-decoration: none;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 240px; display: block; flex-shrink: 0;
+  }
+  .link-card-url:hover { text-decoration: underline; }
+  .link-card-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
   .link-url-cell{max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);font-size:12px;}
 
   /* Modal */
@@ -337,23 +380,14 @@
       <div class="tab-pane active" id="paneLinks">
         <div class="section-hd">
           <h3>Links cadastrados</h3>
-          <button class="btn-sm primary" onclick="abrirModalLink()">+ Novo Link</button>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="text" id="linkSearch" placeholder="Buscar link..." oninput="renderLinksTable()"
+              style="padding:6px 11px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;outline:none;width:180px;">
+            <button class="btn-sm primary" onclick="abrirModalLink()">+ Novo Link</button>
+          </div>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="links-table">
-            <thead>
-              <tr>
-                <th>Título</th>
-                <th>Categoria</th>
-                <th>URL</th>
-                <th>Descrição</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="linksBody">
-              <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
-            </tbody>
-          </table>
+        <div id="linksBody" style="display:flex;flex-direction:column;gap:20px;padding-top:4px;">
+          <div style="text-align:center;color:var(--muted);padding:30px">Carregando...</div>
         </div>
       </div>
 
@@ -1056,28 +1090,57 @@ async function carregarLinks() {
 }
 
 function renderLinksTable() {
-  const tbody = document.getElementById('linksBody');
-  if (!todosLinks.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">Nenhum link cadastrado</td></tr>';
+  const container = document.getElementById('linksBody');
+  const q = (document.getElementById('linkSearch')?.value || '').toLowerCase().trim();
+
+  let links = todosLinks;
+  if (q) {
+    links = links.filter(l =>
+      (l.title || '').toLowerCase().includes(q) ||
+      (l.category || '').toLowerCase().includes(q) ||
+      (l.description || '').toLowerCase().includes(q) ||
+      (l.url || '').toLowerCase().includes(q)
+    );
+  }
+
+  if (!links.length) {
+    container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px;font-size:13px;">Nenhum link encontrado.</div>';
     return;
   }
-  tbody.innerHTML = '';
-  todosLinks.forEach(link => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${escHtml(link.title)}</strong></td>
-      <td><span style="background:#edf7fd;color:var(--blue);border-radius:4px;padding:2px 8px;font-size:10px;font-weight:700">${escHtml(link.category)}</span></td>
-      <td class="link-url-cell"><a href="${escHtml(link.url)}" target="_blank" style="color:var(--blue);text-decoration:none">${escHtml(link.url)}</a></td>
-      <td style="color:var(--muted);font-size:12px;max-width:200px">${escHtml(link.description||'—')}</td>
-      <td>
-        <div style="display:flex;gap:6px">
-          <button class="btn-sm" onclick="abrirModalLink('${link.id}')">✏️ Editar</button>
-          <button class="btn-sm danger" onclick="deletarLink('${link.id}')">🗑</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+
+  // Agrupa por categoria
+  const groups = {};
+  links.forEach(l => {
+    const cat = l.category || 'Sem Categoria';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(l);
   });
+
+  const linkIcon = `<svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;stroke:var(--blue);fill:none;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`;
+
+  container.innerHTML = Object.entries(groups).map(([cat, items]) => `
+    <div>
+      <div class="links-group-header">
+        <span>${escHtml(cat)}</span>
+        <span class="cat-count">${items.length}</span>
+        <span class="cat-line"></span>
+      </div>
+      ${items.map(link => `
+        <div class="link-card">
+          <div class="link-card-icon">${linkIcon}</div>
+          <div class="link-card-body">
+            <div class="link-card-title">${escHtml(link.title)}</div>
+            ${link.description ? `<div class="link-card-desc" title="${escHtml(link.description)}">${escHtml(link.description)}</div>` : ''}
+          </div>
+          <a class="link-card-url" href="${escHtml(link.url)}" target="_blank" title="${escHtml(link.url)}">${escHtml(link.url)}</a>
+          <div class="link-card-actions">
+            <button class="btn-sm" onclick="abrirModalLink('${link.id}')">✏️ Editar</button>
+            <button class="btn-sm danger" onclick="deletarLink('${link.id}')">🗑</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
 }
 
 function abrirModalLink(id = null) {
@@ -1416,24 +1479,16 @@ async function iniciarBackupELimpeza() {
 
 async function carregarPrecosGlobais() {
   try {
-    const precos = await sbGetPrecosProjeto();
-    if (precos) {
-      document.getElementById('adm_val_ate2').value = precos.val_ate2 ?? 70;
-      document.getElementById('adm_val_3a4').value = precos.val_3a4 ?? 80;
-      document.getElementById('adm_val_mais5').value = precos.val_mais5 ?? 95;
-      document.getElementById('adm_val_360').value = precos.val_360 ?? 90;
-      document.getElementById('adm_val_360_3mod').value = precos.val_360_3mod ?? 105;
-      document.getElementById('adm_val_conceito').value = precos.val_conceito ?? 150;
-      document.getElementById('adm_val_alt_grandes').value = precos.val_alt_grandes ?? 60;
-    } else {
-      document.getElementById('adm_val_ate2').value = 70;
-      document.getElementById('adm_val_3a4').value = 80;
-      document.getElementById('adm_val_mais5').value = 95;
-      document.getElementById('adm_val_360').value = 90;
-      document.getElementById('adm_val_360_3mod').value = 105;
-      document.getElementById('adm_val_conceito').value = 150;
-      document.getElementById('adm_val_alt_grandes').value = 60;
-    }
+    const precos = window.sbNormalizarPrecosProjeto
+      ? window.sbNormalizarPrecosProjeto(await sbGetPrecosProjeto())
+      : (await sbGetPrecosProjeto());
+    document.getElementById('adm_val_ate2').value = precos.val_ate2;
+    document.getElementById('adm_val_3a4').value = precos.val_3a4;
+    document.getElementById('adm_val_mais5').value = precos.val_mais5;
+    document.getElementById('adm_val_360').value = precos.val_360;
+    document.getElementById('adm_val_360_3mod').value = precos.val_360_3mod;
+    document.getElementById('adm_val_conceito').value = precos.val_conceito;
+    document.getElementById('adm_val_alt_grandes').value = precos.val_alt_grandes;
   } catch(e) {
     console.error('Erro ao carregar preços:', e);
   }

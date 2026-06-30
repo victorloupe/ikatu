@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin — iGUi Space</title>
-  <link rel="stylesheet" href="../styles.css?v=202606261041">
-  <link rel="stylesheet" href="mobile.css?v=202606261041">
+  <link rel="stylesheet" href="../styles.css?v=202606291932">
+  <link rel="stylesheet" href="mobile.css?v=202606291932">
   <style>
   /* ══ CSS do admin (não está em styles.css) ══ */
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
@@ -526,8 +526,8 @@
 <div class="m-toast" id="mToastGlobal"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="../supabase-client.js?v=202606261041"></script>
-<script src="mobile-nav.js?v=202606261041"></script>
+<script src="../supabase-client.js?v=202606291932"></script>
+<script src="mobile-nav.js?v=202606291932"></script>
 <script>
 let usuarios = [];
 let todosLinks = [];
@@ -1339,8 +1339,9 @@ async function iniciarBackupELimpeza() {
 
 async function carregarPrecosGlobais() {
   try {
-    const p = await sbGetPrecosProjeto();
-    if (!p) return;
+    const p = window.sbNormalizarPrecosProjeto
+      ? window.sbNormalizarPrecosProjeto(await sbGetPrecosProjeto())
+      : (await sbGetPrecosProjeto());
     const campos = {
       adm_val_ate2:       p.val_ate2,
       adm_val_3a4:        p.val_3a4,

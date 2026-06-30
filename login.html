@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202606261041"></script>
+<script src="supabase-client.js?v=202606291932"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/sirxemic/jquery.ripples/dist/jquery.ripples-min.js"></script>
 <style>
@@ -257,7 +257,7 @@
     <form onsubmit="handleLogin(event)">
       <div class="field">
         <label>Usuário / E-mail</label>
-        <input type="text" id="loginEmail" placeholder="Ex: milena ou seu@email.com" required autocomplete="username">
+        <input type="text" id="loginEmail" placeholder="Ex: victor ou seu@email.com" required autocomplete="username">
       </div>
       <div class="field">
         <label>Senha</label>
@@ -562,7 +562,8 @@
         resolution: 256,
         perturbance: 0.005,
         dropRadius: 20,
-        interactive: false // Desabilitado para usarmos o controle manual de coordenadas
+        interactive: false, // Desabilitado para usarmos o controle manual de coordenadas
+        crossOrigin: ''
       });
 
       let rippleTimer = null;

@@ -333,8 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.touches.length === 1) {
         drag(e.touches[0].clientX, e.touches[0].clientY);
       }
-    });
-    window.addEventListener('touchend', stopDrag);
+    }, { passive: true });
+    window.addEventListener('touchend', stopDrag, { passive: true });
 
     // Zoom com scroll do mouse
     cropViewport.addEventListener('wheel', (e) => {

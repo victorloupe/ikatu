@@ -1,0 +1,10 @@
+{
+  "name": "ikatu",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "bump": "node bump-version.js",
+    "deploy": "node bump-version.js && git add -A && git commit -m 'chore: bump version' && git push"
+  },
+  "description": "Ikatu — Gerador de Pranchas iGUi"
+}

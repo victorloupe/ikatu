@@ -67,7 +67,10 @@ function v(id) {
 }
 
 // escapeHtml → use esc() global (supabase-client.js)
-const escapeHtml = esc;
+// BUG-07: fallback inline caso supabase-client.js ainda não tenha executado
+const escapeHtml = typeof esc === 'function'
+  ? esc
+  : s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 /** Retorna o src correto para exibição: URL direta ou data URI de base64. */
 function imgSrc(val) {
@@ -145,6 +148,7 @@ async function exportarSessao() {
       pranchaExtra: S.pranchaExtra,
       step: S.cur,
       obsPadrao: window.obsPadraoAtivo,
+      obsIlustrativo: window.obsIlustrativoAtivo,
     };
 
     const json = JSON.stringify(payload);
@@ -239,7 +243,8 @@ async function importarSessao(input) {
     if (d.pranchaExtra) Object.assign(S.pranchaExtra, d.pranchaExtra);
     atualizarPranchasExtra();
 
-  updateStepChecks();
+    // BUG-09: updateStepChecks() removido daqui — obs padrão, step e campos ainda não
+    // foram restaurados neste ponto. A chamada correta está no setTimeout abaixo (150ms).
 
     // Restaurar estado do toggle obs padrão
     if (d.obsPadrao !== undefined) {
@@ -272,6 +277,10 @@ async function importarSessao(input) {
 // ═══════════════════════════════════════════════════
 window.obsPadraoAtivo = false;
 const OBS_PADRAO_TXT = 'NAO E RECOMENDACAO DA IGUI REVESTIR A BORDA COM CERAMICA, A NOSSA SUGESTAO E A LINHA DE PEDRAS NATURAIS. CLIENTE FICA CIENTE QUE A MANUTENCAO DA BORDA E DE SUA RESPONSABILIDADE.';
+
+// Obs ilustrativo é sempre ativa (fixa)
+window.obsIlustrativoAtivo = true;
+window.OBS_ILUSTRATIVO_TXT = 'O projeto é meramente ilustrativo. A execução final poderá sofrer ajustes de medidas, níveis e posicionamentos, conforme avaliação da equipe técnica e condições do local de instalação.';
 
 function toggleObsPadrao() {
   window.obsPadraoAtivo = !window.obsPadraoAtivo;
@@ -310,6 +319,7 @@ function autoSave() {
         _adicionadoEmPagamentos: S._adicionadoEmPagamentos || false,
         step: S.cur,
         obsPadrao: window.obsPadraoAtivo,
+        obsIlustrativo: window.obsIlustrativoAtivo,
         ts: Date.now(),
       };
       dbSave('autosave', payload);
@@ -1590,14 +1600,14 @@ function confirmarNovaPrancha() {
   // Resetar estado
   S.imgs    = { '3d':['','','','',''], deck:['',''], cer:[''], rev:['',''], mob:['',''], pai:['',''] };
   S.acc     = { corrimao:{on:false,modelo:'',img:''}, cascata:{on:false,modelo:'',img:'',cor_pedra:''}, filtragem:{on:false,modelo:'',img:'',cor:''}, igui_stone:{on:false,modelo:'',img:''}, aquecimento:{on:false,modelo:'',img:''} };
-  S.itens   = { rev:[], mob:[], pai:[] };
-  S.selectedImgs = { rev:[null,null], mob:[null,null], pai:[null,null] };
+  S.itens   = { rev:[], mob:[], pai:[], rev2:[], mob2:[], pai2:[] };
+  S.selectedImgs = { rev:[null,null], mob:[null,null], pai:[null,null], rev2:[null,null], mob2:[null,null], pai2:[null,null] };
   S.secAtiva = { rev:true, mob:true, pai:true };
+  S.pranchaExtra = { rev:false, mob:false, pai:false }; // BUG-06: resetar abas extras
   S._editandoId = null;
   S._adicionadoEmPagamentos = false;
   updateEditBadge();
   window.obsPadraoAtivo = false;
-
   // Limpar formulário
   ['loja','cliente','id_projeto','cidade','obs','modelo','ceramica_marca','ceramica_tamanho','ceramica_rejunte','tipo_projeto','loja_tipo'].forEach(id => {
     const el = document.getElementById(id);
@@ -1632,8 +1642,9 @@ function confirmarNovaPrancha() {
     if (inp) inp.value = '';
   });
 
-  // Reset toggle obs padrão
+  // Reset toggles obs padrão
   document.getElementById('obsPadraoToggle')?.classList.remove('ativo');
+  document.getElementById('obsIlustrativoToggle')?.classList.add('ativo');
 
   // Re-render componentes
   renderAcc();
@@ -1721,7 +1732,7 @@ async function _executarSalvarSessao() {
     const projetoPayload = {
       form: getFormData(), imgs: S.imgs, acc: S.acc,
       itens: S.itens, selectedImgs: S.selectedImgs,
-      secAtiva: S.secAtiva, pranchaExtra: S.pranchaExtra, exibirCapa3d: S.exibirCapa3d || {}, obsPadrao: window.obsPadraoAtivo, step: S.cur,
+      secAtiva: S.secAtiva, pranchaExtra: S.pranchaExtra, exibirCapa3d: S.exibirCapa3d || {}, obsPadrao: window.obsPadraoAtivo, obsIlustrativo: window.obsIlustrativoAtivo, step: S.cur,
     };
     setLoad('Salvando sessão...', 75);
     const savedId = await salvarProjeto(projetoPayload, S._editandoId || null);
@@ -2059,8 +2070,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateStepChecks();
   initDropZones();
 
-  // Auto-save on all input changes (form fields already have oninput)
-  document.addEventListener('change', () => autoSave());
+  // Auto-save em SELECTs do formulário (inputs já têm oninput individual).
+  // Restrito a input/select/textarea para não disparar em botões de filtro, nav, modais, etc.
+  document.addEventListener('change', (e) => {
+    if (!e.target.matches('input, select, textarea')) return;
+    if (e.target.closest('nav, .modal, [data-no-autosave]')) return;
+    autoSave();
+  });
 });
 
 // Inicializar a gotinha: aguarda o logo carregar (ele empurra o layout da sidebar)
