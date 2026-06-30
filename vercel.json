@@ -1,6 +1,12 @@
 {
   "headers": [
     {
+      "source": "/(.*)\\.(jpg|jpeg|png|gif|webp|svg|ico|woff|woff2)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         { "key": "X-Frame-Options",        "value": "DENY" },
