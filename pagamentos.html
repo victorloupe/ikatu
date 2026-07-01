@@ -343,6 +343,34 @@
     background: rgba(255, 255, 255, 0.25);
     border-color: rgba(255, 255, 255, 0.5);
   }
+  .btn-icon-export {
+    width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    border: 1.5px solid #cbd5e1;
+    background: #eef2f7;
+    color: #1a2a3a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-icon-export:hover {
+    background: #1a2a3a;
+    color: #fff;
+    border-color: #1a2a3a;
+    transform: translateY(-1px);
+  }
+  .btn-icon-export svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
   
   /* Conferred Row Highlight */
   .pag-table tr.row-conferido {
@@ -859,7 +887,12 @@
             <div id="bulkFeedback" style="display: none; padding: 2px 4px; margin-bottom: 8px;"></div>
             <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center;">
               <div style="display: flex; gap: 8px; align-items: center;">
-                <button class="btn-action" onclick="exportarExcel()" title="Baixar planilha .xlsx com os projetos do mês selecionado" style="background:#16a34a;">⬇ Excel</button>
+                <button class="btn-icon-export" onclick="exportarExcel()" title="Exportar Excel" aria-label="Exportar Excel">
+                  <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+                </button>
+                <button class="btn-icon-export" onclick="exportarListaPDF()" title="Exportar PDF" aria-label="Exportar PDF">
+                  <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                </button>
                 <button class="btn-action" onclick="abrirModalManual()" style="background:#8b5cf6;">+ Projeto Manual</button>
               </div>
               <div style="display: flex; gap: 8px; align-items: center;">
@@ -912,11 +945,11 @@
             <div class="summary-title-bar" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px;">
               <span>Relação de Projetos para Pagamento</span>
               <div style="display: flex; gap: 6px;">
-                <button class="btn-minimal btn-print-hide" onclick="copiarTabelaExcel()">
-                  📊 Copiar p/ Excel
+                <button class="btn-icon-export btn-print-hide" onclick="copiarTabelaExcel()" title="Copiar p/ Excel" aria-label="Copiar p/ Excel">
+                  <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
                 </button>
-                <button class="btn-minimal btn-print-hide" onclick="exportarPDF()">
-                  🖨️ Exportar A4
+                <button class="btn-icon-export btn-print-hide" onclick="exportarPDF()" title="Exportar A4" aria-label="Exportar A4">
+                  <svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
                 </button>
               </div>
             </div>

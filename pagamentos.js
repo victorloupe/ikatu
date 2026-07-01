@@ -922,7 +922,21 @@ function renderTabela() {
   }
 
   const visibleNumSpans = []; // trs visíveis em ordem de exibição, para numerar depois
-  const rowsReversed = rowsData.map((row, i) => ({ row, index: i })).reverse();
+  // Ordena sempre pela data de recebimento (row.data): mais recente no topo, mais antiga embaixo.
+  // Linhas sem data válida ficam no topo (junto às mais recentes) para não passarem despercebidas.
+  const rowsReversed = rowsData
+    .map((row, i) => ({ row, index: i }))
+    .sort((a, b) => {
+      const dtA = obterObjetoData(a.row.data, anoSelecionado);
+      const dtB = obterObjetoData(b.row.data, anoSelecionado);
+      if (dtA && dtB) {
+        if (dtB - dtA !== 0) return dtB - dtA; // desc: mais recente primeiro
+        return b.index - a.index; // desempate estável, mais recém-adicionado primeiro
+      }
+      if (dtA && !dtB) return -1;
+      if (!dtA && dtB) return 1;
+      return b.index - a.index;
+    });
   rowsReversed.forEach(({ row, index }) => {
     // Apenas renderizar linhas pertencentes ao mês ativo (separado por data de recebimento)
     if (!rowPertenceAoMesAno(row, mesSelecionado, anoSelecionado.toString())) {
@@ -1060,19 +1074,19 @@ function renderTabela() {
         </div>
         ${warningHtml}
       </td>
-      <td>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <button type="button" onclick="definirDataHoje(${index})" title="Usar data de hoje" style="background: none; border: none; padding: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='#e2eaf3'" onmouseout="this.style.background='none'">
+      <td style="text-align: center;">
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: center;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <button type="button" onclick="definirDataHoje(${index})" title="Usar data de hoje" style="background: none; border: none; margin: 0; padding: 2px; width: 16px; height: 16px; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; transition: background 0.2s;" onmouseover="this.style.background='#e2eaf3'" onmouseout="this.style.background='none'">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 13h10M8 2v8M4 7l4 4 4-4"/></svg>
             </button>
-            <input type="text" id="input-data-${index}" value="${esc((row.data || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px;" oninput="atualizarCampo(${index}, 'data', this.value)">
+            <input type="text" id="input-data-${index}" value="${esc((row.data || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" title="Data de Recebimento" style="width: 55px; padding: 4px 6px; font-size: 13px; font-weight: 700; text-align: center;" oninput="atualizarCampo(${index}, 'data', this.value)">
           </div>
-          <div style="display: flex; align-items: center; gap: 6px;">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
             <div style="padding: 2px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; box-sizing: border-box; flex-shrink: 0;">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" title="Data de Envio" style="flex-shrink:0;"><path d="M3 3h10M8 14V6M4 9l4-4 4 4"/></svg>
             </div>
-            <input type="text" value="${esc((dtEnvio || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px;" oninput="atualizarCampo(${index}, 'data_envio', this.value)">
+            <input type="text" value="${esc((dtEnvio || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px; text-align: center;" oninput="atualizarCampo(${index}, 'data_envio', this.value)">
           </div>
         </div>
       </td>
@@ -1919,7 +1933,7 @@ function rowPertenceAoMesAno(row, mesNome, anoStr) {
 
 
 async function exportarPDF() {
-  const btn = document.querySelector('.btn-minimal[onclick="exportarPDF()"]');
+  const btn = document.querySelector('.btn-icon-export[onclick="exportarPDF()"]');
   const originalText = btn ? btn.innerHTML : "";
   if (btn) btn.innerHTML = "⌛ Gerando PDF...";
 
@@ -2355,6 +2369,99 @@ async function exportarExcel() {
   XLSX.utils.book_append_sheet(wb, ws, `${mes} ${ano}`.trim().slice(0, 31) || 'Pagamentos');
   XLSX.writeFile(wb, `Pagamentos_${mes}_${ano}.xlsx`);
   showToast(`✅ ${linhas.length} projeto(s) exportado(s) para Excel!`, 'ok');
+}
+
+// --- Exportar Lista de Projetos para PDF (mesmos dados do Excel, tabela desenhada com jsPDF) ---
+async function exportarListaPDF() {
+  const mes = document.getElementById('pagamentoMes')?.value || '';
+  const ano = document.getElementById('pagamentoAno')?.value || '';
+
+  const linhas = rowsData.filter(r => rowPertenceAoMesAno(r, mes, ano));
+  if (!linhas.length) { showToast('Nenhum projeto no mês selecionado para exportar.', 'err'); return; }
+
+  // Carrega jsPDF sob demanda (só na primeira exportação)
+  if (!window.jspdf?.jsPDF) {
+    showToast('📦 Preparando exportação...', 'ok');
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    }).catch(() => {});
+    if (!window.jspdf?.jsPDF) { showToast('❌ Erro ao carregar biblioteca de PDF.', 'err'); return; }
+  }
+
+  const headers = ['Nº', 'Recebimento', 'Envio', 'Tipo', 'Nº Projeto', 'Piscina', 'Loja', 'Arquivo', 'Observação', 'Conferido', 'Grande Alt.'];
+  const dataRows = linhas.map((row, i) => [
+    i + 1,
+    row.data || '',
+    row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw),
+    row.tipo || '',
+    nProjeto(row.raw) || '',
+    piscinasArr(row.raw).join(', ') || '',
+    loja(row.raw) || '',
+    row.raw || '',
+    row.obs || '',
+    row.conf ? 'Sim' : 'Não',
+    row.alt ? 'Sim' : 'Não',
+  ]);
+  const colWeights = [0.35, 0.85, 0.85, 1.3, 0.8, 1.2, 1.1, 2.4, 1.6, 0.7, 0.8];
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const title = `Lista de Projetos Enviados - ${mes} ${ano}`.trim();
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 10;
+  const usableW = pageW - margin * 2;
+
+  const totalW = colWeights.reduce((a, b) => a + b, 0);
+  const colWidths = colWeights.map(w => (w / totalW) * usableW);
+  const colX = colWidths.reduce((acc, w, i) => { acc.push(i === 0 ? margin : acc[i - 1] + colWidths[i - 1]); return acc; }, []);
+
+  let y = 18;
+  const drawHeader = () => {
+    doc.setFillColor(26, 42, 58);
+    doc.rect(0, 0, pageW, 12, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, margin, 8);
+    doc.setTextColor(26, 42, 58);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    y = 18;
+    headers.forEach((h, i) => {
+      doc.setFillColor(237, 247, 253);
+      doc.rect(colX[i], y - 5, colWidths[i], 7, 'F');
+      doc.text(String(h).slice(0, 18), colX[i] + 1, y);
+    });
+    y += 6;
+    doc.setFont('helvetica', 'normal');
+  };
+
+  drawHeader();
+  doc.setFontSize(6.6);
+  dataRows.forEach((row, rowIdx) => {
+    const lineHeight = Math.max(...row.map((v, i) => doc.splitTextToSize(String(v || ''), colWidths[i] - 2).length)) * 3.2;
+    if (y + lineHeight > pageH - 10) {
+      doc.addPage();
+      drawHeader();
+      doc.setFontSize(6.6);
+    }
+    if (rowIdx % 2 === 0) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(margin, y - 4, usableW, lineHeight + 2, 'F');
+    }
+    row.forEach((v, i) => {
+      const text = doc.splitTextToSize(String(v || ''), colWidths[i] - 2);
+      doc.text(text, colX[i] + 1, y);
+    });
+    y += lineHeight + 2;
+  });
+
+  doc.save(`Pagamentos_${mes}_${ano}.pdf`);
+  showToast(`✅ ${linhas.length} projeto(s) exportado(s) para PDF!`, 'ok');
 }
 
 function atualizarFeedbackLote() {
