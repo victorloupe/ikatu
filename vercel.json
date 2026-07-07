@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/(.*)\\.(jpg|jpeg|png|gif|webp|svg|ico|woff|woff2)",
+      "source": "/bg_water.jpg",
       "headers": [
         { "key": "Access-Control-Allow-Origin", "value": "*" }
       ]

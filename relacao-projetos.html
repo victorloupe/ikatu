@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Relação de Projetos — Admin — Ikatu</title>
-<script>if (window.innerWidth <= 768) { window.location.href = 'index.html'; }</script>
+<script>
+  if (window.innerWidth <= 768) {
+    var mrEl = document.createElement('div');
+    mrEl.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#1a2a3a;color:#fff;font-family:Inter,Arial,sans-serif;text-align:center;padding:24px;';
+    mrEl.innerHTML = '<div><div style="font-size:15px;font-weight:600;margin-bottom:6px;">Esta página não está disponível no celular</div><div style="font-size:13px;color:#9ab0c0;">Redirecionando para Pagamentos…</div></div>';
+    document.documentElement.appendChild(mrEl);
+    setTimeout(function () { window.location.href = 'mobile/pagamentos.html'; }, 1300);
+  }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -389,6 +397,10 @@
   tr.fr-internacional td { background-color: #faf5ff !important; }
   tr.fr-internacional:hover td { background-color: #ede9fe !important; }
   tr.fr-internacional.details-row td { background-color: #fdfcff !important; border-top: 1px solid #ede9fe !important; border-bottom: 3px solid #1e293b !important; }
+
+  tr.fr-sobmedida td { background-color: #f2f2f2 !important; }
+  tr.fr-sobmedida:hover td { background-color: #e0e0e0 !important; }
+  tr.fr-sobmedida.details-row td { background-color: #f7f7f7 !important; border-top: 1px solid #e0e0e0 !important; border-bottom: 3px solid #1e293b !important; }
 
   .cell-select-projetista {
     border-radius: 6px;
@@ -1195,6 +1207,7 @@
                   <option value="Conceito">Conceito</option>
                   <option value="Splash">Splash</option>
                   <option value="Internacional">Internacional</option>
+                  <option value="iGUi SOB MEDIDA">iGUi SOB MEDIDA</option>
                 </select>
               </div>
               <div class="tool-field">
@@ -1449,7 +1462,7 @@
       return;
     }
 
-    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed'};
+    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed','iGUi SOB MEDIDA':'#1A1A1A'};
     const esc = v => String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
     tbody.innerHTML = '';
@@ -1459,7 +1472,7 @@
       const dias = entrada ? Math.floor((hoje - entrada) / 86400000) : '—';
       const st = _statusAndamento(dias);
       const fColor = franquiaColors[p.franquia] || '#64748b';
-      const classFr = {iGUi:'fr-igui',Conceito:'fr-conceito',Splash:'fr-splash',Internacional:'fr-internacional'}[p.franquia]||'';
+      const classFr = {iGUi:'fr-igui',Conceito:'fr-conceito',Splash:'fr-splash',Internacional:'fr-internacional','iGUi SOB MEDIDA':'fr-sobmedida'}[p.franquia]||'';
 
       // Linha principal (clicável)
       const tr = document.createElement('tr');
@@ -1489,7 +1502,7 @@
       trEdit.className = `details-row ${classFr}`;
       trEdit.style.display = 'none';
 
-      const franquias = ['iGUi','Conceito','Internacional','Splash'];
+      const franquias = ['iGUi','Conceito','Internacional','Splash','iGUi SOB MEDIDA'];
       const optsFr = franquias.map(f => `<option value="${f}" ${p.franquia===f?'selected':''}>${f}</option>`).join('');
       const isSplash = p.franquia === 'Splash';
       const piscinasFiltradas = metadataPiscinas.filter(pi => isSplash ? pi.marca==='Splash' : pi.marca==='iGUi');
@@ -2118,7 +2131,7 @@
     filtered.forEach((p, idx) => {
       try {
         const franquiaVal = p.franquia || 'iGUi';
-        const classFranquia = `fr-${franquiaVal.toLowerCase()}`;
+        const classFranquia = franquiaVal === 'iGUi SOB MEDIDA' ? 'fr-sobmedida' : `fr-${franquiaVal.toLowerCase()}`;
         const isDup = _dupCodes[(p.project_code || '').trim().toLowerCase()] > 1;
 
         const tr = document.createElement('tr');
@@ -2140,7 +2153,7 @@
         }
 
         // Franquias Dropdown
-        const franquias = ['iGUi', 'Conceito', 'Internacional', 'Splash'];
+        const franquias = ['iGUi', 'Conceito', 'Internacional', 'Splash', 'iGUi SOB MEDIDA'];
         let optionsFranquia = franquias.map(f => `<option value="${f}" ${franquiaVal === f ? 'selected' : ''}>${f}</option>`).join('');
 
         // (autocomplete replaces dropdown — keep variable for compat)
@@ -3100,7 +3113,7 @@
     [_chartLojas,_chartFranquia,_chartMensal,_chartTipo,_chartPrazo].forEach(c => { if(c) c.destroy(); });
     _chartLojas = _chartFranquia = _chartMensal = _chartTipo = _chartPrazo = null;
 
-    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed'};
+    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed','iGUi SOB MEDIDA':'#1A1A1A'};
 
     document.getElementById('chartLojasSpan').textContent = 'TOP 10';
     document.getElementById('chartMensalSpan').textContent = `${ano}`;

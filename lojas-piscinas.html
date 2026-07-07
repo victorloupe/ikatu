@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lojas & Piscinas — Admin — Ikatu</title>
-<script>if (window.innerWidth <= 768) { window.location.href = 'index.html'; }</script>
+<script>
+  if (window.innerWidth <= 768) {
+    var mrEl = document.createElement('div');
+    mrEl.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#1a2a3a;color:#fff;font-family:Inter,Arial,sans-serif;text-align:center;padding:24px;';
+    mrEl.innerHTML = '<div><div style="font-size:15px;font-weight:600;margin-bottom:6px;">Esta página não está disponível no celular</div><div style="font-size:13px;color:#9ab0c0;">Redirecionando para Pagamentos…</div></div>';
+    document.documentElement.appendChild(mrEl);
+    setTimeout(function () { window.location.href = 'mobile/pagamentos.html'; }, 1300);
+  }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-client.js?v=202606261041"></script>
 <meta name="theme-color" content="#1a2a3a">
@@ -45,6 +53,7 @@
   .brand-badge.conceito{background:#fdf4e8;color:#d97706;}
   .brand-badge.internacional{background:#f3e8ff;color:#7c3aed;}
   .brand-badge.splash{background:#fde8f4;color:#e91e8c;}
+  .brand-badge.igui-sob-medida{background:#e0e0e0;color:#1A1A1A;}
 
   .btn-sm{padding:4px 8px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;transition:all .15s;outline:none;display:inline-flex;align-items:center;justify-content:center;gap:4px;line-height:1.2;}
   .btn-sm:hover{border-color:#cbd5e1;background:#f1f5f9;color:#0f172a;}
@@ -231,6 +240,7 @@
           <button class="subtab" data-franquia="Conceito" onclick="setSubtabLoja(this, 'Conceito')">Conceito</button>
           <button class="subtab" data-franquia="Splash" onclick="setSubtabLoja(this, 'Splash')">Splash</button>
           <button class="subtab" data-franquia="Internacional" onclick="setSubtabLoja(this, 'Internacional')">Internacional</button>
+          <button class="subtab" data-franquia="iGUi SOB MEDIDA" onclick="setSubtabLoja(this, 'iGUi SOB MEDIDA')">iGUi SOB MEDIDA</button>
         </div>
         <div class="search-bar">
           <div class="ac-wrap">
@@ -312,6 +322,7 @@
         <option value="Conceito">Conceito</option>
         <option value="Internacional">Internacional</option>
         <option value="Splash">Splash</option>
+        <option value="iGUi SOB MEDIDA">iGUi SOB MEDIDA</option>
       </select>
     </div>
     <div class="modal-field">
@@ -559,7 +570,7 @@
     if (!matches.length) { list.classList.remove('open'); return; }
     list.innerHTML = matches.map(l => `
       <div class="ac-item" onclick="selectAcLoja('${esc(l.loja)}')">
-        <span class="brand-badge ${l.franquia.toLowerCase()}" style="flex-shrink:0;">${esc(l.franquia)}</span>
+        <span class="brand-badge ${l.franquia.toLowerCase().replace(/\s+/g,'-')}" style="flex-shrink:0;">${esc(l.franquia)}</span>
         <span>${highlight(l.loja, q)}</span>
         <span style="color:var(--muted);font-size:11px;margin-left:auto">${esc(l.fabrica)}</span>
       </div>`).join('');
@@ -626,7 +637,7 @@
 
     filtered.forEach(l => {
       const tr = document.createElement('tr');
-      const franquiaClass = l.franquia.toLowerCase();
+      const franquiaClass = l.franquia.toLowerCase().replace(/\s+/g,'-');
       tr.innerHTML = `
         <td><span class="brand-badge ${franquiaClass}">${esc(l.franquia)}</span></td>
         <td><b>${esc(l.loja)}</b></td>

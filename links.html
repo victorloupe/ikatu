@@ -5,13 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Links — iGUi Pranchas</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202606291932"></script>
+<script src="supabase-client.js?v=202607071645"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=202606291932">
+<link rel="stylesheet" href="styles.css?v=202607071645">
 <script>
   if (window.innerWidth <= 768) {
-    window.location.href = 'mobile/pagamentos.html';
+    var mrEl = document.createElement('div');
+    mrEl.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#1a2a3a;color:#fff;font-family:Inter,Arial,sans-serif;text-align:center;padding:24px;';
+    mrEl.innerHTML = '<div><div style="font-size:15px;font-weight:600;margin-bottom:6px;">Esta página não está disponível no celular</div><div style="font-size:13px;color:#9ab0c0;">Redirecionando para Pagamentos…</div></div>';
+    document.documentElement.appendChild(mrEl);
+    setTimeout(function () { window.location.href = 'mobile/pagamentos.html'; }, 1300);
   }
 </script>
 <style>

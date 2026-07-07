@@ -91,7 +91,7 @@ function drawFooter(doc, includeLoja) {
   const form = window.getFormData ? window.getFormData() : {};
   const lojaStr = (includeLoja && form.loja) ? ' ' + String(form.loja).toUpperCase() : '';
   const marca = window.v ? window.v('loja_tipo') : '';
-  const prefix = marca === 'Splash' ? 'SPLASH' : 'IGUI CONCEITO';
+  const prefix = marca === 'Splash' ? 'SPLASH' : marca === 'iGUi SOB MEDIDA' ? 'IGUI SOB MEDIDA' : 'IGUI CONCEITO';
   doc.text('PROJETO 3D - ' + prefix + lojaStr, 10, fy + 6.5);
 
   doc.setFont('helvetica', 'normal');
@@ -106,6 +106,8 @@ function drawFooter(doc, includeLoja) {
     ratio = 588 / 334;
   } else if (marca === 'iGUi') {
     ratio = 272 / 185;
+  } else if (marca === 'iGUi SOB MEDIDA') {
+    ratio = 272 / 220;
   }
   const LH = +(LW / ratio).toFixed(1);
 
@@ -618,6 +620,8 @@ export async function executarGerarPDF(preview = false) {
               const _dataHoje = `${_pad(_hoje.getDate())}/${_pad(_hoje.getMonth() + 1)}/${_hoje.getFullYear()}`;
               const _raw = form.loja_tipo === 'Splash'
                 ? ['Splash', form.id_projeto || '', form.modelo || '', form.loja || ''].join('_')
+                : form.loja_tipo === 'iGUi SOB MEDIDA'
+                ? ['SOB MEDIDA', form.id_projeto || '', form.modelo || '', form.loja || ''].join('_')
                 : [form.id_projeto || '', form.modelo || '', form.loja || ''].join('_');
               const rowPag = {
                 raw: _raw,

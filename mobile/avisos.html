@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Avisos — iGUi Space</title>
   <!-- Estilos do chat/avisos (área de conteúdo) -->
-  <link rel="stylesheet" href="../styles.css?v=202606291932">
+  <link rel="stylesheet" href="../styles.css?v=202607071645">
   <!-- Sobrescreve layout com mobile -->
-  <link rel="stylesheet" href="mobile.css?v=202606291932">
+  <link rel="stylesheet" href="mobile.css?v=202607071645">
   <style>
     /* Remove layout desktop */
     header { display: none !important; }
@@ -16,9 +16,15 @@
     .main-content { padding-top: var(--header-h) !important; padding-bottom: calc(var(--nav-h) + 8px) !important; }
 
     /* Chat ocupa tudo */
-    .chat-wrap { height: calc(100vh - var(--header-h) - var(--nav-h)); }
+    .chat-wrap { height: calc(100vh - var(--header-h) - var(--nav-h)); height: calc(100dvh - var(--header-h) - var(--nav-h)); }
     .chat-left { display: none !important; }
     .chat-right { width: 100% !important; border-left: none !important; }
+
+    /* Modal com respiro nas bordas em telas pequenas */
+    .modal-overlay { padding: 16px; }
+
+    /* Campo de mensagem: >=16px evita zoom automático do iOS Safari ao focar */
+    .chat-textarea { font-size: 16px !important; }
 
     /* Input area — sobe acima do nav */
     .chat-input-wrap {
@@ -125,11 +131,11 @@
       <div class="modal-title">Agendar Mensagem</div>
       <div class="modal-field">
         <label>Mensagem</label>
-        <textarea id="scheduleContent" rows="3" placeholder="Conteúdo da mensagem..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;resize:vertical;"></textarea>
+        <textarea id="scheduleContent" rows="3" placeholder="Conteúdo da mensagem..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:16px;outline:none;resize:vertical;"></textarea>
       </div>
       <div class="modal-field">
         <label>Data e hora de envio</label>
-        <input type="datetime-local" id="scheduleAt" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;">
+        <input type="datetime-local" id="scheduleAt" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:16px;outline:none;">
       </div>
       <div class="modal-footer">
         <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
@@ -144,7 +150,7 @@
       <div class="modal-title">Fixar Mensagem</div>
       <div class="modal-field">
         <label>Expiração (opcional)</label>
-        <input type="datetime-local" id="pinUntilInput" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;">
+        <input type="datetime-local" id="pinUntilInput" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:16px;outline:none;">
       </div>
       <div class="modal-footer">
         <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
@@ -171,7 +177,7 @@
       <div class="modal-title">Editar Mensagem</div>
       <div class="modal-field" style="margin-bottom:16px;">
         <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Conteúdo</label>
-        <textarea id="editMsgContent" rows="4" placeholder="Conteúdo..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+        <textarea id="editMsgContent" rows="4" placeholder="Conteúdo..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:16px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
@@ -181,8 +187,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202606291932"></script>
-  <script src="mobile-nav.js?v=202606291932"></script>
-  <script src="../avisos.js?v=202606291932"></script>
+  <script src="../supabase-client.js?v=202607071645"></script>
+  <script src="mobile-nav.js?v=202607071645"></script>
+  <script src="../avisos.js?v=202607071645"></script>
 </body>
 </html>

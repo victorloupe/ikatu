@@ -44,8 +44,9 @@ function renderBrandFilters() {
   bar.innerHTML = '';
 
   const brands = [
-    { value: 'iGUI',   label: 'iGUi',   color: '#00AEEF', bg: '#e8f6fd' },
-    { value: 'Splash', label: 'Splash', color: '#e91e8c', bg: '#fde8f4' },
+    { value: 'iGUI',            label: 'iGUi',            color: '#00AEEF', bg: '#e8f6fd' },
+    { value: 'Splash',          label: 'Splash',          color: '#e91e8c', bg: '#fde8f4' },
+    { value: 'iGUi SOB MEDIDA', label: 'iGUi SOB MEDIDA', color: '#1A1A1A', bg: '#eaeaea' },
   ];
 
   brands.forEach(({ value, label, color, bg }) => {
@@ -180,8 +181,9 @@ function renderListaPranchas() {
       : '<div class="proj-thumb proj-thumb-empty">🏊</div>';
 
     const isSplash = (p.brand || 'iGUI') === 'Splash';
+    const isSobMedida = (p.brand || 'iGUI') === 'iGUi SOB MEDIDA';
     const card = document.createElement('div');
-    card.className = 'proj-card' + (isSplash ? ' proj-card-splash' : ' proj-card-igui');
+    card.className = 'proj-card' + (isSplash ? ' proj-card-splash' : isSobMedida ? ' proj-card-sobmedida' : ' proj-card-igui');
     if (animar) {
       card.classList.add('row-entrada');
       card.style.animationDelay = `${Math.min(i * 70, 1000)}ms`;

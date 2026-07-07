@@ -17,10 +17,11 @@ serve(async (req: Request) => {
     const SUPABASE_URL      = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE      = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Aceita: trigger do pg_cron (sem header) ou chamada manual com service role
+    // Exige a service role key — tanto o pg_cron (ver SQL no fim do arquivo)
+    // quanto uma chamada manual sempre enviam o header Authorization.
     const auth = req.headers.get("Authorization") || "";
     const token = auth.replace(/^Bearer\s+/i, "").trim();
-    if (token && token !== SERVICE_ROLE) {
+    if (!token || token !== SERVICE_ROLE) {
       return new Response(JSON.stringify({ error: "Não autorizado." }), { status: 401 });
     }
 

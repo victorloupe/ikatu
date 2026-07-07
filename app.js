@@ -93,14 +93,16 @@ function setLogoImages() {
 // Retorna o base64 da logo de prancha conforme a marca selecionada
 function getLogoPranchaB64() {
   const marca = v('loja_tipo');
-  if (marca === 'Splash')    return typeof LOGO_PRANCHA_SPLASH_B64    !== 'undefined' ? LOGO_PRANCHA_SPLASH_B64    : LOGO_PRANCHA_IGUI_B64;
+  if (marca === 'Splash')          return typeof LOGO_PRANCHA_SPLASH_B64    !== 'undefined' ? LOGO_PRANCHA_SPLASH_B64    : LOGO_PRANCHA_IGUI_B64;
+  if (marca === 'iGUi SOB MEDIDA') return typeof LOGO_PRANCHA_SOBMEDIDA_B64 !== 'undefined' ? LOGO_PRANCHA_SOBMEDIDA_B64 : LOGO_PRANCHA_IGUI_B64;
   return typeof LOGO_PRANCHA_IGUI_B64 !== 'undefined' ? LOGO_PRANCHA_IGUI_B64 : LOGO_PRANCHA_B64;
 }
 
 function onLojaTipoChange(val) {
   const logoMap = {
-    'iGUi':      'logo_pranchaiGUi.png',
-    'Splash':    'logo_pranchaSplash.png',
+    'iGUi':             'logo_pranchaiGUi.png',
+    'Splash':           'logo_pranchaSplash.png',
+    'iGUi SOB MEDIDA':  'logo_pranchaiGUiSobMedida.png',
   };
   const src = val ? (logoMap[val] || '') : '';
   document.querySelectorAll('.card-hd-logo').forEach(img => {
@@ -113,10 +115,11 @@ function onLojaTipoChange(val) {
     }
   });
 
+  document.body.classList.remove('theme-splash', 'theme-sobmedida');
   if (val === 'Splash') {
     document.body.classList.add('theme-splash');
-  } else {
-    document.body.classList.remove('theme-splash');
+  } else if (val === 'iGUi SOB MEDIDA') {
+    document.body.classList.add('theme-sobmedida');
   }
 }
 
@@ -1940,7 +1943,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   setLogoImages();
   // Pré-carregar logos de franquia para eliminar delay ao trocar de aba
-  ['logo_pranchaiGUi.png','logo_pranchaSplash.png'].forEach(src => {
+  ['logo_pranchaiGUi.png','logo_pranchaSplash.png','logo_pranchaiGUiSobMedida.png'].forEach(src => {
     const img = new Image(); img.src = src;
   });
   onLojaTipoChange('iGUi'); // padrão

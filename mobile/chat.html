@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chat — iGUi Space</title>
   <script src="https://cdn.jsdelivr.net/npm/stream-chat@8/dist/browser.full-bundle.min.js"></script>
-  <link rel="stylesheet" href="../styles.css?v=202606291932">
-  <link rel="stylesheet" href="mobile.css?v=202606291932">
+  <link rel="stylesheet" href="../styles.css?v=202607071645">
+  <link rel="stylesheet" href="mobile.css?v=202607071645">
   <style>
     header { display: none !important; }
     .sidebar { display: none !important; }
@@ -14,10 +14,16 @@
     .main-content { padding-top: var(--header-h) !important; padding-bottom: calc(var(--nav-h) + 8px) !important; }
 
     /* Chat já tem lógica mobile (mobile-conv) — só ajusta altura */
-    .chat-wrap { height: calc(100vh - var(--header-h) - var(--nav-h)); }
+    .chat-wrap { height: calc(100vh - var(--header-h) - var(--nav-h)); height: calc(100dvh - var(--header-h) - var(--nav-h)); }
 
     /* Botão voltar sempre visível no mobile */
     #chatBackBtn { display: inline-flex !important; }
+
+    /* Modal com respiro nas bordas em telas pequenas */
+    .modal-overlay { padding: 16px; }
+
+    /* Campo de mensagem: >=16px evita zoom automático do iOS Safari ao focar */
+    .chat-textarea { font-size: 16px !important; }
 
     #adminBadge, #navAdmin, #hdrUser, #userAvatar { display: none !important; }
   </style>
@@ -120,7 +126,7 @@
     <div class="modal-box" style="max-width:440px;">
       <div class="modal-title">Editar mensagem</div>
       <div class="modal-field" style="margin-bottom:16px;">
-        <textarea id="editMsgContent" rows="4" placeholder="Conteúdo..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+        <textarea id="editMsgContent" rows="4" placeholder="Conteúdo..." style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:16px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn-modal cancel" onclick="fecharModais()">Cancelar</button>
@@ -141,8 +147,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202606291932"></script>
-  <script src="mobile-nav.js?v=202606291932"></script>
-  <script src="../chat.js?v=202606291932"></script>
+  <script src="../supabase-client.js?v=202607071645"></script>
+  <script src="mobile-nav.js?v=202607071645"></script>
+  <script src="../chat.js?v=202607071645"></script>
 </body>
 </html>

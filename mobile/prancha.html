@@ -4,14 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pranchas — iGUi Space</title>
-  <link rel="stylesheet" href="mobile.css?v=202606291932">
+  <link rel="stylesheet" href="mobile.css?v=202607071645">
   <style>
-    /* ── Busca sticky ────────────────────────────── */
-    .prancha-search-bar {
+    /* ── Bloco de filtros sticky (busca + marca + projetista) ──────
+       Agrupados num único wrapper sticky para rolar/grudar juntos —
+       evita que a busca cubra parcialmente as pills ao rolar. */
+    .prancha-filters-sticky {
       position: sticky;
       top: var(--header-h);
       z-index: 100;
       background: var(--bg);
+    }
+    .prancha-search-bar {
       padding: 10px 14px;
       border-bottom: 1px solid var(--border);
     }
@@ -112,10 +116,12 @@
     }
 
     /* ── Brand colors ───────────────────────────── */
-    .prancha-row-igui   { border-left: 3px solid #00AEEF; background: #f0f8ff; }
-    .prancha-row-splash { border-left: 3px solid #e91e8c; background: #fff0f7; }
-    .prancha-row-igui:active   { background: #e4f3fc; }
-    .prancha-row-splash:active { background: #fce4f2; }
+    .prancha-row-igui      { border-left: 3px solid #00AEEF; background: #f0f8ff; }
+    .prancha-row-splash    { border-left: 3px solid #e91e8c; background: #fff0f7; }
+    .prancha-row-sobmedida { border-left: 3px solid #1A1A1A; background: #f2f2f2; }
+    .prancha-row-igui:active      { background: #e4f3fc; }
+    .prancha-row-splash:active    { background: #fce4f2; }
+    .prancha-row-sobmedida:active { background: #e0e0e0; }
 
     .prancha-brand-bar {
       display: flex;
@@ -148,8 +154,50 @@
       flex-shrink: 0;
     }
     .prancha-brand-pill.active .pb-dot { background: #fff; }
-    .prancha-row-tag.brand-igui   { color: #0090cc; background: #e4f3fc; }
-    .prancha-row-tag.brand-splash { color: #c0186f; background: #fce4f2; }
+    .prancha-row-tag.brand-igui      { color: #0090cc; background: #e4f3fc; }
+    .prancha-row-tag.brand-splash    { color: #c0186f; background: #fce4f2; }
+    .prancha-row-tag.brand-sobmedida { color: #1A1A1A; background: #e0e0e0; }
+
+    /* ── Filtro por projetista (igual ao desktop) ── */
+    .prancha-user-bar {
+      display: flex;
+      gap: 6px;
+      padding: 0 14px 8px;
+      background: var(--bg);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .prancha-user-bar::-webkit-scrollbar { display: none; }
+    .prancha-user-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .prancha-user-pill.active {
+      background: var(--dark);
+      color: #fff;
+      border-color: var(--dark);
+    }
+    .prancha-user-pill .pf-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .7;
+      flex-shrink: 0;
+    }
 
     /* ── Paginação ───────────────────────────────── */
     .prancha-paginacao {
@@ -287,16 +335,22 @@
     </div>
   </header>
 
-  <!-- Busca -->
-  <div class="prancha-search-bar">
-    <div class="m-search">
-      <svg class="m-search-icon" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l3 3"/></svg>
-      <input type="search" id="campoBusca" placeholder="OS, modelo, loja, projetista…" oninput="buscar(this.value)">
+  <!-- Bloco de filtros (busca + marca + projetista) — sticky em conjunto -->
+  <div class="prancha-filters-sticky">
+    <!-- Busca -->
+    <div class="prancha-search-bar">
+      <div class="m-search">
+        <svg class="m-search-icon" viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4"/><path d="M11 11l3 3"/></svg>
+        <input type="search" id="campoBusca" placeholder="OS, modelo, loja, projetista…" oninput="buscar(this.value)">
+      </div>
     </div>
-  </div>
 
-  <!-- Filtros de marca -->
-  <div class="prancha-brand-bar" id="brandBar"></div>
+    <!-- Filtros de marca -->
+    <div class="prancha-brand-bar" id="brandBar"></div>
+
+    <!-- Filtro por projetista (só aparece se houver mais de 1) -->
+    <div class="prancha-user-bar" id="userBar" style="display:none"></div>
+  </div>
 
   <!-- Conteúdo -->
   <div class="m-content">
@@ -326,8 +380,8 @@
   <div class="m-toast" id="mToastGlobal"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202606291932"></script>
-  <script src="mobile-nav.js?v=202606291932"></script>
+  <script src="../supabase-client.js?v=202607071645"></script>
+  <script src="mobile-nav.js?v=202607071645"></script>
   <script>
   // ══════════════════════════════════════════════
   // Pranchas Mobile — layout em linhas + cache 5min
@@ -339,6 +393,7 @@
   let todasPranchas = [];
   let buscaAtual    = '';
   let filtroBrand   = '';   // '' | 'iGUI' | 'Splash'
+  let filtroUser    = '';   // '' = todos | nome do projetista (created_by)
   let paginaAtual   = 1;
   const POR_PAGINA  = 8;
 
@@ -386,6 +441,7 @@
   function filtrar(lista) {
     let r = lista;
     if (filtroBrand) r = r.filter(p => (p.brand || 'iGUI') === filtroBrand);
+    if (filtroUser)  r = r.filter(p => (p.created_by || '') === filtroUser);
     if (buscaAtual) {
       const q = buscaAtual.toLowerCase();
       r = r.filter(p =>
@@ -409,8 +465,9 @@
     const bar = document.getElementById('brandBar');
     if (!bar) return;
     const brands = [
-      { value: 'iGUI',   label: 'iGUi',   color: '#00AEEF' },
-      { value: 'Splash', label: 'Splash', color: '#e91e8c' },
+      { value: 'iGUI',            label: 'iGUi',            color: '#00AEEF' },
+      { value: 'Splash',          label: 'Splash',           color: '#e91e8c' },
+      { value: 'iGUi SOB MEDIDA', label: 'iGUi SOB MEDIDA',  color: '#1A1A1A' },
     ];
     bar.innerHTML = '';
     brands.forEach(({ value, label, color }) => {
@@ -425,6 +482,46 @@
         renderLista(todasPranchas);
       };
       bar.appendChild(btn);
+    });
+  }
+
+  // ── Filtro por projetista (igual ao desktop: pills "Todos" + 1 por usuário) ──
+  function renderUserBar(lista) {
+    const bar = document.getElementById('userBar');
+    if (!bar) return;
+
+    const usuarios = [...new Set(
+      lista.map(p => p.created_by || '').filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    // Só mostra a barra se houver mais de 1 projetista (ex.: admin vendo todos)
+    if (usuarios.length <= 1) { bar.style.display = 'none'; return; }
+
+    bar.style.display = 'flex';
+    bar.innerHTML = '';
+
+    const todos = document.createElement('button');
+    todos.className = 'prancha-user-pill' + (filtroUser === '' ? ' active' : '');
+    todos.innerHTML = `<span class="pf-dot"></span>Todos`;
+    todos.onclick = () => {
+      filtroUser = '';
+      paginaAtual = 1;
+      renderUserBar(todasPranchas);
+      renderLista(todasPranchas);
+    };
+    bar.appendChild(todos);
+
+    usuarios.forEach(user => {
+      const pill = document.createElement('button');
+      pill.className = 'prancha-user-pill' + (filtroUser === user ? ' active' : '');
+      pill.innerHTML = `<span class="pf-dot"></span>${esc(user)}`;
+      pill.onclick = () => {
+        filtroUser = (filtroUser === user) ? '' : user;
+        paginaAtual = 1;
+        renderUserBar(todasPranchas);
+        renderLista(todasPranchas);
+      };
+      bar.appendChild(pill);
     });
   }
 
@@ -486,8 +583,9 @@
 
       const brand      = p.brand || 'iGUI';
       const isSplash   = brand === 'Splash';
-      const brandClass = isSplash ? 'prancha-row-splash' : 'prancha-row-igui';
-      const brandTag   = isSplash ? 'brand-splash' : 'brand-igui';
+      const isSobMedida = brand === 'iGUi SOB MEDIDA';
+      const brandClass = isSplash ? 'prancha-row-splash' : isSobMedida ? 'prancha-row-sobmedida' : 'prancha-row-igui';
+      const brandTag   = isSplash ? 'brand-splash' : isSobMedida ? 'brand-sobmedida' : 'brand-igui';
 
       const tags = [];
       const dataFmt = formatarData(p.proj_date);
@@ -578,6 +676,7 @@
     const cached = lerCache();
     if (cached) {
       todasPranchas = cached;
+      renderUserBar(todasPranchas);
       renderLista(todasPranchas);
       return;
     }
@@ -599,6 +698,7 @@
       const dados = await sbListarProjetos();
       todasPranchas = dados;
       salvarCache(dados);
+      renderUserBar(todasPranchas);
       renderLista(todasPranchas);
     } catch (e) {
       console.error('Erro ao carregar pranchas:', e);

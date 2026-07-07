@@ -22,26 +22,27 @@
 -- ── 2. Normalizar campo rows_data (JSONB) ─────────────────────────
 UPDATE payments
 SET rows_data = (
-  rows_data::text
+  REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+    rows_data::text,
     -- Tipos de projeto
-    REPLACE('AtÃ© 02 Projetos',                   'Até 02 Projetos')
-    REPLACE('Projeto 360Âº',                       'Projeto 360º')
-    REPLACE('Projeto 360Âº (3 ModificaÃ§Ãµes)',   'Projeto 360º (3 Modificações)')
-    REPLACE('AlteraÃ§Ãµes GRANDES',               'Alterações GRANDES')
-    REPLACE('ModificaÃ§Ãµes',                      'Modificações')
+    'AtÃ© 02 Projetos',                   'Até 02 Projetos'),
+    'Projeto 360Âº',                       'Projeto 360º'),
+    'Projeto 360Âº (3 ModificaÃ§Ãµes)',   'Projeto 360º (3 Modificações)'),
+    'AlteraÃ§Ãµes GRANDES',               'Alterações GRANDES'),
+    'ModificaÃ§Ãµes',                      'Modificações'),
     -- Caracteres soltos remanescentes (fallback)
-    REPLACE('Ã©', 'é')
-    REPLACE('Ã£', 'ã')
-    REPLACE('Ã§', 'ç')
-    REPLACE('Ãµ', 'õ')
-    REPLACE('Ã ', 'à')
-    REPLACE('Ã¡', 'á')
-    REPLACE('Ã­', 'í')
-    REPLACE('Ã³', 'ó')
-    REPLACE('Ãº', 'ú')
-    REPLACE('Â°', '°')
-    REPLACE('Âº', 'º')
-    REPLACE('Â³', '³')
+    'Ã©', 'é'),
+    'Ã£', 'ã'),
+    'Ã§', 'ç'),
+    'Ãµ', 'õ'),
+    'Ã ', 'à'),
+    'Ã¡', 'á'),
+    'Ã­', 'í'),
+    'Ã³', 'ó'),
+    'Ãº', 'ú'),
+    'Â°', '°'),
+    'Âº', 'º'),
+    'Â³', '³')
 )::jsonb
 WHERE rows_data::text ILIKE '%Ã%'
    OR rows_data::text ILIKE '%Â%';
@@ -49,13 +50,14 @@ WHERE rows_data::text ILIKE '%Ã%'
 -- ── 3. Normalizar campo header_data (JSONB) se houver ────────────
 UPDATE payments
 SET header_data = (
-  header_data::text
-    REPLACE('Ã©', 'é')
-    REPLACE('Ã£', 'ã')
-    REPLACE('Ã§', 'ç')
-    REPLACE('Ãµ', 'õ')
-    REPLACE('Â°', '°')
-    REPLACE('Âº', 'º')
+  REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+    header_data::text,
+    'Ã©', 'é'),
+    'Ã£', 'ã'),
+    'Ã§', 'ç'),
+    'Ãµ', 'õ'),
+    'Â°', '°'),
+    'Âº', 'º')
 )::jsonb
 WHERE header_data IS NOT NULL
   AND (header_data::text ILIKE '%Ã%' OR header_data::text ILIKE '%Â%');

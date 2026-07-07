@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Admin — iGUi Space</title>
-  <link rel="stylesheet" href="../styles.css?v=202606291932">
-  <link rel="stylesheet" href="mobile.css?v=202606291932">
+  <link rel="stylesheet" href="../styles.css?v=202607071645">
+  <link rel="stylesheet" href="mobile.css?v=202607071645">
   <style>
   /* ══ CSS do admin (não está em styles.css) ══ */
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
@@ -56,7 +56,7 @@
   .invite-form{background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:20px;margin-bottom:24px;display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
   .invite-form .field{flex:1;min-width:160px;}
   .invite-form label{display:block;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:5px;}
-  .invite-form input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;background:#fff;box-sizing:border-box;}
+  .invite-form input{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:16px;outline:none;background:#fff;box-sizing:border-box;}
   .invite-form input:focus{border-color:var(--blue);}
   .links-table{width:100%;border-collapse:collapse;font-size:13px;}
   .links-table th{background:#f0f4f8;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;}
@@ -69,7 +69,7 @@
   .modal-title{font-size:16px;font-weight:700;color:#1a2a3a;margin-bottom:20px;}
   .modal-field{margin-bottom:14px;}
   .modal-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;margin-bottom:5px;}
-  .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .15s;box-sizing:border-box;}
+  .modal-field input,.modal-field textarea,.modal-field select{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Inter',sans-serif;font-size:16px;outline:none;transition:border-color .15s;box-sizing:border-box;}
   .modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--blue);}
   .modal-field textarea{resize:vertical;min-height:70px;}
   .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
@@ -82,7 +82,7 @@
   .preco-card-nome{font-size:12px;font-weight:700;color:#1a2a3a;margin-bottom:10px;}
   .preco-field{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;}
   .preco-field label{flex:1;color:var(--muted);}
-  .preco-field input{width:70px;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;text-align:right;outline:none;}
+  .preco-field input{width:78px;padding:4px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:16px;text-align:right;outline:none;}
   .preco-field input:focus{border-color:var(--blue);}
   .sug-card{background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;}
   .sug-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
@@ -119,7 +119,7 @@
 
     /* Preços: sem scroll, inputs menores */
     #panePrecos .users-table { min-width: 0 !important; width: 100% !important; }
-    #panePrecos .users-table input[type="number"] { width: 80px !important; font-size: 13px; }
+    #panePrecos .users-table input[type="number"] { width: 88px !important; font-size: 16px !important; } /* >=16px evita zoom automático do iOS Safari */
     #panePrecos [style*="overflow-x:auto"] { overflow-x: visible !important; }
   </style>
 </head>
@@ -423,7 +423,7 @@
       Escolha o período limite das pranchas de todos os usuários para exportação (em meses):
     </div>
     <div style="margin-bottom:20px;">
-      <select id="adminExportMesesSelect" style="width:100%; padding:10px; border-radius:6px; border:1.5px solid var(--border); font-family:inherit; font-size:14px; background:#fafcff; outline:none;">
+      <select id="adminExportMesesSelect" style="width:100%; padding:10px; border-radius:6px; border:1.5px solid var(--border); font-family:inherit; font-size:16px; background:#fafcff; outline:none;">
         <option value="1">Apenas o último mês (1 mês)</option>
         <option value="3" selected>Últimos 3 meses</option>
         <option value="6">Últimos 6 meses</option>
@@ -446,7 +446,7 @@
       Escolha o período limite para o backup e exclusão permanente das pranchas (em meses):
     </div>
     <div style="margin-bottom:20px;">
-      <select id="backupLimpezaMesesSelect" style="width:100%; padding:10px; border-radius:6px; border:1.5px solid var(--border); font-family:inherit; font-size:14px; background:#fafcff; outline:none;">
+      <select id="backupLimpezaMesesSelect" style="width:100%; padding:10px; border-radius:6px; border:1.5px solid var(--border); font-family:inherit; font-size:16px; background:#fafcff; outline:none;">
         <option value="1">Projetos com mais de 1 mês</option>
         <option value="2">Projetos com mais de 2 meses</option>
         <option value="3">Projetos com mais de 3 meses</option>
@@ -526,8 +526,8 @@
 <div class="m-toast" id="mToastGlobal"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="../supabase-client.js?v=202606291932"></script>
-<script src="mobile-nav.js?v=202606291932"></script>
+<script src="../supabase-client.js?v=202607071645"></script>
+<script src="mobile-nav.js?v=202607071645"></script>
 <script>
 let usuarios = [];
 let todosLinks = [];
@@ -806,7 +806,7 @@ function abrirModalAssinatura(userId, nome) {
         <button class="btn-sm btn-role" style="padding:9px 0;font-size:12px;" onclick="confirmarAssinatura('${userId}', 12)">+12 meses</button>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <input type="number" id="assinaturaMesesCustom" min="1" max="120" placeholder="Qtd. de meses" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;">
+        <input type="number" id="assinaturaMesesCustom" min="1" max="120" placeholder="Qtd. de meses" style="flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-size:16px;">
         <button class="btn-sm btn-role" style="padding:8px 12px;font-size:12px;white-space:nowrap;" onclick="confirmarAssinaturaCostum('${userId}')">+ Adicionar</button>
       </div>
       <div style="display:flex;gap:8px;">

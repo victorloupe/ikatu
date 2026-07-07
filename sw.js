@@ -7,7 +7,7 @@
 
 // ⚠️ AO FAZER DEPLOY com mudanças: incremente a versão abaixo (v2 → v3 → ...).
 // É isso que dispara o aviso "Nova versão disponível" nas abas abertas.
-const CACHE = 'ikatu-v35';
+const CACHE = 'ikatu-v37';
 
 // Arquivos básicos do app shell (pré-cacheados na instalação)
 const SHELL = [

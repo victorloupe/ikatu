@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Pagamentos — iGUi Space</title>
-  <link rel="stylesheet" href="mobile.css?v=202606291932">
+  <link rel="stylesheet" href="mobile.css?v=202607071645">
   <style>
     /* ── Filtros ─────────────────────────────────── */
     .pag-filters {
@@ -24,7 +24,7 @@
       border-radius: 8px;
       padding: 8px 10px;
       font-family: 'Inter', sans-serif;
-      font-size: 13px;
+      font-size: 16px; /* >=16px evita zoom automático do iOS Safari ao focar */
       color: var(--text);
       background: #fafcff;
       outline: none;
@@ -189,7 +189,7 @@
       border-radius: 8px;
       padding: 9px 14px 9px 36px;
       font-family: 'Inter', sans-serif;
-      font-size: 13px;
+      font-size: 16px; /* >=16px evita zoom automático do iOS Safari ao focar */
       color: var(--text);
       background: #fafcff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none' stroke='%239aa8b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M14 14l-3-3'/%3E%3C/svg%3E") no-repeat 12px center;
       outline: none;
@@ -265,8 +265,8 @@
   <div class="m-toast" id="mToastGlobal"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202606291932"></script>
-  <script src="mobile-nav.js?v=202606291932"></script>
+  <script src="../supabase-client.js?v=202607071645"></script>
+  <script src="mobile-nav.js?v=202607071645"></script>
   <script>
   // ═══════════════════════════════════════════════
   // Pagamentos Mobile — leitura de todos os usuários

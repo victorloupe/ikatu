@@ -600,6 +600,8 @@ body.pg-projetos { background: #e2eaf3; }
 .proj-card-igui:hover { background: #e4f3fc; border-color: #00AEEF; }
 .proj-card-splash { background: #fff0f7; border-left: 4px solid #e91e8c; }
 .proj-card-splash:hover { background: #fce4f2; border-color: #e91e8c; }
+.proj-card-sobmedida { background: #f2f2f2; border-left: 4px solid #1A1A1A; }
+.proj-card-sobmedida:hover { background: #e0e0e0; border-color: #1A1A1A; }
 
 .proj-thumb {
   width: 80px; height: 56px; object-fit: cover;
@@ -2077,4 +2079,42 @@ body.theme-splash .btn-nav.primary {
 body.theme-splash .btn-nav.primary:hover {
   background: #c50b6a !important;
   border-color: #c50b6a !important;
+}
+
+/* iGUi SOB MEDIDA Theme Overrides */
+body.theme-sobmedida .card-ico {
+  background: #1A1A1A !important;
+}
+body.theme-sobmedida .sdb-btn.sdb-gerar {
+  background: #1A1A1A !important;
+}
+body.theme-sobmedida .sdb-btn.sdb-gerar:hover {
+  background: #000000 !important;
+}
+body.theme-sobmedida .btn-nav.primary {
+  background: #1A1A1A !important;
+  border-color: #1A1A1A !important;
+}
+body.theme-sobmedida .btn-nav.primary:hover {
+  background: #000000 !important;
+  border-color: #000000 !important;
+}
+
+/* iGUi SOB MEDIDA Theme Overrides */
+body.theme-sobmedida .card-ico {
+  background: #1A1A1A !important;
+}
+body.theme-sobmedida .sdb-btn.sdb-gerar {
+  background: #1A1A1A !important;
+}
+body.theme-sobmedida .sdb-btn.sdb-gerar:hover {
+  background: #000000 !important;
+}
+body.theme-sobmedida .btn-nav.primary {
+  background: #1A1A1A !important;
+  border-color: #1A1A1A !important;
+}
+body.theme-sobmedida .btn-nav.primary:hover {
+  background: #000000 !important;
+  border-color: #000000 !important;
 }

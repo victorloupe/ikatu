@@ -19,6 +19,7 @@ function getBrand(texto) {
   if (!texto) return "iGUI";
   let limpo = texto.toString().trim();
   if (/^splash/i.test(limpo)) return "Splash";
+  if (/^sob medida/i.test(limpo)) return "iGUi SOB MEDIDA";
   let partes = limpo.split("_");
   if (/^\d+$/.test(partes[0])) return "iGUI";
   return "Inter.";
@@ -36,6 +37,14 @@ function nProjeto(texto) {
       return partes[1].trim();
     }
     return "Splash"; // formato antigo sem número
+  }
+  if (/^sob medida/i.test(limpo)) {
+    let partes = limpo.split("_");
+    // Formato: SOB MEDIDA_819194_Piscina_Loja_Data → extrai número
+    if (partes.length >= 2 && /^\d+$/.test(partes[1])) {
+      return partes[1].trim();
+    }
+    return "SOB MEDIDA";
   }
   let partes = limpo.split("_");
   let projeto = partes[0] || "";
@@ -71,6 +80,10 @@ function piscina(texto) {
   let partes = limpo.split("_");
   // Novo Splash: Splash_819194_Piscina_... → piscina em partes[2]
   if (/^splash/i.test(partes[0]) && /^\d+$/.test(partes[1])) {
+    return partes[2] || "";
+  }
+  // SOB MEDIDA_819194_Piscina_... → piscina em partes[2]
+  if (/^sob medida/i.test(partes[0]) && /^\d+$/.test(partes[1])) {
     return partes[2] || "";
   }
   return partes[1] || "";
@@ -876,6 +889,8 @@ function renderTabela() {
         matchesLoja = getBrand(row.raw) === 'Inter.';
       } else if (filtroLojaAtivo === 'iGUI') {
         matchesLoja = getBrand(row.raw) === 'iGUI';
+      } else if (filtroLojaAtivo === 'iGUi SOB MEDIDA') {
+        matchesLoja = getBrand(row.raw) === 'iGUi SOB MEDIDA';
       }
     }
 
@@ -1008,6 +1023,8 @@ function renderTabela() {
         matchesLoja = getBrand(row.raw) === 'Inter.';
       } else if (filtroLojaAtivo === 'iGUI') {
         matchesLoja = getBrand(row.raw) === 'iGUI';
+      } else if (filtroLojaAtivo === 'iGUi SOB MEDIDA') {
+        matchesLoja = getBrand(row.raw) === 'iGUi SOB MEDIDA';
       }
     }
     
@@ -1740,6 +1757,7 @@ function definirFiltroLoja(lojaVal) {
   if (lojaVal === 'Splash') btnId = 'btnFiltroLojaSplash';
   else if (lojaVal === 'Inter.') btnId = 'btnFiltroLojaInter';
   else if (lojaVal === 'iGUI') btnId = 'btnFiltroLojaIgui';
+  else if (lojaVal === 'iGUi SOB MEDIDA') btnId = 'btnFiltroLojaSobMedida';
   
   const activeBtn = document.getElementById(btnId);
   if (activeBtn) activeBtn.classList.add('active');
@@ -1828,6 +1846,8 @@ function marcarVisiveisComoConferidos() {
         matchesLoja = getBrand(row.raw) === 'Inter.';
       } else if (filtroLojaAtivo === 'iGUI') {
         matchesLoja = getBrand(row.raw) === 'iGUI';
+      } else if (filtroLojaAtivo === 'iGUi SOB MEDIDA') {
+        matchesLoja = getBrand(row.raw) === 'iGUi SOB MEDIDA';
       }
     }
 

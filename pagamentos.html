@@ -6,10 +6,10 @@
 <title>Controle de Pagamentos – iGUi</title>
 <script>if (window.innerWidth <= 768) { window.location.href = 'mobile/pagamentos.html'; }</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202606291932"></script>
+<script src="supabase-client.js?v=202607071645"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=202606291932">
+<link rel="stylesheet" href="styles.css?v=202607071645">
 <style>
   /* Custom styles for Payments Page */
   .pag-container {
@@ -556,6 +556,11 @@
     color: #0369a1 !important;
     border-color: #38bdf8 !important;
   }
+  #btnFiltroLojaSobMedida.active {
+    background: #e5e5e5 !important;
+    color: #1A1A1A !important;
+    border-color: #1A1A1A !important;
+  }
   #btnFiltroDuplicados.has-duplicates {
     background: #fee2e2;
     color: #991b1b;
@@ -856,6 +861,7 @@
                 <button id="btnFiltroLojaSplash" class="btn-filter" onclick="definirFiltroLoja('Splash')">Splash</button>
                 <button id="btnFiltroLojaInter" class="btn-filter" onclick="definirFiltroLoja('Inter.')">Inter.</button>
                 <button id="btnFiltroLojaIgui" class="btn-filter" onclick="definirFiltroLoja('iGUI')">iGUi</button>
+                <button id="btnFiltroLojaSobMedida" class="btn-filter" onclick="definirFiltroLoja('iGUi SOB MEDIDA')">iGUi SOB MEDIDA</button>
               </div>
  
               <!-- Tipo Filter -->
@@ -1166,6 +1172,6 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<script src="pagamentos.js?v=202606291932"></script>
+<script src="pagamentos.js?v=202607071645"></script>
 </body>
 </html>
