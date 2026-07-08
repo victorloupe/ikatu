@@ -114,6 +114,67 @@
   .remember-row input[type=checkbox]{width:15px;height:15px;accent-color:#00AEEF;cursor:pointer;flex-shrink:0;}
   .remember-row label{font-size:12px;color:#7f8c9a;cursor:pointer;user-select:none;font-weight:500;}
 
+  /* ── Card com flip (frente: login / verso: sobre) ───────────── */
+  .flip-container{position:relative;width:100%;max-width:400px;z-index:10;perspective:1800px;}
+  .flip-card{position:relative;width:100%;transform-style:preserve-3d;transition:transform .85s cubic-bezier(.65,0,.35,1);}
+  .flip-card.flipped{transform:rotateY(180deg);}
+  .card-face{backface-visibility:hidden;-webkit-backface-visibility:hidden;}
+  .card-front{position:relative;}
+  .card-back{position:absolute;inset:0;transform:rotateY(180deg);display:flex;flex-direction:column;overflow:hidden;}
+
+  .about-scroll{flex:1;overflow-y:auto;padding-right:6px;margin-right:-6px;}
+  .about-scroll::-webkit-scrollbar{width:5px;}
+  .about-scroll::-webkit-scrollbar-thumb{background:rgba(26,42,58,.18);border-radius:10px;}
+  .about-kicker{font-size:10px;font-weight:800;color:#7f93a6;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;}
+  .about-intro{font-size:12px;color:#4a5a6a;line-height:1.65;margin:0 0 8px;}
+  .about-intro:last-of-type{margin-bottom:0;}
+  .about-intro strong{color:#1a2a3a;}
+  .about-intro em{color:#0369a1;font-style:normal;}
+  .about-features{margin-top:16px;display:flex;flex-direction:column;gap:11px;}
+  .about-feature{display:flex;align-items:flex-start;gap:10px;}
+  .about-feature svg{flex-shrink:0;margin-top:1px;}
+  .about-feature-title{font-size:12px;font-weight:700;color:#1a2a3a;}
+  .about-feature-desc{font-size:11px;color:#7f8c9a;margin-top:1px;line-height:1.4;}
+
+  /* Etiqueta "Sobre": presa fisicamente na borda do card, gira junto com ele (não desliza por cima) */
+  .info-tab{
+    position:absolute; bottom:30px; left:100%; width:32px; height:32px;
+    display:flex; align-items:center; gap:7px;
+    background:rgba(26,42,58,.82);
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    color:#fff; padding:0 9px; box-sizing:border-box;
+    border-radius:6px 16px 16px 6px;
+    cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.2);
+    z-index:5; overflow:hidden;
+    backface-visibility:hidden; -webkit-backface-visibility:hidden;
+    transition:width .35s cubic-bezier(.4,.2,.2,1), background .2s;
+  }
+  .info-tab:hover{ width:112px; background:#00AEEF; }
+  /* No lado da frente o texto vem antes do símbolo: "Sobre (i)" — mantém o ícone
+     encostado na borda (visível já no estado recolhido) e o texto some por trás dele */
+  .info-tab-front{ flex-direction:row-reverse; }
+  .info-tab-icon{width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  .info-tab-label{font-size:11.5px;font-weight:700;white-space:nowrap;letter-spacing:.2px;opacity:0;transition:opacity .25s ease;}
+  .info-tab:hover .info-tab-label{opacity:1;}
+
+  /* Etiqueta do verso: mesma peça física, girada 180° — some quando a frente está visível
+     e reaparece (já do lado esquerdo, sem espelhar o texto) quando o card completa o giro */
+  .info-tab-back{
+    width:112px; background:#00AEEF; border-radius:16px 6px 6px 16px;
+    transform:rotateY(180deg);
+  }
+  .info-tab-back .info-tab-label{ opacity:1; }
+
+  /* Evita que a etiqueta escondida (de costas) intercepte cliques */
+  .flip-card:not(.flipped) .info-tab-back{ pointer-events:none; }
+  .flip-card.flipped .info-tab-front{ pointer-events:none; }
+
+  @media (max-width:480px){
+    .info-tab{ width:26px; height:26px; bottom:24px; }
+    .info-tab:hover{ width:96px; }
+    .info-tab-back{ width:96px; }
+  }
+
   /* ── Tela de abertura (pós-login) ───────────────────────────── */
   .splash{
     position:fixed; inset:0; z-index:9999;
@@ -240,60 +301,149 @@
   </div>
 </div>
 
-<!-- LOGIN -->
-<div class="card" id="loginCard">
+<!-- CARD COM FLIP: frente = login, verso = sobre -->
+<div class="flip-container">
+  <div class="flip-card" id="flipCard">
 
-  <!-- Logo dentro do Card -->
-  <div class="logo-wrap">
-    <img src="logo_site.png" alt="iGUi Pranchas" style="height:130px; width:auto; display:block; margin:0 auto;">
-  </div>
+    <!-- FRENTE: LOGIN -->
+    <div class="card card-face card-front" id="loginCard">
 
-  <div class="login-wrap" id="loginWrap">
-    <div class="card-title">Entrar</div>
-    <div class="card-sub">Acesse com seu e-mail e senha</div>
-
-    <div class="error-msg" id="loginError"></div>
-
-    <form onsubmit="handleLogin(event)">
-      <div class="field">
-        <label>Usuário / E-mail</label>
-        <input type="text" id="loginEmail" placeholder="Ex: victor ou seu@email.com" required autocomplete="username">
+      <!-- Logo dentro do Card -->
+      <div class="logo-wrap">
+        <img src="logo_site.png" alt="iGUi Pranchas" style="height:130px; width:auto; display:block; margin:0 auto;">
       </div>
-      <div class="field">
-        <label>Senha</label>
-        <div style="position: relative;">
-          <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 42px;">
-          <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #7f8c9a; padding: 4px; display: flex; align-items: center; justify-content: center; outline: none; transition: color 0.2s;" onmouseover="this.style.color='#00AEEF'" onmouseout="this.style.color='#7f8c9a'">
-            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
+
+      <div class="login-wrap" id="loginWrap">
+        <div class="card-title">Entrar</div>
+        <div class="card-sub">Acesse com seu e-mail e senha</div>
+
+        <div class="error-msg" id="loginError"></div>
+
+        <form onsubmit="handleLogin(event)">
+          <div class="field">
+            <label>Usuário / E-mail</label>
+            <input type="text" id="loginEmail" placeholder="Ex: victor ou seu@email.com" required autocomplete="username">
+          </div>
+          <div class="field">
+            <label>Senha</label>
+            <div style="position: relative;">
+              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password" style="padding-right: 42px;">
+              <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #7f8c9a; padding: 4px; display: flex; align-items: center; justify-content: center; outline: none; transition: color 0.2s;" onmouseover="this.style.color='#00AEEF'" onmouseout="this.style.color='#7f8c9a'">
+                <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="remember-row">
+            <input type="checkbox" id="rememberMe">
+            <label for="rememberMe">Lembrar-me</label>
+          </div>
+          <button class="btn-login" id="btnLogin" type="submit">Entrar</button>
+        </form>
+
+        <a class="forgot" onclick="mostrarReset()">Esqueci minha senha</a>
+      </div>
+
+      <!-- RESET DE SENHA -->
+      <div class="reset-wrap" id="resetWrap">
+        <div class="card-title">Redefinir senha</div>
+        <div class="card-sub" style="font-size: 13px; color: #7f8c9a; margin-top: 10px; margin-bottom: 20px; line-height: 1.6;">
+          Por favor, entre em contato com o administrador para redefinir a sua senha.
         </div>
-      </div>
-      <div class="remember-row">
-        <input type="checkbox" id="rememberMe">
-        <label for="rememberMe">Lembrar-me</label>
-      </div>
-      <button class="btn-login" id="btnLogin" type="submit">Entrar</button>
-    </form>
 
-    <a class="forgot" onclick="mostrarReset()">Esqueci minha senha</a>
-  </div>
+        <span class="back-link" onclick="mostrarLogin()" style="margin-top: 24px; font-weight: 600;">← Voltar ao login</span>
+      </div>
 
-  <!-- RESET DE SENHA -->
-  <div class="reset-wrap" id="resetWrap">
-    <div class="card-title">Redefinir senha</div>
-    <div class="card-sub" style="font-size: 13px; color: #7f8c9a; margin-top: 10px; margin-bottom: 20px; line-height: 1.6;">
-      Por favor, entre em contato com o administrador para redefinir a sua senha.
+      <!-- Rodapé dentro do Card -->
+      <div class="card-footer">Ikatu © 2026</div>
+
     </div>
 
-    <span class="back-link" onclick="mostrarLogin()" style="margin-top: 24px; font-weight: 600;">← Voltar ao login</span>
+    <!-- VERSO: SOBRE -->
+    <div class="card card-face card-back" id="aboutCard">
+
+      <div class="card-title">Sobre o Ikatu</div>
+      <div class="card-sub">Por que existimos e o que oferecemos</div>
+
+      <div class="about-scroll">
+
+        <div class="about-kicker">Por que Ikatu?</div>
+        <p class="about-intro">
+          <strong>Ikatu</strong> vem do Tupi-Guarani e significa
+          <em>"bom lugar"</em> — uma referência direta ao ambiente
+          onde piscinas ganham vida: espaços de lazer, bem-estar e convivência.
+        </p>
+        <p class="about-intro">
+          O nome também carrega a ideia de <strong>organização e harmonia</strong>:
+          tudo no lugar certo, do projeto à entrega. Uma plataforma pensada por quem vive
+          o dia a dia de piscinas, para quem projeta, vende e acompanha cada obra.
+        </p>
+
+        <div class="about-features">
+          <div class="about-kicker" style="margin-bottom:2px;">O sistema Ikatu conta com:</div>
+
+          <div class="about-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AEEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+            <div><div class="about-feature-title">Gerador de Pranchas Técnicas</div><div class="about-feature-desc">Crie PDFs profissionais com pré-visualização em tempo real</div></div>
+          </div>
+
+          <div class="about-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AEEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h12"/></svg>
+            <div><div class="about-feature-title">Histórico na Nuvem</div><div class="about-feature-desc">Acesse pranchas anteriores a qualquer hora + lixeira de 30 dias</div></div>
+          </div>
+
+          <div class="about-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AEEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <div><div class="about-feature-title">Controle de Pagamentos</div><div class="about-feature-desc">Relatórios financeiros com gráficos e exportação para Excel</div></div>
+          </div>
+
+          <div class="about-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AEEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            <div><div class="about-feature-title">Mural de Avisos</div><div class="about-feature-desc">Comunicados da equipe com notificações nativas no navegador</div></div>
+          </div>
+
+          <div class="about-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AEEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div><div class="about-feature-title">Chat em Tempo Real</div><div class="about-feature-desc">Converse com a equipe direto pelo sistema, sem apps externos</div></div>
+          </div>
+
+          <div class="about-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AEEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            <div><div class="about-feature-title">Biblioteca de Links</div><div class="about-feature-desc">Organize catálogos, referências e documentos em pastas compartilhadas</div></div>
+          </div>
+
+          <div class="about-feature">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00AEEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+            <div><div class="about-feature-title">Instalável como App (PWA)</div><div class="about-feature-desc">Adicione ao celular ou desktop e use como aplicativo nativo</div></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Rodapé dentro do Card (mesmo rodapé da frente) -->
+      <div class="card-footer">Ikatu © 2026</div>
+
+    </div>
+
+    <!-- Etiqueta "Sobre" (presa na borda direita da frente) -->
+    <div class="info-tab info-tab-front" id="infoTabFront" onclick="toggleFlip()" title="Sobre o Ikatu">
+      <span class="info-tab-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M8 7v4.5M8 5.2v.3"/></svg>
+      </span>
+      <span class="info-tab-label">Sobre</span>
+    </div>
+
+    <!-- Etiqueta "Voltar" (mesma etiqueta, presa na borda que -- após o giro -- fica à esquerda) -->
+    <div class="info-tab info-tab-back" id="infoTabBack" onclick="toggleFlip()" title="Voltar ao login">
+      <span class="info-tab-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+      </span>
+      <span class="info-tab-label">Voltar</span>
+    </div>
+
   </div>
-
-  <!-- Rodapé dentro do Card -->
-  <div class="card-footer">Ikatu © 2026</div>
-
 </div>
 
 <script>
@@ -536,6 +686,12 @@
     return msg;
   }
 
+  // Flip do card: frente (login) ⇄ verso (sobre). A etiqueta é filha do próprio
+  // card e gira junto (fisicamente presa a ele), por isso só precisamos alternar uma classe.
+  function toggleFlip() {
+    document.getElementById('flipCard').classList.toggle('flipped');
+  }
+
   function togglePasswordVisibility() {
     const input = document.getElementById('loginPassword');
     const eyeIcon = document.getElementById('eyeIcon');
@@ -600,30 +756,4 @@
           clientY = e.clientY;
         }
 
-        if (clientX === undefined || clientY === undefined) return;
-
-        const offset = $bg.offset();
-        const x = clientX - offset.left;
-        const y = clientY - offset.top;
-
-        const width = $bg.width();
-        const height = $bg.height();
-        const pctX = (x / width) * 100;
-        const pctY = (y / height) * 100;
-
-        // Limites da piscina (deslocado levemente para dentro para poupar as bordas de pedra)
-        if (pctX >= 11.5 && pctX <= 90.0 && pctY >= 15.0 && pctY <= 83.5) {
-          const strength = (e.type === 'mousedown' || e.type === 'touchstart' || e.type === 'click') ? 0.035 : 0.012;
-          $bg.ripples('drop', x, y, 20, strength);
-        }
-      }
-
-      $(window).on('mousemove mousedown touchmove touchstart click', handleInteraction);
-      pauseRipplesAfterDelay();
-    } catch (e) {
-      console.warn('WebGL Ripples não suportado neste navegador:', e);
-    }
-  });
-</script>
-</body>
-</html>
+        if (clientX === undefined || clientY === undefined) return
