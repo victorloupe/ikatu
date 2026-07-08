@@ -756,4 +756,30 @@
           clientY = e.clientY;
         }
 
-        if (clientX === undefined || clientY === undefined) return
+        if (clientX === undefined || clientY === undefined) return;
+
+        const offset = $bg.offset();
+        const x = clientX - offset.left;
+        const y = clientY - offset.top;
+
+        const width = $bg.width();
+        const height = $bg.height();
+        const pctX = (x / width) * 100;
+        const pctY = (y / height) * 100;
+
+        // Limites da piscina (deslocado levemente para dentro para poupar as bordas de pedra)
+        if (pctX >= 11.5 && pctX <= 90.0 && pctY >= 15.0 && pctY <= 83.5) {
+          const strength = (e.type === 'mousedown' || e.type === 'touchstart' || e.type === 'click') ? 0.035 : 0.012;
+          $bg.ripples('drop', x, y, 20, strength);
+        }
+      }
+
+      $(window).on('mousemove mousedown touchmove touchstart click', handleInteraction);
+      pauseRipplesAfterDelay();
+    } catch (e) {
+      console.warn('WebGL Ripples não suportado neste navegador:', e);
+    }
+  });
+</script>
+</body>
+</html>
