@@ -51,7 +51,7 @@
   .brand-badge{padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;display:inline-block;}
   .brand-badge.igui{background:#e8f6fd;color:#00aefe;}
   .brand-badge.conceito{background:#fdf4e8;color:#d97706;}
-  .brand-badge.internacional{background:#f3e8ff;color:#7c3aed;}
+  .brand-badge.internacional{background:#e8fdf0;color:#10b981;}
   .brand-badge.splash{background:#fde8f4;color:#e91e8c;}
   .brand-badge.igui-sob-medida{background:#e0e0e0;color:#1A1A1A;}
 
@@ -269,6 +269,26 @@
             </tbody>
           </table>
         </div>
+        <!-- Lojas Pagination and Page Size Container -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; user-select: none; flex-wrap: wrap; gap: 12px;">
+          <!-- Left spacer to center pagination controls -->
+          <div style="flex: 1; display: flex; justify-content: flex-start;"></div>
+          
+          <!-- Pagination Controls in Center -->
+          <div id="lojasPagination" style="display: flex; align-items: center; gap: 8px;"></div>
+          
+          <!-- Page Size Selector on the Right -->
+          <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+            <label style="font-size: 11px; font-weight: 700; color: #8090a0; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">Mostrar:</label>
+            <select id="lojasPageSize" onchange="alterarLojaPageSize()" style="width: 110px !important; padding: 6px 24px 6px 12px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text); outline: none; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+              <option value="10">10 itens</option>
+              <option value="15" selected>15 itens</option>
+              <option value="30">30 itens</option>
+              <option value="50">50 itens</option>
+              <option value="all">Todos</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- ABA PISCINAS -->
@@ -303,6 +323,26 @@
               <tr><td colspan="3" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
             </tbody>
           </table>
+        </div>
+        <!-- Piscinas Pagination and Page Size Container -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; user-select: none; flex-wrap: wrap; gap: 12px;">
+          <!-- Left spacer to center pagination controls -->
+          <div style="flex: 1; display: flex; justify-content: flex-start;"></div>
+          
+          <!-- Pagination Controls in Center -->
+          <div id="piscinasPagination" style="display: flex; align-items: center; gap: 8px;"></div>
+          
+          <!-- Page Size Selector on the Right -->
+          <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+            <label style="font-size: 11px; font-weight: 700; color: #8090a0; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">Mostrar:</label>
+            <select id="piscinasPageSize" onchange="alterarPiscinaPageSize()" style="width: 110px !important; padding: 6px 24px 6px 12px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text); outline: none; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+              <option value="10">10 itens</option>
+              <option value="15" selected>15 itens</option>
+              <option value="30">30 itens</option>
+              <option value="50">50 itens</option>
+              <option value="all">Todos</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -448,11 +488,20 @@
   let filtroLojaFranquia = '';
   let filtroPiscinaMarca = '';
 
+  // Lojas pagination state
+  let _lojaPageSize = 15;
+  let _lojaCurrentPage = 1;
+
+  // Piscinas pagination state
+  let _piscinaPageSize = 15;
+  let _piscinaCurrentPage = 1;
+
   // Sub-tab switching — Lojas
   function setSubtabLoja(btn, franquia) {
     filtroLojaFranquia = franquia;
     document.querySelectorAll('#subtabsLojas .subtab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    _lojaCurrentPage = 1;
     renderLojas();
   }
 
@@ -461,6 +510,7 @@
     filtroPiscinaMarca = marca;
     document.querySelectorAll('#subtabsPiscinas .subtab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    _piscinaCurrentPage = 1;
     renderPiscinas();
   }
 
@@ -558,6 +608,7 @@
   }
 
   function handleAcLojas(val) {
+    _lojaCurrentPage = 1;
     renderLojas();
     const list = document.getElementById('acLojas');
     const q = val.trim();
@@ -580,10 +631,12 @@
   function selectAcLoja(nome) {
     document.getElementById('filtroLojaBusca').value = nome;
     closeAllAc();
+    _lojaCurrentPage = 1;
     renderLojas();
   }
 
   function handleAcPiscinas(val) {
+    _piscinaCurrentPage = 1;
     renderPiscinas();
     const list = document.getElementById('acPiscinas');
     const q = val.trim();
@@ -602,12 +655,150 @@
   function selectAcPiscina(modelo) {
     document.getElementById('filtroPiscinaBusca').value = modelo;
     closeAllAc();
+    _piscinaCurrentPage = 1;
     renderPiscinas();
   }
 
   document.addEventListener('click', e => {
     if (!e.target.closest('.ac-wrap')) closeAllAc();
   });
+
+  function _paginationRange(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+    if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  }
+
+  function alterarLojaPageSize() {
+    _lojaPageSize = document.getElementById('lojasPageSize').value;
+    _lojaCurrentPage = 1;
+    renderLojas();
+  }
+
+  function renderLojasPagination(totalItems, pageSize, totalPages) {
+    const container = document.getElementById('lojasPagination');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (pageSize >= totalItems) {
+      return;
+    }
+
+    // First page
+    const btnFirst = document.createElement('button');
+    btnFirst.className = 'proj-pag-btn' + (_lojaCurrentPage === 1 ? ' disabled' : '');
+    btnFirst.disabled = _lojaCurrentPage === 1;
+    btnFirst.innerHTML = '&laquo;';
+    btnFirst.onclick = () => { _lojaCurrentPage = 1; renderLojas(); };
+    container.appendChild(btnFirst);
+
+    // Prev page
+    const btnPrev = document.createElement('button');
+    btnPrev.className = 'proj-pag-btn' + (_lojaCurrentPage === 1 ? ' disabled' : '');
+    btnPrev.disabled = _lojaCurrentPage === 1;
+    btnPrev.innerHTML = '&lsaquo;';
+    btnPrev.onclick = () => { _lojaCurrentPage--; renderLojas(); };
+    container.appendChild(btnPrev);
+
+    // Page numbers
+    const range = _paginationRange(_lojaCurrentPage, totalPages);
+    range.forEach(n => {
+      if (n === '...') {
+        const span = document.createElement('span');
+        span.style.cssText = 'color:var(--muted);padding:0 4px;font-size:12px;';
+        span.textContent = '...';
+        container.appendChild(span);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'proj-pag-btn' + (n === _lojaCurrentPage ? ' active' : '');
+        btn.textContent = n;
+        btn.onclick = () => { _lojaCurrentPage = n; renderLojas(); };
+        container.appendChild(btn);
+      }
+    });
+
+    // Next page
+    const btnNext = document.createElement('button');
+    btnNext.className = 'proj-pag-btn' + (_lojaCurrentPage === totalPages ? ' disabled' : '');
+    btnNext.disabled = _lojaCurrentPage === totalPages;
+    btnNext.innerHTML = '&rsaquo;';
+    btnNext.onclick = () => { _lojaCurrentPage++; renderLojas(); };
+    container.appendChild(btnNext);
+
+    // Last page
+    const btnLast = document.createElement('button');
+    btnLast.className = 'proj-pag-btn' + (_lojaCurrentPage === totalPages ? ' disabled' : '');
+    btnLast.disabled = _lojaCurrentPage === totalPages;
+    btnLast.innerHTML = '&raquo;';
+    btnLast.onclick = () => { _lojaCurrentPage = totalPages; renderLojas(); };
+    container.appendChild(btnLast);
+  }
+
+  function alterarPiscinaPageSize() {
+    _piscinaPageSize = document.getElementById('piscinasPageSize').value;
+    _piscinaCurrentPage = 1;
+    renderPiscinas();
+  }
+
+  function renderPiscinasPagination(totalItems, pageSize, totalPages) {
+    const container = document.getElementById('piscinasPagination');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (pageSize >= totalItems) {
+      return;
+    }
+
+    // First page
+    const btnFirst = document.createElement('button');
+    btnFirst.className = 'proj-pag-btn' + (_piscinaCurrentPage === 1 ? ' disabled' : '');
+    btnFirst.disabled = _piscinaCurrentPage === 1;
+    btnFirst.innerHTML = '&laquo;';
+    btnFirst.onclick = () => { _piscinaCurrentPage = 1; renderPiscinas(); };
+    container.appendChild(btnFirst);
+
+    // Prev page
+    const btnPrev = document.createElement('button');
+    btnPrev.className = 'proj-pag-btn' + (_piscinaCurrentPage === 1 ? ' disabled' : '');
+    btnPrev.disabled = _piscinaCurrentPage === 1;
+    btnPrev.innerHTML = '&lsaquo;';
+    btnPrev.onclick = () => { _piscinaCurrentPage--; renderPiscinas(); };
+    container.appendChild(btnPrev);
+
+    // Page numbers
+    const range = _paginationRange(_piscinaCurrentPage, totalPages);
+    range.forEach(n => {
+      if (n === '...') {
+        const span = document.createElement('span');
+        span.style.cssText = 'color:var(--muted);padding:0 4px;font-size:12px;';
+        span.textContent = '...';
+        container.appendChild(span);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'proj-pag-btn' + (n === _piscinaCurrentPage ? ' active' : '');
+        btn.textContent = n;
+        btn.onclick = () => { _piscinaCurrentPage = n; renderPiscinas(); };
+        container.appendChild(btn);
+      }
+    });
+
+    // Next page
+    const btnNext = document.createElement('button');
+    btnNext.className = 'proj-pag-btn' + (_piscinaCurrentPage === totalPages ? ' disabled' : '');
+    btnNext.disabled = _piscinaCurrentPage === totalPages;
+    btnNext.innerHTML = '&rsaquo;';
+    btnNext.onclick = () => { _piscinaCurrentPage++; renderPiscinas(); };
+    container.appendChild(btnNext);
+
+    // Last page
+    const btnLast = document.createElement('button');
+    btnLast.className = 'proj-pag-btn' + (_piscinaCurrentPage === totalPages ? ' disabled' : '');
+    btnLast.disabled = _piscinaCurrentPage === totalPages;
+    btnLast.innerHTML = '&raquo;';
+    btnLast.onclick = () => { _piscinaCurrentPage = totalPages; renderPiscinas(); };
+    container.appendChild(btnLast);
+  }
 
   // ── render Lojas ──────────────────────────────────────
   function renderLojas() {
@@ -632,10 +823,28 @@
 
     if (!filtered.length) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">Nenhuma loja encontrada</td></tr>';
+      renderLojasPagination(0, 1, 1);
       return;
     }
 
-    filtered.forEach(l => {
+    const totalItems = filtered.length;
+    const pageSize = _lojaPageSize === 'all' ? totalItems : parseInt(_lojaPageSize);
+    const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+    if (_lojaCurrentPage > totalPages) {
+      _lojaCurrentPage = totalPages;
+    }
+    if (_lojaCurrentPage < 1) {
+      _lojaCurrentPage = 1;
+    }
+
+    const startIndex = (_lojaCurrentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalItems);
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    renderLojasPagination(totalItems, pageSize, totalPages);
+
+    paginatedItems.forEach(l => {
       const tr = document.createElement('tr');
       const franquiaClass = l.franquia.toLowerCase().replace(/\s+/g,'-');
       tr.innerHTML = `
@@ -671,10 +880,28 @@
 
     if (!filtered.length) {
       tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:32px">Nenhum modelo encontrado</td></tr>';
+      renderPiscinasPagination(0, 1, 1);
       return;
     }
 
-    filtered.forEach(p => {
+    const totalItems = filtered.length;
+    const pageSize = _piscinaPageSize === 'all' ? totalItems : parseInt(_piscinaPageSize);
+    const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+    if (_piscinaCurrentPage > totalPages) {
+      _piscinaCurrentPage = totalPages;
+    }
+    if (_piscinaCurrentPage < 1) {
+      _piscinaCurrentPage = 1;
+    }
+
+    const startIndex = (_piscinaCurrentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalItems);
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    renderPiscinasPagination(totalItems, pageSize, totalPages);
+
+    paginatedItems.forEach(p => {
       const tr = document.createElement('tr');
       const marcaClass = p.marca.toLowerCase();
       tr.innerHTML = `
@@ -746,6 +973,7 @@
 
       showToast('Loja salva com sucesso!', 'ok');
       fecharModalLoja();
+      if (!id) _lojaCurrentPage = 1;
       await carregarDados();
     } catch(e) {
       console.error(e);
@@ -818,6 +1046,7 @@
 
       showToast('Modelo salvo com sucesso!', 'ok');
       fecharModalPiscina();
+      if (!id) _piscinaCurrentPage = 1;
       await carregarDados();
     } catch(e) {
       console.error(e);

@@ -1916,6 +1916,16 @@ window.sbDeserializeSessionData = sbDeserializeSessionData;
 // ── Exports de sugestões ─────────────────────────────────────────────────────
 window.sbListarSugestoes        = sbListarSugestoes;
 window.sbVerificarBackupPendente = sbVerificarBackupPendente;
+function extrairCodigoProjeto(texto) {
+  if (!texto) return "";
+  let limpo = texto.toString().trim().replace(/\s*\(\d+\)\s*$/, "");
+  if (/splash/i.test(limpo)) return "Splash";
+  let partes = limpo.split("_");
+  let projeto = partes[0] || "";
+  if (/^\d+$/.test(projeto)) return projeto.trim();
+  return "Inter.";
+}
+
 async function sbAdicionarLinhaAoPagamento(userId, rowObj) {
   const { data: list, error: listErr } = await sb.from('payments')
     .select('*').eq('user_id', userId);
@@ -1923,6 +1933,55 @@ async function sbAdicionarLinhaAoPagamento(userId, rowObj) {
   const rec = list && list[0];
   if (rec) {
     const rows = Array.isArray(rec.rows_data) ? rec.rows_data.slice() : [];
+    
+    // 1. Tentar encontrar pelo prancha_id (vínculo exato)
+    let existingIndex = -1;
+    if (rowObj.prancha_id) {
+      existingIndex = rows.findIndex(r => r.prancha_id === rowObj.prancha_id);
+    }
+    
+    // 2. Se não encontrar, e o código do projeto for numérico, tentar encontrar pelo código do projeto (caso de duplicação)
+    if (existingIndex === -1) {
+      const newProjCode = extrairCodigoProjeto(rowObj.raw);
+      if (newProjCode && /^\d+$/.test(newProjCode)) {
+        existingIndex = rows.findIndex(r => extrairCodigoProjeto(r.raw) === newProjCode);
+      }
+    }
+    
+    if (existingIndex !== -1) {
+      const oldRow = rows[existingIndex];
+      
+      // Sub-opção A1 (Adicionar/Concatenar):
+      const modeloOriginal = oldRow.modelo || "";
+      const novoModelo = rowObj.modelo || "";
+      let modelosAtualizados = modeloOriginal;
+      if (novoModelo && !modeloOriginal.split(';').map(s => s.trim()).includes(novoModelo)) {
+        modelosAtualizados = modeloOriginal ? `${modeloOriginal}; ${novoModelo}` : novoModelo;
+      }
+      
+      // Reconstrói o campo 'raw' com os modelos atualizados
+      const partesRaw = (oldRow.raw || "").split('_');
+      if (partesRaw.length >= 3) {
+        partesRaw[1] = modelosAtualizados;
+      }
+      const rawAtualizado = partesRaw.join('_');
+
+      rows[existingIndex] = {
+        ...oldRow,
+        raw: rawAtualizado,
+        cliente: rowObj.cliente,
+        loja: rowObj.loja,
+        modelo: modelosAtualizados,
+        tipo: rowObj.tipo,
+        data_envio: rowObj.data_envio,
+        prancha_id: rowObj.prancha_id || oldRow.prancha_id // Vincula o pagamento à nova prancha duplicada
+      };
+      
+      const { error } = await sb.from('payments').update({ rows_data: rows }).eq('id', rec.id);
+      if (error) throw error;
+      return;
+    }
+    
     rows.push(rowObj);
     const { error } = await sb.from('payments').update({ rows_data: rows }).eq('id', rec.id);
     if (error) throw error;

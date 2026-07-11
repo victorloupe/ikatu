@@ -92,7 +92,7 @@ function drawFooter(doc, includeLoja) {
   const lojaStr = (includeLoja && form.loja) ? ' ' + String(form.loja).toUpperCase() : '';
   const marca = window.v ? window.v('loja_tipo') : '';
   const prefix = marca === 'Splash' ? 'SPLASH' : marca === 'iGUi SOB MEDIDA' ? 'IGUI SOB MEDIDA' : 'IGUI CONCEITO';
-  doc.text('PROJETO 3D - ' + prefix + lojaStr, 10, fy + 6.5);
+  doc.text('PROJETO 3D - ' + prefix + lojaStr, 10, fy + 7.5);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);

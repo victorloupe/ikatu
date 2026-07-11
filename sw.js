@@ -7,13 +7,22 @@
 
 // ⚠️ AO FAZER DEPLOY com mudanças: incremente a versão abaixo (v2 → v3 → ...).
 // É isso que dispara o aviso "Nova versão disponível" nas abas abertas.
-const CACHE = 'ikatu-v37';
+const CACHE = 'ikatu-v38';
 
 // Arquivos básicos do app shell (pré-cacheados na instalação)
 const SHELL = [
   'index.html',
   'login.html',
   'mobile/login.html',
+  'mobile/index.html',
+  'mobile/pagamentos.html',
+  'mobile/admin.html',
+  'mobile/avisos.html',
+  'mobile/chat.html',
+  'mobile/perfil.html',
+  'mobile/prancha.html',
+  'mobile/mobile.css',
+  'mobile/mobile-nav.js',
   'admin.html',
   'manifest.json',
   'projetos.html',
@@ -65,7 +74,8 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
   // Páginas HTML não pré-cacheadas passam direto para o servidor
-  const pathname = url.pathname.replace(/^\//, '');
+  let pathname = url.pathname.replace(/^\//, '');
+  if (pathname === '') pathname = 'index.html';
   const isHtml = url.pathname.endsWith('.html') || url.pathname === '/';
   if (isHtml && !SHELL.includes(pathname)) return;
 

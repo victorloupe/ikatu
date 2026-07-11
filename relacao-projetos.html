@@ -17,8 +17,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="supabase-client.js?v=202606261041"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <meta name="theme-color" content="#1a2a3a">
-<link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="styles.css?v=202606261041">
 <style>
   /* Header Relação */
@@ -160,7 +161,6 @@
     background: #fff;
     border: 1.5px solid #cbd5e1;
     border-radius: 10px;
-    max-height: calc(100vh - 210px);
     position: relative;
     box-shadow: 0 4px 20px rgba(0,0,0,0.07);
   }
@@ -394,9 +394,41 @@
   tr.fr-conceito:hover td { background-color: #fef9c3 !important; }
   tr.fr-conceito.details-row td { background-color: #fffdf5 !important; border-top: 1px solid #fef9c3 !important; border-bottom: 3px solid #1e293b !important; }
 
-  tr.fr-internacional td { background-color: #faf5ff !important; }
-  tr.fr-internacional:hover td { background-color: #ede9fe !important; }
-  tr.fr-internacional.details-row td { background-color: #fdfcff !important; border-top: 1px solid #ede9fe !important; border-bottom: 3px solid #1e293b !important; }
+  tr.fr-internacional td { background-color: #f0fdf4 !important; }
+  tr.fr-internacional:hover td { background-color: #dcfce7 !important; }
+  tr.fr-internacional.details-row td { background-color: #f8fef9 !important; border-top: 1px solid #dcfce7 !important; border-bottom: 3px solid #1e293b !important; }
+
+  /* Map markers custom styles */
+  .custom-map-icon-container {
+    background: transparent;
+    border: none;
+  }
+  .map-circle {
+    border-radius: 50%;
+    text-align: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    border: 2px solid #fff;
+    transition: transform 0.2s;
+    user-select: none;
+  }
+  .map-circle:hover {
+    transform: scale(1.1);
+  }
+  .map-marker-blue {
+    background: rgba(0, 174, 254, 0.85); /* iGUi Blue */
+    box-shadow: 0 0 10px rgba(0, 174, 254, 0.6);
+  }
+  .map-marker-purple {
+    background: rgba(124, 58, 237, 0.85); /* Roxo */
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
+  }
+  .map-marker-pink {
+    background: rgba(233, 30, 140, 0.85); /* Splash Pink */
+    box-shadow: 0 0 15px rgba(233, 30, 140, 0.6);
+  }
 
   tr.fr-sobmedida td { background-color: #f2f2f2 !important; }
   tr.fr-sobmedida:hover td { background-color: #e0e0e0 !important; }
@@ -875,12 +907,12 @@
 
               <div class="tool-field">
                 <label>Buscar </label>
-                <input type="text" id="filtroGrid" placeholder="Loja, ID ou Projetista..." oninput="renderGrid()">
+                <input type="text" id="filtroGrid" placeholder="Loja, ID ou Projetista..." oninput="_gridCurrentPage = 1; renderGrid()">
               </div>
 
               <div class="tool-field">
                 <label>Status  </label>
-                <select id="filtroPago" onchange="renderGrid();_updateDupHighlights()">
+                <select id="filtroPago" onchange="_gridCurrentPage = 1; renderGrid();_updateDupHighlights()">
                   <option value="nao_pagos" selected>Não Pagos</option>
                   <option value="pagos">Pagos</option>
                   <option value="todos">Todos</option>
@@ -945,6 +977,26 @@
                   <!-- Loaded dynamically -->
                 </tbody>
               </table>
+            </div>
+            <!-- Pagination and Page Size Container -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; user-select: none; flex-wrap: wrap; gap: 12px;">
+              <!-- Left spacer to center pagination controls -->
+              <div style="flex: 1; display: flex; justify-content: flex-start;"></div>
+              
+              <!-- Pagination Controls in Center -->
+              <div id="gridPagination" style="display: flex; align-items: center; gap: 8px;"></div>
+              
+              <!-- Page Size Selector on the Right -->
+              <div style="flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 8px;">
+                <label style="font-size: 11px; font-weight: 700; color: #8090a0; text-transform: uppercase; letter-spacing: 0.5px; margin: 0;">Mostrar:</label>
+                <select id="gridPageSize" onchange="alterarPageSize()" style="width: 110px !important; padding: 6px 24px 6px 12px; border-radius: 8px; border: 1.5px solid var(--border); background: #fff; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--text); outline: none; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                  <option value="10">10 itens</option>
+                  <option value="20" selected>20 itens</option>
+                  <option value="50">50 itens</option>
+                  <option value="100">100 itens</option>
+                  <option value="all">Todos</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
@@ -1272,6 +1324,25 @@
                   <canvas id="chartPrazo"></canvas>
                 </div>
               </div>
+              <!-- Bar: Piscina mais vendida -->
+              <div class="chart-card" style="min-height:280px;">
+                <div class="chart-title">Modelos de Piscina mais Solicitados <span id="chartPiscinaSpan" style="color:#00aefe;font-weight:700;"></span></div>
+                <div style="position:relative;height:240px;">
+                  <canvas id="chartPiscina"></canvas>
+                </div>
+              </div>
+              <!-- Donut: por fábrica -->
+              <div class="chart-card" style="min-height:280px;">
+                <div class="chart-title">Fábricas mais Solicitadas <span id="chartFabricaSpan" style="color:#00aefe;font-weight:700;"></span></div>
+                <div style="position:relative;height:240px;">
+                  <canvas id="chartFabrica"></canvas>
+                </div>
+              </div>
+              <!-- Map: Geográfico de Projetos (full width) -->
+              <div class="chart-card full" style="min-height:380px;">
+                <div class="chart-title">Distribuição Geográfica de Projetos <span style="color:#00aefe;font-weight:700;">(UFs)</span></div>
+                <div id="map" style="height:320px; border-radius:8px; overflow:hidden; border: 1px solid #e2e8f0; background:#ffffff;"></div>
+              </div>
               <!-- Bar: evolução mensal (full width) -->
               <div class="chart-card full">
                 <div class="chart-title">Evolução Mensal <span id="chartMensalSpan" style="color:#00aefe;font-weight:700;"></span></div>
@@ -1337,7 +1408,10 @@
   let debounceTimers = {};
   let _resumoCurrentProjects = []; // projetos atuais do resumo projetista
   let _chartLojas = null, _chartFranquia = null, _chartMensal = null,
-      _chartTipo = null, _chartPrazo = null; // Chart.js instances
+      _chartTipo = null, _chartPrazo = null, _chartPiscina = null, _chartFabrica = null; // Chart.js instances
+  let _gridPageSize = 20; // Default: 20 rows per page
+  let _gridCurrentPage = 1;
+  let _leafletMap = null, _mapMarkersLayer = null; // Leaflet map state
 
   // Sort state
   let _gridSortField = null; // null = ordem natural (por #)
@@ -1462,7 +1536,7 @@
       return;
     }
 
-    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed','iGUi SOB MEDIDA':'#1A1A1A'};
+    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#10b981','iGUi SOB MEDIDA':'#1A1A1A'};
     const esc = v => String(v||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
     tbody.innerHTML = '';
@@ -1633,6 +1707,11 @@
     const elAno = document.getElementById('lojaResumoAno');
     if (elAno) elAno.value = document.getElementById('exercicioAno').value;
     atualizarResumoLoja();
+    if (_leafletMap) {
+      setTimeout(() => {
+        _leafletMap.invalidateSize();
+      }, 100);
+    }
   }
 
   function popularFiltrosResumo() {
@@ -1941,6 +2020,7 @@
   }
 
   async function carregarRelacaoProjetos() {
+    _gridCurrentPage = 1;
     const ano = document.getElementById('exercicioAno').value;
     const bannerEl = document.getElementById('bannerTitle');
     if (bannerEl) bannerEl.textContent = `Relação Projetos ${ano}`;
@@ -2110,6 +2190,78 @@
     `).join('');
   }
 
+  function alterarPageSize() {
+    _gridPageSize = document.getElementById('gridPageSize').value;
+    _gridCurrentPage = 1;
+    renderGrid();
+  }
+
+  function _paginationRange(current, total) {
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 4) return [1, 2, 3, 4, 5, '...', total];
+    if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+    return [1, '...', current - 1, current, current + 1, '...', total];
+  }
+
+  function renderPagination(totalItems, pageSize, totalPages) {
+    const container = document.getElementById('gridPagination');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (pageSize >= totalItems) {
+      return;
+    }
+
+    // Button: First page
+    const btnFirst = document.createElement('button');
+    btnFirst.className = 'proj-pag-btn' + (_gridCurrentPage === 1 ? ' disabled' : '');
+    btnFirst.disabled = _gridCurrentPage === 1;
+    btnFirst.innerHTML = '&laquo;';
+    btnFirst.onclick = () => { _gridCurrentPage = 1; renderGrid(); };
+    container.appendChild(btnFirst);
+
+    // Button: Prev page
+    const btnPrev = document.createElement('button');
+    btnPrev.className = 'proj-pag-btn' + (_gridCurrentPage === 1 ? ' disabled' : '');
+    btnPrev.disabled = _gridCurrentPage === 1;
+    btnPrev.innerHTML = '&lsaquo;';
+    btnPrev.onclick = () => { _gridCurrentPage--; renderGrid(); };
+    container.appendChild(btnPrev);
+
+    // Page numbers
+    const range = _paginationRange(_gridCurrentPage, totalPages);
+    range.forEach(n => {
+      if (n === '...') {
+        const span = document.createElement('span');
+        span.style.cssText = 'color:var(--muted);padding:0 4px;font-size:12px;';
+        span.textContent = '...';
+        container.appendChild(span);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = 'proj-pag-btn' + (n === _gridCurrentPage ? ' active' : '');
+        btn.textContent = n;
+        btn.onclick = () => { _gridCurrentPage = n; renderGrid(); };
+        container.appendChild(btn);
+      }
+    });
+
+    // Next page
+    const btnNext = document.createElement('button');
+    btnNext.className = 'proj-pag-btn' + (_gridCurrentPage === totalPages ? ' disabled' : '');
+    btnNext.disabled = _gridCurrentPage === totalPages;
+    btnNext.innerHTML = '&rsaquo;';
+    btnNext.onclick = () => { _gridCurrentPage++; renderGrid(); };
+    container.appendChild(btnNext);
+
+    // Last page
+    const btnLast = document.createElement('button');
+    btnLast.className = 'proj-pag-btn' + (_gridCurrentPage === totalPages ? ' disabled' : '');
+    btnLast.disabled = _gridCurrentPage === totalPages;
+    btnLast.innerHTML = '&raquo;';
+    btnLast.onclick = () => { _gridCurrentPage = totalPages; renderGrid(); };
+    container.appendChild(btnLast);
+  }
+
   function renderGrid() {
     _renderSortHeaders();
     const gridBody = document.getElementById('gridBody');
@@ -2125,10 +2277,28 @@
 
     if (filtered.length === 0) {
       gridBody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">Nenhum projeto encontrado. Adicione uma linha para começar.</td></tr>';
+      renderPagination(0, 1, 1);
       return;
     }
 
-    filtered.forEach((p, idx) => {
+    const totalItems = filtered.length;
+    const pageSize = _gridPageSize === 'all' ? totalItems : parseInt(_gridPageSize);
+    const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+    if (_gridCurrentPage > totalPages) {
+      _gridCurrentPage = totalPages;
+    }
+    if (_gridCurrentPage < 1) {
+      _gridCurrentPage = 1;
+    }
+
+    const startIndex = (_gridCurrentPage - 1) * pageSize;
+    const endIndex = Math.min(startIndex + pageSize, totalItems);
+    const paginatedItems = filtered.slice(startIndex, endIndex);
+
+    renderPagination(totalItems, pageSize, totalPages);
+
+    paginatedItems.forEach((p, idx) => {
       try {
         const franquiaVal = p.franquia || 'iGUi';
         const classFranquia = franquiaVal === 'iGUi SOB MEDIDA' ? 'fr-sobmedida' : `fr-${franquiaVal.toLowerCase()}`;
@@ -2199,7 +2369,7 @@
         const projColors = getProjetistaColors(p.projetista);
         const projStyle = p.projetista ? `style="color:${projColors.color};font-weight:700;"` : '';
 
-        const rowNum = filtered.length - idx;
+        const rowNum = filtered.length - (startIndex + idx);
 
         // Badge de andamento: calcula status se projeto estiver em andamento
         let badgeStyle = 'cursor:pointer;';
@@ -2478,6 +2648,7 @@
 
       if (field === 'data_entrada' || field === 'data_saida') {
         refreshAndamentoBadge();
+        renderGrid();
       }
 
       if (field === 'project_code' || field === 'obs') {
@@ -2581,6 +2752,7 @@
     };
 
     projectRelations.unshift(novaLinha);
+    _gridCurrentPage = 1;
     renderGrid();
     refreshAndamentoBadge();
     // Abre o detail row da nova linha automaticamente
@@ -3110,10 +3282,10 @@
     renderDelta(document.getElementById('kpiLojasDelta'), totalLojas,    lojasAnt);
 
     // ── Destroy all existing charts ────────────────────
-    [_chartLojas,_chartFranquia,_chartMensal,_chartTipo,_chartPrazo].forEach(c => { if(c) c.destroy(); });
-    _chartLojas = _chartFranquia = _chartMensal = _chartTipo = _chartPrazo = null;
+    [_chartLojas,_chartFranquia,_chartMensal,_chartTipo,_chartPrazo,_chartPiscina,_chartFabrica].forEach(c => { if(c) c.destroy(); });
+    _chartLojas = _chartFranquia = _chartMensal = _chartTipo = _chartPrazo = _chartPiscina = _chartFabrica = null;
 
-    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#7c3aed','iGUi SOB MEDIDA':'#1A1A1A'};
+    const franquiaColors = {iGUi:'#00aefe',Conceito:'#d97706',Splash:'#e91e8c',Internacional:'#10b981','iGUi SOB MEDIDA':'#1A1A1A'};
 
     document.getElementById('chartLojasSpan').textContent = 'TOP 10';
     document.getElementById('chartMensalSpan').textContent = `${ano}`;
@@ -3206,6 +3378,145 @@
           y: { beginAtZero: true, ticks: { font: { size: 10 } }, grid: { color: '#f1f5f9' } }
         }
       }
+    });
+
+    // ── Chart 6.5: Top 10 Piscinas (bar horizontal) ────
+    const countPiscina = {};
+    base.forEach(p => {
+      [p.modelo_01, p.modelo_02, p.modelo_03, p.modelo_04, p.modelo_05].forEach(m => {
+        if (m && m.trim()) {
+          const name = m.trim().toUpperCase();
+          countPiscina[name] = (countPiscina[name] || 0) + 1;
+        }
+      });
+    });
+    const sortedPiscina = Object.entries(countPiscina).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const piscinaLabels = sortedPiscina.map(([l]) => l.length > 20 ? l.slice(0,18)+'…' : l);
+    const piscinaData   = sortedPiscina.map(([,v]) => v);
+    const piscinaColors = ['#00aefe','#7c3aed','#10b981','#d97706','#e91e8c','#3b82f6','#06b6d4','#14b8a6','#f59e0b','#ef4444'];
+
+    document.getElementById('chartPiscinaSpan').textContent = 'TOP 10';
+
+    _chartPiscina = new Chart(document.getElementById('chartPiscina'), {
+      type: 'bar',
+      data: {
+        labels: piscinaLabels,
+        datasets: [{ label: 'Quantidade', data: piscinaData, backgroundColor: sortedPiscina.map((_,i)=>piscinaColors[i%piscinaColors.length]), borderRadius: 5, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { title: ctx => sortedPiscina[ctx[0].dataIndex][0], label: ctx => ` ${ctx.raw} piscina(s)` } } },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+          y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    // ── Chart 6.7: Top 10 Fábricas (bar horizontal) ──
+    const countFabrica = {};
+    base.forEach(p => {
+      if (p.fabrica && p.fabrica.trim()) {
+        const name = p.fabrica.trim().toUpperCase();
+        countFabrica[name] = (countFabrica[name] || 0) + 1;
+      }
+    });
+    const sortedFabrica = Object.entries(countFabrica).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const fabLabels = sortedFabrica.map(([l]) => l.length > 20 ? l.slice(0,18)+'…' : l);
+    const fabData   = sortedFabrica.map(([,v]) => v);
+    const fabColors = ['#10b981','#00aefe','#d97706','#7c3aed','#e91e8c','#3b82f6','#06b6d4','#14b8a6','#f59e0b','#ef4444'];
+
+    document.getElementById('chartFabricaSpan').textContent = 'TOP 10';
+
+    _chartFabrica = new Chart(document.getElementById('chartFabrica'), {
+      type: 'bar',
+      data: {
+        labels: fabLabels,
+        datasets: [{ label: 'Quantidade', data: fabData, backgroundColor: sortedFabrica.map((_,i)=>fabColors[i%fabColors.length]), borderRadius: 5, borderSkipped: false }]
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { title: ctx => sortedFabrica[ctx[0].dataIndex][0], label: ctx => ` ${ctx.raw} projeto(s)` } } },
+        scales: {
+          x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } }, grid: { color: '#f1f5f9' } },
+          y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    // ── Map: Distribuição Geográfica de Projetos ────────
+    const ESTADO_COORDS = {
+      'AC': [-9.0238, -70.812], 'AL': [-9.5713, -36.782], 'AP': [1.41, -51.77], 'AM': [-3.47, -62.28],
+      'BA': [-12.97, -38.50], 'CE': [-5.20, -39.53], 'DF': [-15.78, -47.93], 'ES': [-19.19, -40.34],
+      'GO': [-15.83, -49.83], 'MA': [-5.42, -45.44], 'MT': [-12.64, -55.42], 'MS': [-20.77, -54.78],
+      'MG': [-18.51, -44.55], 'PA': [-3.95, -49.67], 'PB': [-7.24, -36.78], 'PR': [-24.89, -51.55],
+      'PE': [-8.28, -37.95], 'PI': [-6.60, -42.28], 'RJ': [-22.30, -42.80], 'RN': [-5.81, -36.50],
+      'RS': [-30.03, -51.23], 'RO': [-10.83, -62.80], 'RR': [1.99, -61.33], 'SC': [-27.25, -50.49],
+      'SP': [-22.25, -48.25], 'SE': [-10.57, -37.45], 'TO': [-9.46, -48.26]
+    };
+
+    function extrairEstado(p) {
+      if (p.fabrica) {
+        const match = p.fabrica.match(/-\s*([A-Z]{2})$/);
+        if (match) return match[1];
+      }
+      if (p.loja) {
+        const matchLoja = p.loja.match(/-\s*([A-Z]{2})$/);
+        if (matchLoja) return matchLoja[1];
+      }
+      return null;
+    }
+
+    const countState = {};
+    base.forEach(p => {
+      const uf = extrairEstado(p);
+      if (uf && ESTADO_COORDS[uf]) {
+        countState[uf] = (countState[uf] || 0) + 1;
+      }
+    });
+
+    if (!_leafletMap) {
+      _leafletMap = L.map('map', {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([-14.235, -51.9253], 4);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 18
+      }).addTo(_leafletMap);
+
+      _mapMarkersLayer = L.layerGroup().addTo(_leafletMap);
+    } else {
+      _mapMarkersLayer.clearLayers();
+    }
+
+    Object.entries(countState).forEach(([uf, count]) => {
+      const coords = ESTADO_COORDS[uf];
+      if (!coords) return;
+
+      let colorClass = 'map-marker-blue';
+      let size = 32;
+      if (count > 10) {
+        colorClass = 'map-marker-purple';
+        size = 40;
+      }
+      if (count > 50) {
+        colorClass = 'map-marker-pink';
+        size = 48;
+      }
+
+      const iconHtml = `<div class="map-circle ${colorClass}" style="width:${size}px; height:${size}px; line-height:${size - 4}px;">${count}</div>`;
+
+      const customIcon = L.divIcon({
+        html: iconHtml,
+        className: 'custom-map-icon-container',
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
+      });
+
+      const marker = L.marker(coords, { icon: customIcon });
+      marker.bindPopup(`<b>Estado:</b> ${uf}<br/><b>Projetos:</b> ${count}`);
+      _mapMarkersLayer.addLayer(marker);
     });
 
     // ── Chart 7: Evolução mensal ───────────────────────
