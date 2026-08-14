@@ -63,7 +63,33 @@ function getFormData() {
 
 function v(id) {
   const el = document.getElementById(id);
-  return el ? el.value : '';
+  if (!el) return '';
+  if (id === 'data_proj') {
+    const val = el.value || '';
+    if (val.includes('-')) {
+      const pts = val.split('-');
+      if (pts.length === 3) return `${pts[2]}/${pts[1]}/${pts[0]}`;
+    }
+    return val;
+  }
+  return el.value;
+}
+
+function setFormInputVal(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (id === 'data_proj') {
+    if (val && typeof val === 'string' && val.includes('/')) {
+      const pts = val.split('/');
+      if (pts.length === 3) {
+        el.value = `${pts[2]}-${pts[1].padStart(2, '0')}-${pts[0].padStart(2, '0')}`;
+        return;
+      }
+    }
+    el.value = val || '';
+    return;
+  }
+  el.value = val || '';
 }
 
 // escapeHtml → use esc() global (supabase-client.js)
@@ -206,8 +232,7 @@ async function importarSessao(input) {
     // Restaurar campos do formulário
     const f = d.form || {};
     Object.entries(f).forEach(([k, val]) => {
-      const el = document.getElementById(k);
-      if (el) el.value = val || '';
+      setFormInputVal(k, val);
     });
 
     // Restaurar imagens
@@ -361,8 +386,7 @@ function restaurar() {
   const f = d.form || {};
   Object.entries(f).forEach(([k, val]) => {
     if (k === 'usuario_logado_id') return; // tratado após o loop
-    const el = document.getElementById(k);
-    if (el) el.value = val || '';
+    setFormInputVal(k, val);
   });
   // Restaurar seleção do projetista pelo UUID (mais preciso que nome)
   const selULr = document.getElementById('usuario_logado');
@@ -1612,10 +1636,12 @@ function confirmarNovaPrancha() {
   updateEditBadge();
   window.obsPadraoAtivo = false;
   // Limpar formulário
-  ['loja','cliente','id_projeto','cidade','obs','modelo','ceramica_marca','ceramica_tamanho','ceramica_rejunte','tipo_projeto','loja_tipo'].forEach(id => {
+  ['loja','cliente','id_projeto','cidade','obs','modelo','ceramica_marca','ceramica_tamanho','ceramica_rejunte','loja_tipo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  const tipoProjEl = document.getElementById('tipo_projeto');
+  if (tipoProjEl) tipoProjEl.value = 'Conceito';
   // Repovoar usuario_logado
   const usuarioLogadoEl = document.getElementById('usuario_logado');
   if (usuarioLogadoEl) {
@@ -1634,7 +1660,7 @@ function confirmarNovaPrancha() {
   const d = new Date();
   const pad = n => String(n).padStart(2,'0');
   const dataEl = document.getElementById('data_proj');
-  if (dataEl) dataEl.value = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  if (dataEl) dataEl.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   // Limpar slots de imagem
   document.querySelectorAll('.slot.has-img').forEach(slot => {
@@ -1956,7 +1982,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Init date
   const d = new Date();
   const pad = n => String(n).padStart(2,'0');
-  document.getElementById('data_proj').value = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  const dataProjEl = document.getElementById('data_proj');
+  if (dataProjEl) dataProjEl.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 
   // Init DB (autosave local)
   try {
@@ -2011,8 +2038,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (sessao.form) {
         Object.entries(sessao.form).forEach(([k, v]) => {
           if (k === 'usuario_logado_id') return; // tratado após o loop
-          const el = document.getElementById(k);
-          if (el) el.value = v || '';
+          setFormInputVal(k, v);
         });
         // Restaurar projetista pelo UUID (saves novos); ignora saves antigos sem o campo
         const selCL = document.getElementById('usuario_logado');

@@ -6,10 +6,10 @@
 <title>Controle de Pagamentos – iGUi</title>
 <script>if (window.innerWidth <= 768) { window.location.href = 'mobile/pagamentos.html'; }</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202607071645"></script>
+<script src="supabase-client.js?v=202608132134"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=202607071645">
+<link rel="stylesheet" href="styles.css?v=202608132134">
 <style>
   /* Custom styles for Payments Page */
   .pag-container {
@@ -188,29 +188,41 @@
     border-bottom: 1px solid var(--border);
     font-size: 12px;
     font-weight: 600;
+    gap: 10px;
   }
   .designer-input {
-    border: none;
-    background: transparent;
-    font-weight: 700;
-    color: var(--dark);
-    font-size: 13px;
-    width: 60%;
-    padding: 4px;
-    border-bottom: 1.5px dashed var(--border);
+    height: 34px !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    border-radius: 6px !important;
+    border: 1.5px solid var(--border) !important;
+    background: #fff !important;
+    color: var(--dark) !important;
+    box-sizing: border-box !important;
+    outline: none;
+    transition: border-color 0.15s ease;
   }
   .designer-input:focus {
-    outline: none;
-    border-bottom-color: var(--blue);
+    border-color: var(--blue) !important;
   }
   .month-select {
-    padding: 4px 8px;
-    font-size: 12px;
-    border-radius: 4px;
-    border: 1px solid var(--border);
-    background: #fff;
-    color: var(--dark);
-    font-weight: 700;
+    height: 34px !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    border: 1.5px solid var(--border) !important;
+    background: #fff !important;
+    color: var(--dark) !important;
+    font-weight: 700 !important;
+    width: auto !important;
+    cursor: pointer;
+    box-sizing: border-box !important;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .month-select:focus {
+    border-color: var(--blue) !important;
   }
   .budget-list-card {
     background: #fff;
@@ -798,7 +810,8 @@
           <!-- Filtro de Mês e Ano para a Lista -->
           <div id="filtroMesAnoContainer" class="btn-print-hide" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; flex-wrap: nowrap;">
             <span style="font-weight: 700; color: var(--muted); font-size: 13px; white-space: nowrap; margin-right: 4px;">Período da Lista:</span>
-            <select id="filtroListaMes" class="month-select" style="padding: 6px 10px; font-size: 12px; font-weight: 700; width: 110px; min-width: 110px; box-sizing: border-box;" onchange="syncFiltrosLista(this.value, null)">
+            <!-- MÊS -->
+            <select id="filtroListaMes" class="month-select" style="min-width: 140px; width: auto;" onchange="syncFiltrosLista(this.value, null)">
               <option value="Janeiro">Janeiro</option>
               <option value="Fevereiro">Fevereiro</option>
               <option value="Março">Março</option>
@@ -812,12 +825,17 @@
               <option value="Novembro">Novembro</option>
               <option value="Dezembro">Dezembro</option>
             </select>
-            <select id="filtroListaAno" class="month-select" style="padding: 6px 10px; font-size: 12px; font-weight: 700; width: 80px; min-width: 80px; box-sizing: border-box;" onchange="syncFiltrosLista(null, this.value)">
+            <!-- ANO -->
+            <select id="filtroListaAno" class="month-select" style="width: 80px; min-width: 80px;" onchange="syncFiltrosLista(null, this.value)">
               <option value="2025">2025</option>
               <option value="2026" selected>2026</option>
               <option value="2027">2027</option>
               <option value="2028">2028</option>
             </select>
+            <!-- ETIQUETA / BADGE PAGO NO CANTO DIREITO -->
+            <span id="badgePeriodoPago" class="badge-mes-pago-tag" style="display: none; margin-left: auto; white-space: nowrap;">
+              ✓ Mês Pago
+            </span>
           </div>
 
           <!-- Filtros e Pesquisa -->
@@ -961,11 +979,11 @@
             </div>
             
             <div class="designer-bar">
-              <div>
-                <span>Projetista: </span>
-                <input type="text" id="projetistaNome" class="designer-input" value="VICTOR LOURENÇO PEREIRA" oninput="salvarCabecalho()">
+              <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap;">Projetista:</span>
+                <input type="text" id="projetistaNome" class="designer-input" value="VICTOR LOURENÇO PEREIRA" oninput="salvarCabecalho()" style="flex: 1; max-width: 240px;">
               </div>
-              <div>
+              <div style="display: flex; align-items: center; gap: 6px;">
                 <select id="pagamentoMes" class="month-select" onchange="salvarCabecalho(true)">
                   <option value="Janeiro">Janeiro</option>
                   <option value="Fevereiro">Fevereiro</option>
@@ -988,6 +1006,8 @@
                 </select>
               </div>
             </div>
+            
+            <div id="printStatusPagamento" style="display: none; padding: 7px 12px; font-size: 11px; font-weight: 700; text-align: center; border-bottom: 1px solid var(--border);"></div>
             
             <table class="summary-table">
               <thead>
@@ -1068,6 +1088,24 @@
               <div class="budget-list-label">Nº de Orçamento dos projetos 3 Piscinas</div>
               <div class="budget-list-value" id="orc_3_piscinas">#N/A</div>
             </div>
+          </div>
+          
+          <!-- Card de Confirmação de Pagamento do Mês -->
+          <div id="cardStatusPagamentoMes" class="card-status-pagamento btn-print-hide">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div id="statusPagamentoIco" class="status-pagamento-ico">⏳</div>
+              <div>
+                <div id="statusPagamentoTitulo" style="font-size: 13px; font-weight: 700; color: var(--dark); line-height: 1.2;">
+                  Pagamento Pendente
+                </div>
+                <div id="statusPagamentoDesc" style="font-size: 11px; color: var(--muted); margin-top: 2px;">
+                  Mês de <span id="statusPagamentoMesAno">—</span>
+                </div>
+              </div>
+            </div>
+            <button id="btnTogglePagamentoMes" onclick="toggleStatusPagamentoMes()" class="btn-action success" style="padding: 8px 16px; font-size: 12px; font-weight: 700; white-space: nowrap; border-radius: 6px; cursor: pointer; transition: all 0.2s;">
+              ✓ Confirmar Pagamento
+            </button>
           </div>
           
         </div>
@@ -1172,6 +1210,6 @@
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<script src="pagamentos.js?v=202607071645"></script>
+<script src="pagamentos.js?v=202608132134"></script>
 </body>
 </html>

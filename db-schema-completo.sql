@@ -480,7 +480,15 @@ CREATE POLICY "storage_delete_own" ON storage.objects
     AND auth.uid()::text = (string_to_array(name, '/'))[1]
   );
 
+DROP POLICY IF EXISTS "storage_update_own" ON storage.objects;
+CREATE POLICY "storage_update_own" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'igui-files'
+    AND auth.uid()::text = (string_to_array(name, '/'))[1]
+  );
+
 -- Admin lê e escreve em tudo
+
 DROP POLICY IF EXISTS "storage_admin_read_all" ON storage.objects;
 CREATE POLICY "storage_admin_read_all" ON storage.objects
   FOR SELECT USING (

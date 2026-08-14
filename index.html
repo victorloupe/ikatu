@@ -6,10 +6,10 @@
 <title>Prancha Técnica iGUI – Gerador</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202607071645"></script>
+<script src="supabase-client.js?v=202608132134"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=202607071645">
+<link rel="stylesheet" href="styles.css?v=202608132134">
 <style>
   /* Abas de prancha extra (2ª página por seção) */
   .prancha-tabs { display:flex; align-items:center; gap:6px; margin:6px 0 14px; flex-wrap:wrap; }
@@ -237,7 +237,7 @@
         <div class="row r3">
           <div class="field"><label>Loja / Franquia</label><input type="text" id="loja" placeholder="Ex: iGUI João Pessoa" oninput="autoSave()"></div>
           <div class="field"><label>ID do Projeto</label><input type="text" id="id_projeto" placeholder="Ex: 805672" oninput="autoSave()"></div>
-          <div class="field"><label>Data</label><input type="text" id="data_proj" placeholder="Ex: 13/04/2026" oninput="autoSave()"></div>
+          <div class="field"><label>Data</label><input type="date" id="data_proj" oninput="autoSave()" onclick="this.showPicker && this.showPicker()"></div>
         </div>
         <div class="row r3">
           <div class="field"><label>Nome do Cliente</label><input type="text" id="cliente" placeholder="Nome completo do cliente" oninput="autoSave()"></div>
@@ -254,7 +254,7 @@
               <option value="Mais que 05 Projetos">Mais que 05 Projetos</option>
               <option value="Projeto 360º">Projeto 360º</option>
               <option value="Projeto 360º (3 Modificações)">Projeto 360º (3 Modificações)</option>
-              <option value="Conceito">Conceito</option>
+              <option value="Conceito" selected>Conceito</option>
               <option value="Alterações GRANDES">Alterações GRANDES</option>
             </select>
           </div>
@@ -584,6 +584,6 @@
 </div>
 
 
-<script type="module" src="app.js?v=202607071645"></script>
+<script type="module" src="app.js?v=202608132134"></script>
 </body>
 </html>

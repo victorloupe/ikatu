@@ -191,6 +191,7 @@ let filtroAtivo = "todos";
 let filtroTipoAtivo = "todos";
 let filtroLojaAtivo = "todos";
 let ultimoExcluido = null;
+let mesesPagos = {}; // { "Agosto/2026": { pago: true, data_confirmacao: "...", confirmado_por: "..." }, ... }
 // Defaults seguros no parse time; aplicarPrecosGlobais() sobrescreve com valores reais do Supabase
 // quando iniciarPagamentos() carregar (BUG-04: não depender de window.sbNormalizarPrecosProjeto aqui)
 let precosGlobais = { val_ate2: 70, val_3a4: 80, val_mais5: 95, val_360: 90, val_360_3mod: 105, val_conceito: 150, val_alt_grandes: 60 };
@@ -495,6 +496,7 @@ function trocarProjetista(userId) {
   targetUserName = u?.name || '';
   pagId = null;        // novo alvo: zera o registro atual
   rowsData = [];
+  mesesPagos = {};
   resetarFiltrosVista(); // mostra todos os projetos do mês do projetista escolhido
   mostrarSkeletonTabela();
   carregarDados();
@@ -568,6 +570,7 @@ async function carregarDados() {
         const anoAtual = hoje.getFullYear().toString();
 
         const h = data.header_data || {};
+        mesesPagos = (h.meses_pagos && typeof h.meses_pagos === 'object') ? h.meses_pagos : {};
         let projetistaVal = h.projetista;
         if (projetistaVal && !projetistaVal.trim().includes(' ')) {
           projetistaVal = nomeCompleto;
@@ -591,6 +594,7 @@ async function carregarDados() {
         const anoAtual = hoje.getFullYear().toString();
 
         rowsData = obterValoresIniciais();
+        mesesPagos = {};
         document.getElementById('projetistaNome').value = nomeCompleto;
         document.getElementById('pagamentoMes').value = mesAtual;
         document.getElementById('pagamentoAno').value = anoAtual;
@@ -651,6 +655,16 @@ async function carregarTodosProjetistas() {
     });
   });
   rowsData = todas;
+
+  mesesPagos = {};
+  (list || []).forEach(rec => {
+    const mp = rec.header_data?.meses_pagos;
+    if (mp && typeof mp === 'object') {
+      Object.entries(mp).forEach(([k, v]) => {
+        if (v) mesesPagos[k] = v;
+      });
+    }
+  });
 
   // Cabeçalho em modo Todos (nome não editável; valores não se aplicam aqui)
   const inp = document.getElementById('projetistaNome');
@@ -762,7 +776,8 @@ async function salvarSupabaseAgora(mostrarStatus = true) {
     const header = {
       projetista: document.getElementById('projetistaNome').value,
       mes: document.getElementById('pagamentoMes').value,
-      ano: document.getElementById('pagamentoAno').value
+      ano: document.getElementById('pagamentoAno').value,
+      meses_pagos: mesesPagos
     };
     
     // Preços vêm sempre da global_prices (admin config), não salvamos no registro individual
@@ -1546,6 +1561,155 @@ function recalcularFinanceiro() {
   atualizarOpcoesPeriodo();
   atualizarGraficoEvolucao();
   atualizarGraficoTipos();
+  atualizarUIStatusPagamento();
+}
+
+// --- Status de Pagamento do Mês ---
+function isMesPago(mes, ano) {
+  if (!mes || !ano) return false;
+  const chave = `${mes}/${ano}`;
+  return Boolean(mesesPagos[chave]);
+}
+
+async function toggleStatusPagamentoMes() {
+  const mes = document.getElementById('pagamentoMes')?.value || 'Maio';
+  const ano = document.getElementById('pagamentoAno')?.value || '2026';
+  const chave = `${mes}/${ano}`;
+  const statusAtual = Boolean(mesesPagos[chave]);
+
+  if (!statusAtual) {
+    // Marcar como pago diretamente
+    mesesPagos[chave] = {
+      pago: true,
+      data_confirmacao: new Date().toISOString(),
+      confirmado_por: (targetUserName || localStorage.getItem('igui_user_name') || 'Usuário').trim()
+    };
+    atualizarUIStatusPagamento();
+    atualizarOpcoesPeriodo();
+    await salvarTudoSupabase();
+    showToast(`✅ Mês de ${mes}/${ano} confirmado como pago!`, 'ok');
+  } else {
+    // Desmarcar pagamento com modal de confirmação
+    confirmar(
+      'Desmarcar Pagamento',
+      `Tem certeza que deseja desmarcar o status de pagamento do mês de ${mes}/${ano}?`,
+      async () => {
+        delete mesesPagos[chave];
+        atualizarUIStatusPagamento();
+        atualizarOpcoesPeriodo();
+        await salvarTudoSupabase();
+        showToast(`ℹ️ Confirmação de pagamento de ${mes}/${ano} removida.`, 'ok');
+      }
+    );
+  }
+}
+window.toggleStatusPagamentoMes = toggleStatusPagamentoMes;
+
+function atualizarUIStatusPagamento() {
+  const mes = document.getElementById('pagamentoMes')?.value || 'Maio';
+  const ano = document.getElementById('pagamentoAno')?.value || '2026';
+  const chave = `${mes}/${ano}`;
+  const pagoInfo = mesesPagos[chave];
+  const pago = Boolean(pagoInfo);
+
+  const card = document.getElementById('cardStatusPagamentoMes');
+  const ico = document.getElementById('statusPagamentoIco');
+  const titulo = document.getElementById('statusPagamentoTitulo');
+  const desc = document.getElementById('statusPagamentoDesc');
+  const mesAnoSpan = document.getElementById('statusPagamentoMesAno');
+  const btn = document.getElementById('btnTogglePagamentoMes');
+  const badgePeriodo = document.getElementById('badgePeriodoPago');
+  const printStatus = document.getElementById('printStatusPagamento');
+
+  if (mesAnoSpan) {
+    mesAnoSpan.textContent = `${mes}/${ano}`;
+  }
+
+  // 1. Badge no topo da lista (canto direito)
+  if (badgePeriodo) {
+    badgePeriodo.style.display = pago ? 'inline-flex' : 'none';
+  }
+
+  // 3. Faixa de status para exportação em PDF / Impressão A4
+  if (printStatus) {
+    let extra = '';
+    if (pagoInfo?.data_confirmacao) {
+      try {
+        const dt = new Date(pagoInfo.data_confirmacao);
+        const pad = n => String(n).padStart(2, '0');
+        extra = ` em ${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+      } catch(e){}
+    }
+    if (pago) {
+      printStatus.style.display = 'block';
+      printStatus.style.background = '#f0fdf4';
+      printStatus.style.color = '#15803d';
+      printStatus.style.borderColor = '#86efac';
+      printStatus.innerHTML = `✓ STATUS: <strong>PAGO</strong> (Confirmado${extra}${pagoInfo?.confirmado_por ? ' por ' + esc(pagoInfo.confirmado_por) : ''})`;
+    } else {
+      printStatus.style.display = 'block';
+      printStatus.style.background = '#fff8e1';
+      printStatus.style.color = '#92600a';
+      printStatus.style.borderColor = '#f5d87a';
+      printStatus.innerHTML = `⏳ STATUS: <strong>PENDENTE DE PAGAMENTO</strong>`;
+    }
+  }
+
+  if (!card) return;
+
+  if (pago) {
+    card.classList.add('pago');
+    if (ico) ico.textContent = '✓';
+    if (titulo) {
+      titulo.textContent = 'Pagamento Confirmado';
+      titulo.style.color = '#15803d';
+    }
+    if (desc) {
+      let extra = '';
+      if (pagoInfo?.data_confirmacao) {
+        try {
+          const dt = new Date(pagoInfo.data_confirmacao);
+          const pad = n => String(n).padStart(2, '0');
+          extra = ` em ${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+        } catch(e){}
+      }
+      desc.textContent = `Mês de ${mes}/${ano} pago${extra}`;
+      desc.style.color = '#166534';
+    }
+    if (btn) {
+      btn.textContent = 'Desmarcar Pagamento';
+      btn.className = 'btn-mini danger';
+      btn.style.background = '#fff';
+      btn.style.color = '#dc2626';
+      btn.style.border = '1.5px solid #fca5a5';
+      btn.style.fontWeight = '700';
+      btn.style.fontSize = '11px';
+      btn.style.padding = '6px 12px';
+      btn.style.boxShadow = 'none';
+    }
+  } else {
+    card.classList.remove('pago');
+    if (ico) ico.textContent = '⏳';
+    if (titulo) {
+      titulo.textContent = 'Pagamento Pendente';
+      titulo.style.color = 'var(--dark)';
+    }
+    if (desc) {
+      desc.textContent = `Mês de ${mes}/${ano} não marcado como pago`;
+      desc.style.color = 'var(--muted)';
+    }
+    if (btn) {
+      btn.textContent = '✓ Confirmar Pagamento';
+      btn.className = 'btn-action success';
+      btn.style.background = '#10b981';
+      btn.style.color = '#fff';
+      btn.style.border = 'none';
+      btn.style.fontWeight = '700';
+      btn.style.fontSize = '12px';
+      btn.style.padding = '8px 16px';
+      btn.style.boxShadow = '0 2px 6px rgba(16,185,129,0.25)';
+    }
+  }
 }
 
 // --- Períodos com dados (meses/anos) ---
@@ -1563,6 +1727,7 @@ function periodosDisponiveis() {
   anosCandidatos.forEach(ano => {
     const ms = MESES_NOMES.filter(m =>
       (ano === anoAtual && m === mesAtual) || // mês corrente sempre disponível
+      isMesPago(m, ano) || // mês com status de pago
       rowsData.some(r => rowPertenceAoMesAno(r, m, ano))
     );
     if (ms.length) dispo[ano] = ms;
@@ -1584,20 +1749,28 @@ function atualizarOpcoesPeriodo() {
   if (!meses.includes(mesSel)) meses.push(mesSel);
   meses.sort((a, b) => MESES_NOMES.indexOf(a) - MESES_NOMES.indexOf(b));
 
-  const setOptions = (selId, values, selected) => {
+  const setOptions = (selId, values, selected, isMes = false) => {
     const sel = document.getElementById(selId);
     if (!sel) return;
+    const items = values.map(v => {
+      let label = v;
+      if (isMes && isMesPago(v, anoSel)) {
+        label = `${v} (Pago)`;
+      }
+      return { val: v, label };
+    });
     // Evita reconstruir o select se nada mudou (não atrapalhar dropdown aberto)
-    const atual = Array.from(sel.options).map(o => o.value).join('|');
-    if (atual === values.join('|') && sel.value === selected) return;
-    sel.innerHTML = values.map(v =>
-      `<option value="${v}"${v === selected ? ' selected' : ''}>${v}</option>`
+    const atual = Array.from(sel.options).map(o => `${o.value}:${o.textContent}`).join('|');
+    const proximo = items.map(it => `${it.val}:${it.label}`).join('|');
+    if (atual === proximo && sel.value === selected) return;
+    sel.innerHTML = items.map(it =>
+      `<option value="${it.val}"${it.val === selected ? ' selected' : ''}>${it.label}</option>`
     ).join('');
   };
-  setOptions('pagamentoAno', anos, anoSel);
-  setOptions('filtroListaAno', anos, anoSel);
-  setOptions('pagamentoMes', meses, mesSel);
-  setOptions('filtroListaMes', meses, mesSel);
+  setOptions('pagamentoAno', anos, anoSel, false);
+  setOptions('filtroListaAno', anos, anoSel, false);
+  setOptions('pagamentoMes', meses, mesSel, true);
+  setOptions('filtroListaMes', meses, mesSel, true);
 }
 
 // --- Mini-gráfico: projetos do mês por tipo ---
@@ -2429,7 +2602,8 @@ async function exportarListaPDF() {
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const title = `Lista de Projetos Enviados - ${mes} ${ano}`.trim();
+  const statusStr = isMesPago(mes, ano) ? 'PAGO' : 'PENDENTE';
+  const title = `Lista de Projetos Enviados - ${mes} ${ano} [Status: ${statusStr}]`.trim();
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 10;
