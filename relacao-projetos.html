@@ -699,10 +699,73 @@
   .status-badge.prazo   { background: #dcfce7; color: #16a34a; }
   .status-badge.atencao { background: #fef9c3; color: #b45309; }
   .status-badge.atrasado{ background: #fee2e2; color: #dc2626; }
+  .status-badge.entregue{
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 800;
+    border: 1px solid #86efac;
+    cursor: pointer;
+    user-select: none;
+    transition: all .2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .status-badge.entregue:hover { background: #fee2e2 !important; color: #dc2626 !important; border-color: #fca5a5 !important; }
   .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .prazo   .status-dot { background: #16a34a; }
   .atencao .status-dot { background: #d97706; }
   .atrasado .status-dot{ background: #dc2626; }
+  .entregue .status-dot{ background: #16a34a; }
+  .status-badge.entregue:hover .status-dot { background: #dc2626 !important; }
+  .entregue-undo-x { display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 50%; background: rgba(21, 128, 61, 0.15); font-size: 9px; font-weight: 800; margin-left: 4px; transition: all .15s ease; }
+  .status-badge.entregue:hover .entregue-undo-x { background: rgba(220, 38, 38, 0.2); color: #dc2626; }
+
+  @keyframes andCountdownAnim {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  .and-badge-timer-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2.5px;
+    background: #16a34a;
+    width: 100%;
+    animation: andCountdownAnim 5s linear forwards;
+    border-radius: 0 0 20px 20px;
+    pointer-events: none;
+  }
+  .status-badge.entregue:hover .and-badge-timer-bar {
+    background: #dc2626 !important;
+  }
+
+  .btn-hoje-saida {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+    border-radius: 5px;
+    padding: 3px 8px;
+    font-size: 10.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 26px;
+  }
+  .btn-hoje-saida:hover {
+    background: #16a34a;
+    color: #fff;
+    border-color: #16a34a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(22, 163, 74, 0.2);
+  }
+  .btn-hoje-saida:active {
+    transform: translateY(0);
+  }
 
   /* Em andamento table */
   #andamentoTabela { width: 100%; border-collapse: collapse; }
@@ -724,11 +787,128 @@
   .dias-badge.prazo   { background: #dcfce7; color: #16a34a; }
   .dias-badge.atencao { background: #fef9c3; color: #b45309; }
   .dias-badge.atrasado{ background: #fee2e2; color: #dc2626; }
+  .dias-badge.entregue{
+    background: #dcfce7;
+    color: #15803d;
+    font-weight: 800;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: all .2s ease;
+  }
+  .dias-badge.entregue:hover {
+    background: #fee2e2 !important;
+    color: #dc2626 !important;
+    transform: scale(1.08);
+  }
+  .dias-badge.entregue:hover .dias-check-icon {
+    display: none;
+  }
+  .dias-badge.entregue:hover::after {
+    content: '✕';
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .and-row-entregue td {
+    background: #f0fdf4 !important;
+    transition: background 0.3s ease;
+  }
+  .and-row-entregue {
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .and-row-fadeout {
+    opacity: 0 !important;
+    transform: translateY(-8px) scale(0.99) !important;
+    pointer-events: none !important;
+  }
   .tab-pane {
     display: none;
   }
   .tab-pane.active {
     display: block;
+  }
+
+  /* Mini KPI Cards - Planilha Geral */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 900px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 500px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+  }
+  .kpi-card {
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all .2s ease;
+  }
+  .kpi-card:hover {
+    border-color: #cbd5e1;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+  }
+  .kpi-card-lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .kpi-card-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 2px;
+    line-height: 1.2;
+  }
+  .kpi-card-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Micro-feedback de linha salva */
+  @keyframes rowSavePulse {
+    0% {
+      box-shadow: inset 4px 0 0 #22c55e, inset 0 0 10px rgba(34, 197, 94, 0.2);
+    }
+    50% {
+      box-shadow: inset 4px 0 0 #16a34a, inset 0 0 6px rgba(34, 197, 94, 0.3);
+    }
+    100% {
+      box-shadow: inset 0 0 0 transparent;
+    }
+  }
+  .row-just-saved {
+    animation: rowSavePulse 1.4s ease forwards !important;
+  }
+
+  /* Lead Time Pill */
+  .lead-time-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #e0f2fe;
+    color: #0369a1;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 8px;
   }
 </style>
 </head>
@@ -893,6 +1073,49 @@
             </div>
           </div>
           <div class="card-bd" style="padding: 20px;">
+            <!-- Mini KPI Cards -->
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div>
+                  <div class="kpi-card-lbl">Total no Ano</div>
+                  <div class="kpi-card-val" id="kpiTotalAno">0</div>
+                </div>
+                <div class="kpi-card-icon" style="background: rgba(59,130,246,0.12); color: #2563eb;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                </div>
+              </div>
+
+              <div class="kpi-card" style="cursor: pointer;" onclick="abaAndamento()" title="Ver projetos em andamento">
+                <div>
+                  <div class="kpi-card-lbl">Em Andamento</div>
+                  <div class="kpi-card-val" id="kpiEmAndamento" style="color: #0284c7;">0</div>
+                </div>
+                <div class="kpi-card-icon" style="background: rgba(2,132,199,0.12); color: #0284c7;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+              </div>
+
+              <div class="kpi-card">
+                <div>
+                  <div class="kpi-card-lbl">Entregues / Concluídos</div>
+                  <div class="kpi-card-val" id="kpiConcluidos" style="color: #16a34a;">0</div>
+                </div>
+                <div class="kpi-card-icon" style="background: rgba(22,163,74,0.12); color: #16a34a;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                </div>
+              </div>
+
+              <div class="kpi-card" style="cursor: pointer;" onclick="document.getElementById('filtroPago').value='nao_pagos'; _gridCurrentPage=1; renderGrid();" title="Filtrar não pagos">
+                <div>
+                  <div class="kpi-card-lbl">Pendentes de Pagto</div>
+                  <div class="kpi-card-val" id="kpiPendentes" style="color: #d97706;">0</div>
+                </div>
+                <div class="kpi-card-icon" style="background: rgba(217,119,6,0.12); color: #d97706;">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                </div>
+              </div>
+            </div>
+
             <!-- Action Toolbar inside card body -->
             <div style="margin-bottom: 16px; display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;">
               <div class="tool-field">
@@ -902,6 +1125,18 @@
                   <option value="2026" selected>2026</option>
                   <option value="2027">2027</option>
                   <option value="2028">2028</option>
+                </select>
+              </div>
+
+              <div class="tool-field">
+                <label>Franquia</label>
+                <select id="filtroFranquia" onchange="_gridCurrentPage = 1; renderGrid()">
+                  <option value="">Todas</option>
+                  <option value="iGUi">iGUi</option>
+                  <option value="Conceito">Conceito</option>
+                  <option value="Splash">Splash</option>
+                  <option value="Internacional">Internacional</option>
+                  <option value="iGUi SOB MEDIDA">iGUi SOB MEDIDA</option>
                 </select>
               </div>
 
@@ -1474,7 +1709,10 @@
     });
   }
 
-  function abaPlanilha() { _setTab('Planilha'); }
+  function abaPlanilha() {
+    _setTab('Planilha');
+    renderGrid();
+  }
 
   function abaAndamento() {
     _setTab('Andamento');
@@ -1513,6 +1751,15 @@
     dt.setHours(0, 0, 0, 0);
     return dt;
   }
+  // Retorna a data de hoje no fuso horário local no formato "YYYY-MM-DD"
+  function getHojeLocal() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
   function formatLocalDate(str) {
     const dt = parseLocalDate(str);
     if (!dt) return '—';
@@ -1559,12 +1806,12 @@
         <td style="text-align:left;font-weight:700;border-bottom:none;">${p.loja||'—'}</td>
         <td style="font-weight:700;border-bottom:none;">${p.project_code||'—'}</td>
         <td style="border-bottom:none;">${formatLocalDate(p.data_entrada)}</td>
-        <td style="border-bottom:none;"><span class="dias-badge ${st.cls}">${dias}</span></td>
+        <td style="border-bottom:none;"><span class="dias-badge ${st.cls}" id="and-dias-${p.id}">${dias}</span></td>
         <td style="border-bottom:none;"><span style="color:${getProjetistaColors(p.projetista).color};font-weight:700;">${p.projetista||'—'}</span></td>
         <td style="font-size:11px;border-bottom:none;"><span style="color:${getTipoColor(p.tipo_projeto)};font-weight:${p.tipo_projeto?'700':'400'};">${p.tipo_projeto||'—'}</span></td>
         <td style="border-bottom:none;">
           <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
-            <span class="status-badge ${st.cls}"><span class="status-dot"></span>${st.label}</span>
+            <span class="status-badge ${st.cls}" id="and-status-${p.id}"><span class="status-dot"></span>${st.label}</span>
             <svg id="and-chevron-${p.id}" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;transition:transform .2s;"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
         </td>`;
@@ -1611,7 +1858,8 @@
 
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
             <span style="${L}color:#16a34a;">Saída:</span>
-            <input type="date" class="cell-input" value="${p.data_saida||''}" onchange="updateRowField('${p.id}',this);setTimeout(()=>renderAndamento(),600)" data-field="data_saida" style="border-color:#16a34a;border-width:1.5px;width:145px;">
+            <input type="date" class="cell-input" value="${p.data_saida||''}" oninput="onAndamentoSaidaChange('${p.id}',this)" onchange="onAndamentoSaidaChange('${p.id}',this)" data-field="data_saida" style="border-color:#16a34a;border-width:1.5px;width:135px;">
+            <button type="button" class="btn-hoje-saida" onclick="setSaidaHoje('${p.id}')" title="Preencher saída com a data de hoje">Hoje</button>
           </div>
 
           <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -1640,6 +1888,146 @@
       tbody.appendChild(tr);
       tbody.appendChild(trEdit);
     });
+  }
+
+  let _andamentoTimers = {};
+
+  function setSaidaHoje(id) {
+    const todayStr = getHojeLocal();
+    const inp = document.querySelector(`#and-edit-${id} input[data-field="data_saida"]`);
+    if (inp) {
+      inp.value = todayStr;
+      onAndamentoSaidaChange(id, inp);
+    }
+  }
+
+  function onAndamentoSaidaChange(id, inputEl) {
+    updateRowField(id, inputEl);
+
+    const val = (inputEl.value || '').trim();
+    const trMain = document.getElementById(`and-row-${id}`);
+    const trEdit = document.getElementById(`and-edit-${id}`);
+    const badge = document.getElementById(`and-status-${id}`);
+    const diasBadge = document.getElementById(`and-dias-${id}`);
+
+    if (_andamentoTimers[id]) {
+      clearTimeout(_andamentoTimers[id]);
+      delete _andamentoTimers[id];
+    }
+
+    if (val) {
+      // Exibe imediatamente o status "Entregue" com barra de contagem regressiva
+      if (badge) {
+        badge.className = 'status-badge entregue';
+        badge.innerHTML = '<span class="status-dot"></span>✓ Entregue <span class="entregue-undo-x" title="Cancelar entrega">✕</span><div class="and-badge-timer-bar"></div>';
+        badge.title = 'Clique para desfazer entrega (✕)';
+        badge.onclick = (e) => { e.stopPropagation(); cancelarEntregaAndamento(id); };
+      }
+      if (diasBadge) {
+        diasBadge.className = 'dias-badge entregue';
+        diasBadge.innerHTML = '<span class="dias-check-icon">✓</span>';
+        diasBadge.title = 'Clique para desfazer entrega (✕)';
+        diasBadge.onclick = (e) => { e.stopPropagation(); cancelarEntregaAndamento(id); };
+      }
+      if (trMain) trMain.classList.add('and-row-entregue');
+      if (trEdit) trEdit.classList.add('and-row-entregue');
+
+      // Mantém a linha visível por 5 segundos com o badge "Entregue" antes de desaparecer
+      _andamentoTimers[id] = setTimeout(() => {
+        if (trMain) trMain.classList.add('and-row-fadeout');
+        if (trEdit) trEdit.classList.add('and-row-fadeout');
+
+        setTimeout(() => {
+          delete _andamentoTimers[id];
+          renderAndamento();
+
+          // Toast com opção Desfazer por mais 6 segundos
+          const t = document.getElementById('toast');
+          if (t) {
+            clearTimeout(toastTimer);
+            t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;opacity:.85;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span>Projeto concluído e arquivado.</span>
+              <button onclick="desfazerEntregaToast('${id}')" style="margin-left:8px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:5px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;">↩ Desfazer</button>`;
+            t.className = 'toast ok show';
+            toastTimer = setTimeout(() => t.classList.remove('show'), 6000);
+          }
+        }, 500);
+      }, 5000);
+    } else {
+      cancelarEntregaAndamento(id, false);
+    }
+  }
+
+  function desfazerEntregaToast(id) {
+    const t = document.getElementById('toast');
+    if (t) t.classList.remove('show');
+
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    row.data_saida = '';
+
+    // Atualiza input na planilha geral se renderizada
+    const inpGrid = document.querySelector(`#row-${id} input[data-field="data_saida"]`);
+    if (inpGrid) inpGrid.value = '';
+
+    salvarLinhaNoDB(id);
+    refreshAndamentoBadge();
+    renderAndamento();
+    showToast('✓ Entrega desfeita! Projeto de volta em andamento.', 'ok');
+  }
+
+  function cancelarEntregaAndamento(id, shouldSave = true) {
+    if (_andamentoTimers[id]) {
+      clearTimeout(_andamentoTimers[id]);
+      delete _andamentoTimers[id];
+    }
+
+    const row = projectRelations.find(x => x.id === id);
+    if (!row) return;
+
+    row.data_saida = '';
+
+    // Atualiza campo de data no formulário de edição do andamento
+    const inpAnd = document.querySelector(`#and-edit-${id} input[data-field="data_saida"]`);
+    if (inpAnd) inpAnd.value = '';
+
+    // Atualiza campo de data na planilha geral se renderizada
+    const inpGrid = document.querySelector(`#row-${id} input[data-field="data_saida"]`);
+    if (inpGrid) inpGrid.value = '';
+
+    // Remove classes de entregue
+    const trMain = document.getElementById(`and-row-${id}`);
+    const trEdit = document.getElementById(`and-edit-${id}`);
+    if (trMain) trMain.classList.remove('and-row-entregue', 'and-row-fadeout');
+    if (trEdit) trEdit.classList.remove('and-row-entregue', 'and-row-fadeout');
+
+    // Restaura badges para o status normal
+    const badge = document.getElementById(`and-status-${id}`);
+    const diasBadge = document.getElementById(`and-dias-${id}`);
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const entrada = parseLocalDate(row.data_entrada);
+    const dias = entrada ? Math.floor((hoje - entrada) / 86400000) : '—';
+    const st = _statusAndamento(dias);
+
+    if (badge) {
+      badge.className = `status-badge ${st.cls}`;
+      badge.innerHTML = `<span class="status-dot"></span>${st.label}`;
+      badge.title = '';
+      badge.onclick = null;
+    }
+    if (diasBadge) {
+      diasBadge.className = `dias-badge ${st.cls}`;
+      diasBadge.textContent = dias;
+      diasBadge.title = '';
+      diasBadge.onclick = null;
+    }
+
+    if (shouldSave) {
+      salvarLinhaNoDB(id);
+      refreshAndamentoBadge();
+      showToast('Entrega desfeita! Projeto mantido em andamento.', 'ok');
+    }
   }
 
   function toggleGridRow(id) {
@@ -1866,17 +2254,30 @@
     const paySub    = document.getElementById('paySubtitle');
     const btnPay    = document.getElementById('btnPay');
 
+    // Lead Time médio do projetista no período
+    const comSaida = filteredProjects.filter(p => p.data_entrada && p.data_saida);
+    let leadTimeText = '';
+    if (comSaida.length > 0) {
+      const sumDays = comSaida.reduce((acc, p) => {
+        const ent = parseLocalDate(p.data_entrada);
+        const sai = parseLocalDate(p.data_saida);
+        return acc + Math.max(0, Math.floor((sai - ent) / 86400000));
+      }, 0);
+      const avg = (sumDays / comSaida.length).toFixed(1);
+      leadTimeText = ` • Média entrega: ${avg} dias`;
+    }
+
     const filterPagoVal = document.getElementById('resumoFiltroPago').value;
     if (payTotal) payTotal.textContent = `R$ ${grandTotalPrice.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
     if (filterPagoVal === 'pagos') {
-      if (paySub) paySub.textContent = `${filteredProjects.length} projeto(s) já pagos neste período`;
+      if (paySub) paySub.textContent = `${filteredProjects.length} projeto(s) já pagos neste período${leadTimeText}`;
       if (btnPay) { btnPay.disabled = true; btnPay.textContent = '✓ Já Pagos'; }
     } else if (pendentes.length === 0) {
-      if (paySub) paySub.textContent = 'Nenhum projeto pendente de pagamento';
+      if (paySub) paySub.textContent = `Nenhum projeto pendente de pagamento${leadTimeText}`;
       if (btnPay) { btnPay.disabled = true; btnPay.textContent = '✓ Registrar Pagamento'; }
     } else {
-      if (paySub) paySub.textContent = `${pendentes.length} projeto(s) pendente(s) de pagamento`;
+      if (paySub) paySub.textContent = `${pendentes.length} projeto(s) pendente(s) de pagamento${leadTimeText}`;
       if (btnPay) { btnPay.disabled = false; btnPay.textContent = '✓ Registrar Pagamento'; }
     }
 
@@ -1953,6 +2354,16 @@
           }
         }, 2000);
       }
+
+      // Micro-feedback visual na linha salva
+      const trMain = document.getElementById(`row-${id}`);
+      if (trMain) {
+        trMain.classList.remove('row-just-saved');
+        void trMain.offsetWidth;
+        trMain.classList.add('row-just-saved');
+        setTimeout(() => trMain.classList.remove('row-just-saved'), 1400);
+      }
+      _atualizarKpisGerais();
     } catch(e) {
       console.error(e);
       if (statusEl) {
@@ -2111,10 +2522,34 @@
       .filter(Boolean);
   }
 
+  function _atualizarKpisGerais() {
+    const elTotal = document.getElementById('kpiTotalAno');
+    const elAnd = document.getElementById('kpiEmAndamento');
+    const elConc = document.getElementById('kpiConcluidos');
+    const elPend = document.getElementById('kpiPendentes');
+    if (!elTotal) return;
+
+    const rows = projectRelations.filter(r => !rowsDeleted.has(r.id));
+    const total = rows.length;
+    const emAndamento = rows.filter(p => p.data_entrada && !p.data_saida);
+    const concluidos = rows.filter(p => p.data_saida);
+    const pendentes = rows.filter(p => !p.pago);
+
+    elTotal.textContent = total;
+    elAnd.textContent = emAndamento.length;
+    elConc.textContent = concluidos.length;
+    elPend.textContent = pendentes.length;
+  }
+
   function getFilteredGridRows() {
-    const filterVal = document.getElementById('filtroGrid').value.toLowerCase().trim();
-    const filterPago = document.getElementById('filtroPago').value;
+    const filterVal = (document.getElementById('filtroGrid')?.value || '').toLowerCase().trim();
+    const filterPago = document.getElementById('filtroPago')?.value || 'nao_pagos';
+    const filterFranquia = document.getElementById('filtroFranquia')?.value || '';
     let filtered = projectRelations.filter(r => !rowsDeleted.has(r.id));
+
+    if (filterFranquia) {
+      filtered = filtered.filter(p => (p.franquia || '').trim() === filterFranquia.trim());
+    }
 
     if (filterPago === 'nao_pagos') {
       filtered = filtered.filter(p => !p.pago);
@@ -2383,7 +2818,7 @@
 
         // ── Linha principal: inputs editáveis ───────────
         tr.innerHTML = `
-          <td style="text-align:center;padding:0 4px;border-bottom:none;" onclick="toggleGridRow('${p.id}')" title="Abrir/fechar detalhes"><span class="row-num-badge" style="${badgeStyle}">${rowNum}</span></td>
+          <td style="text-align:center;padding:0 4px;border-bottom:none;" onclick="toggleGridRow('${p.id}')" title="Abrir/fechar detalhes"><span class="row-num-badge" id="row-badge-${p.id}" style="${badgeStyle}">${rowNum}</span></td>
           <td style="border-bottom:none;">
             <div class="cell-select-wrap">
               <select class="cell-select" onchange="onFranquiaChange('${p.id}',this.value)">${optionsFranquia}</select>
@@ -2403,10 +2838,10 @@
               title="${isDup ? '⚠ ID duplicado' : ''}">
           </td>
           <td style="border-bottom:none;">
-            <input type="date" class="cell-input" value="${p.data_entrada||''}" onchange="updateRowField('${p.id}',this)" data-field="data_entrada">
+            <input type="date" class="cell-input" value="${p.data_entrada||''}" oninput="updateRowField('${p.id}',this)" onchange="updateRowField('${p.id}',this)" ondblclick="setHojeInput(this,'${p.id}','data_entrada')" title="Duplo clique para data de hoje" data-field="data_entrada">
           </td>
           <td style="border-bottom:none;">
-            <input type="date" class="cell-input" value="${p.data_saida||''}" onchange="updateRowField('${p.id}',this)" data-field="data_saida">
+            <input type="date" class="cell-input" value="${p.data_saida||''}" oninput="updateRowField('${p.id}',this)" onchange="updateRowField('${p.id}',this)" ondblclick="setHojeInput(this,'${p.id}','data_saida')" title="Duplo clique para data de hoje" data-field="data_saida">
           </td>
           <td style="border-bottom:none;padding:${p.projetista ? '0' : '3px 6px'};">
             <div class="cell-select-wrap${p.projetista ? '' : ' cell-sem-projetista'}">
@@ -2467,6 +2902,14 @@
       }
     });
 
+    _atualizarKpisGerais();
+  }
+
+  function setHojeInput(inputEl, id, field) {
+    const today = getHojeLocal();
+    inputEl.value = today;
+    updateRowField(id, inputEl);
+    showToast('Data preenchida com a data de hoje!', 'ok');
   }
 
   // ── Pool dinâmico ─────────────────────────────────────
@@ -2580,6 +3023,28 @@
     }
   });
 
+  // Atalhos de Teclado Globais
+  document.addEventListener('keydown', e => {
+    // Alt + N ou Ctrl + Enter adiciona nova linha na Planilha Geral
+    if ((e.altKey && (e.key === 'n' || e.key === 'N')) || (e.ctrlKey && e.key === 'Enter')) {
+      const panePlanilha = document.getElementById('panePlanilha');
+      if (panePlanilha && panePlanilha.style.display !== 'none') {
+        e.preventDefault();
+        adicionarLinha();
+        setTimeout(() => {
+          const firstLoja = document.querySelector('#gridBody tr.main-row:first-child input[id^="loja-input-"]');
+          if (firstLoja) {
+            firstLoja.focus();
+            firstLoja.select();
+          }
+        }, 100);
+      }
+    }
+    if (e.key === 'Escape') {
+      closeLojaAc();
+    }
+  });
+
   // Row update hooks
   function _updateDupHighlights() {
     // Calcula contagem de cada project_code em toda a base
@@ -2634,6 +3099,31 @@
     _updateDupHighlights();
   }
 
+  function _updateRowBadge(row) {
+    const badge = document.getElementById(`row-badge-${row.id}`);
+    if (!badge) return;
+    if (row.data_entrada && !row.data_saida) {
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const entrada = parseLocalDate(row.data_entrada);
+      if (entrada) {
+        const dias = Math.floor((hoje - entrada) / 86400000);
+        if (dias <= 1) {
+          badge.style.background = '#dcfce7';
+          badge.style.color = '#16a34a';
+        } else if (dias <= 2) {
+          badge.style.background = '#fef9c3';
+          badge.style.color = '#b45309';
+        } else {
+          badge.style.background = '#fee2e2';
+          badge.style.color = '#dc2626';
+        }
+        return;
+      }
+    }
+    badge.style.background = '';
+    badge.style.color = '';
+  }
+
   function updateRowField(id, el) {
     const row = projectRelations.find(x => x.id === id);
     if (!row) return;
@@ -2648,20 +3138,25 @@
 
       if (field === 'data_entrada' || field === 'data_saida') {
         refreshAndamentoBadge();
-        renderGrid();
-      }
-
-      if (field === 'project_code' || field === 'obs') {
+        _updateRowBadge(row);
+        // Sincroniza o input correspondente na planilha principal se existir
+        const inpGrid = document.querySelector(`#row-${id} input[data-field="${field}"]`);
+        if (inpGrid && inpGrid !== el) inpGrid.value = el.value || '';
+        
+        clearTimeout(debounceTimers[id]);
+        debounceTimers[id] = setTimeout(() => {
+          salvarLinhaNoDB(row.id);
+        }, 500);
+      } else if (field === 'project_code' || field === 'obs') {
         if (field === 'project_code') {
           _updateDupHighlights();
-          // Se o filtro de duplicados estiver ativo, re-renderiza para incluir/excluir linhas
-          if (document.getElementById('filtroPago')?.value === 'duplicados') {
-            renderGrid();
-          }
         }
         clearTimeout(debounceTimers[id]);
         debounceTimers[id] = setTimeout(() => {
           salvarLinhaNoDB(row.id);
+          if (field === 'project_code' && document.getElementById('filtroPago')?.value === 'duplicados') {
+            renderGrid();
+          }
         }, 500); // 500ms debounce
       } else {
         salvarLinhaNoDB(row.id);
@@ -2735,7 +3230,7 @@
       id: tempId,
       loja: '',
       project_code: '',
-      data_entrada: new Date().toISOString().slice(0, 10),
+      data_entrada: getHojeLocal(),
       data_saida: '',
       modelo_01: '',
       modelo_02: '',
