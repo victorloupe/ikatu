@@ -77,6 +77,16 @@ CREATE POLICY "profiles_update_own" ON profiles
   FOR UPDATE USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "profiles_insert_own" ON profiles;
+CREATE POLICY "profiles_insert_own" ON profiles
+  FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "profiles_insert_admin" ON profiles;
+CREATE POLICY "profiles_insert_admin" ON profiles
+  FOR INSERT TO authenticated
+  WITH CHECK (public.is_admin());
+
 -- Leitura básica para todos os autenticados (necessária para lista de DMs do chat)
 DROP POLICY IF EXISTS "profiles_chat_read" ON profiles;
 CREATE POLICY "profiles_chat_read" ON profiles

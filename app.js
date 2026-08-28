@@ -923,9 +923,11 @@ const ACC_IMG = {
     'iguaçu_black':            'imagens/equipamentos/cascataIguaçu-Veu_Black.png',
     'iguaçu_travertino':       'imagens/equipamentos/cascataIguaçu-Veu_Travertino.png',
     'iguaçu_cintilante':       'imagens/equipamentos/cascataIguaçu-Veu_Cintilante.png',
+    'iguaçu_personalizado':    'imagens/equipamentos/cascataIguaçu-Veu_Cintilante.png',
     'véu de noiva_black':      'imagens/equipamentos/cascataIguaçu-Veu_Black.png',
     'véu de noiva_travertino': 'imagens/equipamentos/cascataIguaçu-Veu_Travertino.png',
     'véu de noiva_cintilante': 'imagens/equipamentos/cascataIguaçu-Veu_Cintilante.png',
+    'véu de noiva_personalizado': 'imagens/equipamentos/cascataIguaçu-Veu_Cintilante.png',
   },
   filtragem: {
     'g6_branco':   'imagens/equipamentos/G6_Branco.jpg',
@@ -950,6 +952,10 @@ const ACC_IMG = {
     'thermas kelvin p': 'imagens/equipamentos/termasKelvin.png',
     'thermas kelvin m': 'imagens/equipamentos/termasKelvin.png',
     'thermas kelvin g': 'imagens/equipamentos/termasKelvin.png',
+  },
+  outros: {
+    'perlage': 'imagens/equipamentos/perlage.png',
+    'pergale': 'imagens/equipamentos/perlage.png',
   },
 };
 
@@ -996,6 +1002,8 @@ const ACC_CFG = [
    opcoes:['Black','Travertino','Cintilante','Personalizado']},
   {key:'aquecimento', label:'Sistema de Aquecimento',icon:'🌡️',
    opcoes:['Thermas Kelvin P','Thermas Kelvin M','Thermas Kelvin G','Personalizado']},
+  {key:'outros',      label:'Outros',                icon:'✨',
+   opcoes:['Perlage','Personalizado']},
 ];
 
 function buildAccOpcoes(key, modeloAtual) {
@@ -1030,15 +1038,23 @@ function buildAccOpcoes(key, modeloAtual) {
   // Sub-seletor de COR DA PEDRA para Cascata Iguaçu / Véu de Noiva
   if (key === 'cascata' && (modeloLow === 'iguaçu' || modeloLow === 'véu de noiva') && !mostrarInput) {
     const corAtual = (S.acc[key].cor_pedra || '').toLowerCase();
-    const PEDRAS = ['Black', 'Travertino', 'Cintilante'];
+    const PEDRAS = ['Black', 'Travertino', 'Cintilante', 'Personalizado'];
+    const isPedraPersonalizada = corAtual === 'personalizado' || (corAtual && !['black', 'travertino', 'cintilante'].includes(corAtual));
+    const valorPedraCustom = S.acc[key].cor_pedra_custom || (isPedraPersonalizada && corAtual !== 'personalizado' ? S.acc[key].cor_pedra : '');
+
     html += `<label style="${LBL_STYLE}">Cor da Pedra</label>`;
     html += `<select onchange="onAccCorSelect('${key}','pedra',this)" style="${SEL_STYLE}">`;
     html += '<option value="">-- Selecione a Pedra --</option>';
     PEDRAS.forEach(p => {
-      const sel = p.toLowerCase() === corAtual ? 'selected' : '';
-      html += `<option value="${p.toLowerCase()}" ${sel}>${p}</option>`;
+      const pLow = p.toLowerCase();
+      const sel = (pLow === corAtual || (pLow === 'personalizado' && isPedraPersonalizada)) ? 'selected' : '';
+      html += `<option value="${pLow}" ${sel}>${p}</option>`;
     });
     html += '</select>';
+
+    if (isPedraPersonalizada) {
+      html += `<input type="text" value="${escapeHtml(valorPedraCustom)}" oninput="onAccCorPedraCustomInput('${key}', this.value)" placeholder="Descreva o modelo da pedra..." style="margin-top:8px;${SEL_STYLE}">`;
+    }
   }
 
   // Filtragem: cor herdada do corrimão — apenas informa qual cor será usada
@@ -1056,19 +1072,24 @@ function buildAccOpcoes(key, modeloAtual) {
 
 function renderAcc() {
   const g = document.getElementById('accGrid');
+  if (!g) return;
   g.innerHTML = '';
   ACC_CFG.forEach(({key, label, icon}) => {
+    if (!S.acc[key]) S.acc[key] = { on: false, modelo: '', img: '' };
     const a = S.acc[key];
     const div = document.createElement('div');
     div.className = 'acc' + (a.on ? ' on' : '');
 
     const isPersonalizado = !a.modelo || a.modelo.toUpperCase() === 'PERSONALIZADO';
+    const isPedraPersonalizada = (key === 'cascata' && (a.cor_pedra || '').toLowerCase() === 'personalizado');
+    const allowUpload = isPersonalizado || isPedraPersonalizada;
+
     const imgHtml = a.img
       ? `<img src="${imgSrc(a.img)}">`
-      : (isPersonalizado
+      : (allowUpload
           ? '<span style="font-size:18px;opacity:.3">📷</span>'
           : '<span style="font-size:11px;opacity:.4;text-align:center;padding:4px">Selecione o modelo</span>');
-    const uploadHtml = isPersonalizado
+    const uploadHtml = allowUpload
       ? `<input type="file" accept="image/*" onchange="loadAccImg(this,'${key}')">`
       : '';
 
@@ -1095,6 +1116,7 @@ function renderAcc() {
 }
 
 function togAcc(key) {
+  if (!S.acc[key]) S.acc[key] = { on: false, modelo: '', img: '' };
   S.acc[key].on = !S.acc[key].on;
   renderAcc();
   initDropZones();
@@ -1107,6 +1129,7 @@ function onAccSelect(key, sel) {
 
   // Resetar sub-seleções ao trocar modelo
   if (S.acc[key].cor_pedra !== undefined) S.acc[key].cor_pedra = '';
+  if (S.acc[key].cor_pedra_custom !== undefined) S.acc[key].cor_pedra_custom = '';
   if (S.acc[key].cor !== undefined) S.acc[key].cor = '';
 
   if (val === 'Personalizado') {
@@ -1270,12 +1293,20 @@ function onAccCorSelect(key, tipo, sel) {
   const val = sel.value;
   if (tipo === 'pedra') {
     S.acc[key].cor_pedra = val;
-    if (val) {
+    if (val === 'personalizado') {
+      const modelo = (S.acc[key].modelo || '').toLowerCase();
+      const pathKey = modelo + '_cintilante';
+      const path = (ACC_IMG.cascata_pedra || {})[pathKey] || 'imagens/equipamentos/cascataIguaçu-Veu_Cintilante.png';
+      loadAccImgFromPath(path, key);
+    } else if (val) {
       const modelo = (S.acc[key].modelo || '').toLowerCase();
       const pathKey = modelo + '_' + val;
       const path = (ACC_IMG.cascata_pedra || {})[pathKey];
       if (path) loadAccImgFromPath(path, key);
+    } else {
+      S.acc[key].img = '';
     }
+    renderAcc();
   } else {
     // tipo = 'g6' ou 'g7'
     S.acc[key].cor = val;
@@ -1285,6 +1316,11 @@ function onAccCorSelect(key, tipo, sel) {
       if (path) loadAccImgFromPath(path, key);
     }
   }
+  autoSave();
+}
+
+function onAccCorPedraCustomInput(key, val) {
+  S.acc[key].cor_pedra_custom = val;
   autoSave();
 }
 
@@ -1626,7 +1662,7 @@ function novaPrancha() {
 function confirmarNovaPrancha() {
   // Resetar estado
   S.imgs    = { '3d':['','','','',''], deck:['',''], cer:[''], rev:['',''], mob:['',''], pai:['',''] };
-  S.acc     = { corrimao:{on:false,modelo:'',img:''}, cascata:{on:false,modelo:'',img:'',cor_pedra:''}, filtragem:{on:false,modelo:'',img:'',cor:''}, igui_stone:{on:false,modelo:'',img:''}, aquecimento:{on:false,modelo:'',img:''} };
+  S.acc     = { corrimao:{on:false,modelo:'',img:''}, cascata:{on:false,modelo:'',img:'',cor_pedra:'',cor_pedra_custom:''}, filtragem:{on:false,modelo:'',img:'',cor:''}, igui_stone:{on:false,modelo:'',img:''}, aquecimento:{on:false,modelo:'',img:''}, outros:{on:false,modelo:'',img:''} };
   S.itens   = { rev:[], mob:[], pai:[], rev2:[], mob2:[], pai2:[] };
   S.selectedImgs = { rev:[null,null], mob:[null,null], pai:[null,null], rev2:[null,null], mob2:[null,null], pai2:[null,null] };
   S.secAtiva = { rev:true, mob:true, pai:true };
@@ -1882,6 +1918,7 @@ Object.assign(window, {
   loadImg,
   loadItemImg,
   novaPrancha,
+  onAccCorPedraCustomInput,
   onAccCorSelect,
   onAccSelect,
   onAtlasTileSelect,

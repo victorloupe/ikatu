@@ -412,12 +412,13 @@ export async function executarGerarPDF(preview = false) {
       { key: 'cascata', label: 'Cascata' },
       { key: 'filtragem', label: 'Sistema de Filtragem' },
       { key: 'igui_stone', label: 'IGUI Stone' },
-      { key: 'aquecimento', label: 'Sistema de Aquecimento' }
+      { key: 'aquecimento', label: 'Sistema de Aquecimento' },
+      { key: 'outros', label: 'Outros' }
     ];
 
     for (let i = 0; i < ACC_CFG.length; i++) {
       const { key, label } = ACC_CFG[i];
-      const a = S.acc[key];
+      const a = S.acc[key] || { on: false, modelo: '', img: '' };
       const col = i % 3, row = Math.floor(i / 3);
       const ax = M + col * ACW, ay = ACC_Y_START + row * ACC_ROW_H;
 
@@ -432,7 +433,15 @@ export async function executarGerarPDF(preview = false) {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...rgb(C.muted));
         doc.setFontSize(8);
-        doc.text(a.modelo, ax + 7, ay + 9);
+        let textoModelo = a.modelo;
+        if (a.cor_pedra) {
+          const pedraNome = (a.cor_pedra.toLowerCase() === 'personalizado' && a.cor_pedra_custom)
+            ? a.cor_pedra_custom
+            : (a.cor_pedra.charAt(0).toUpperCase() + a.cor_pedra.slice(1));
+          if (pedraNome) textoModelo += ` (${pedraNome})`;
+        }
+        const lines = doc.splitTextToSize(textoModelo, 50);
+        doc.text(lines, ax + 7, ay + 9);
       }
       if (a.on && a.img) {
         const IS = 18;

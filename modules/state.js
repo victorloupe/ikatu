@@ -6,10 +6,11 @@ export const S = {
   exibirCapa3d: {},
   acc: {
     corrimao:   {on:false, modelo:'', img:''},
-    cascata:    {on:false, modelo:'', img:'', cor_pedra:''},
+    cascata:    {on:false, modelo:'', img:'', cor_pedra:'', cor_pedra_custom:''},
     filtragem:  {on:false, modelo:'', img:'', cor:''},
     aquecimento:{on:false, modelo:'', img:''},
     igui_stone: {on:false, modelo:'', img:''},
+    outros:     {on:false, modelo:'', img:''},
   },
   itens: {rev:[], mob:[], pai:[], rev2:[], mob2:[], pai2:[]},
   // Índice das imagens 3D selecionadas (0-3: Vista1/2/3/Superior, sem deck)
