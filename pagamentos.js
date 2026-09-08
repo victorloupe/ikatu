@@ -2241,7 +2241,7 @@ async function exportarPDF() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(26, 42, 58); // #1a2a3a
-    doc.text('iGUi Space — Relatório de Pagamento', margin, y);
+    doc.text('Ikatu — Relatório de Pagamento', margin, y);
 
     doc.setFontSize(13);
     doc.setTextColor(0, 174, 239);
@@ -2432,7 +2432,7 @@ async function exportarPDF() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184); // #94a3b8
-    doc.text(`Documento oficial gerado eletronicamente em ${dataStr} às ${horaStr} via iGUi Space.`, 105, y, { align: 'center' });
+    doc.text(`Documento oficial gerado eletronicamente em ${dataStr} às ${horaStr} via Ikatu.`, 105, y, { align: 'center' });
 
     doc.save(`Relatorio_Pagamento_${nomeProj.replace(/\s+/g, '_')}_${mesNome}_${anoNome}.pdf`);
     showToast("📦 PDF gerado com sucesso!", "ok");

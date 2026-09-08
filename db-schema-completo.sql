@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
--- iGUi Space — SCHEMA CONSOLIDADO (estado final do banco)
+-- Ikatu — SCHEMA CONSOLIDADO (estado final do banco)
 -- Gerado em 12/06/2026 a partir de: db-schema, db-chat, db-add-categories,
 -- db-payments, db-fix-rls, db-fix-chat-rls, db-performance,
 -- db-auto-limpeza e db-reset-password.

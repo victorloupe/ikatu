@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Pagamentos — iGUi Space</title>
+  <title>Pagamentos — Ikatu</title>
   <meta name="theme-color" content="#1a2a3a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="iGUi Space">
+  <meta name="apple-mobile-web-app-title" content="Ikatu">
   <link rel="apple-touch-icon" href="../icon-192.png">
   <link rel="manifest" href="../manifest.json">
-  <link rel="stylesheet" href="mobile.css?v=202609081804">
+  <link rel="stylesheet" href="mobile.css?v=202609081828">
   <style>
     /* ── Barra Sticky de Filtros e Busca ─────────── */
     .pag-sticky-bar {
@@ -391,7 +391,7 @@
 
   <!-- Header -->
   <header class="m-header">
-    <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
+    <img src="../logo_site.png" alt="Ikatu" class="m-header-logo">
     
     <div class="m-header-right">
       <a class="m-header-user-btn" id="mHeaderUser" href="perfil.html" title="Meu Perfil"></a>
@@ -499,8 +499,8 @@
   <div class="m-toast" id="mToastGlobal"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202609081804"></script>
-  <script src="mobile-nav.js?v=202609081804"></script>
+  <script src="../supabase-client.js?v=202609081828"></script>
+  <script src="mobile-nav.js?v=202609081828"></script>
   <script>
   // ═══════════════════════════════════════════════
   // Pagamentos Mobile — leitura de todos os usuários
@@ -1252,7 +1252,7 @@
       if (filtroProj) registros = registros.filter(r => r.user_id === filtroProj);
 
       let linhas = [];
-      let nomeProj = 'Equipe iGUi Space';
+      let nomeProj = 'Equipe Ikatu';
       registros.forEach(r => {
         if (filtroProj) nomeProj = r.nome;
         const doMes = r.rows_data.filter(row => {
@@ -1320,7 +1320,7 @@
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.setTextColor(26, 42, 58); // #1a2a3a
-      doc.text('iGUi Space — Relatório de Pagamento', margin, y);
+      doc.text('Ikatu — Relatório de Pagamento', margin, y);
 
       doc.setFontSize(13);
       doc.setTextColor(0, 174, 239);
@@ -1511,14 +1511,14 @@
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(148, 163, 184); // #94a3b8
-      doc.text(`Documento oficial gerado eletronicamente em ${dataStr} às ${horaStr} via iGUi Space.`, 105, y, { align: 'center' });
+      doc.text(`Documento oficial gerado eletronicamente em ${dataStr} às ${horaStr} via Ikatu.`, 105, y, { align: 'center' });
 
       const fileName = `Relatorio_Pagamento_${nomeProj.replace(/\s+/g, '_')}_${mesNome}_${anoNome}.pdf`;
       await salvarOuCompartilharPDF(
         doc,
         fileName,
         'Relatório de Pagamento',
-        `Relatório de Pagamento iGUi Space — ${nomeProj} (${mesNome}/${anoNome})`
+        `Relatório de Pagamento Ikatu — ${nomeProj} (${mesNome}/${anoNome})`
       );
     } catch(err) {
       console.error(err);
@@ -1599,7 +1599,7 @@
       const margin = 10;
       const usableW = pageW - margin * 2;
 
-      const title = `iGUi Space — Lista de Projetos (${mesNome} / ${anoNome}) ${statusLabel}`.trim();
+      const title = `Ikatu — Lista de Projetos (${mesNome} / ${anoNome}) ${statusLabel}`.trim();
       const headers = ['Nº', 'Projetista', 'OS', 'Modelo Piscina', 'Loja/Franquia', 'Tipo', 'Data', 'Alt.'];
       const colWeights = [0.4, 1.4, 0.9, 1.8, 1.4, 1.4, 0.8, 0.6];
       const totalW = colWeights.reduce((a, b) => a + b, 0);
@@ -1666,7 +1666,7 @@
         doc,
         fileName,
         'Lista de Projetos',
-        `Lista de Projetos iGUi Space — (${mesNome}/${anoNome})`
+        `Lista de Projetos Ikatu — (${mesNome}/${anoNome})`
       );
     } catch(err) {
       console.error(err);
@@ -1685,7 +1685,7 @@
 
     let totalGeral = 0;
     let totalProjetos = 0;
-    let nome = filtroProj ? (registros[0]?.nome || 'Projetista') : 'Equipe iGUi Space';
+    let nome = filtroProj ? (registros[0]?.nome || 'Projetista') : 'Equipe Ikatu';
 
     registros.forEach(r => {
       const doMes = r.rows_data.filter(row => {
@@ -1698,13 +1698,13 @@
     const infoPago = getInfoMesPago(mesNome, String(anoNome));
     const statusTxt = (infoPago && infoPago.pago) ? '✅ PAGO' : '⏳ PENDENTE DE PAGAMENTO';
 
-    const texto = `*Resumo de Pagamento — iGUi Space*\n` +
+    const texto = `*Resumo de Pagamento — Ikatu*\n` +
                   `👤 *Projetista:* ${nome}\n` +
                   `📅 *Competência:* ${mesNome}/${anoNome}\n` +
                   `📌 *Status:* ${statusTxt}\n` +
                   `📁 *Total de Projetos:* ${totalProjetos}\n` +
                   `💰 *Valor Total:* R$ ${totalGeral.toFixed(2).replace('.', ',')}\n\n` +
-                  `Gerado via iGUi Space Mobile.`;
+                  `Gerado via Ikatu Mobile.`;
 
     if (navigator.share) {
       navigator.share({ title: 'Resumo de Pagamento', text: texto }).catch(() => {});

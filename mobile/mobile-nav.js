@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════
-// iGUi Space — Mobile Navigation
+// Ikatu — Mobile Navigation
 // Bottom nav + badges + pull-to-refresh
 // ═══════════════════════════════════════════════════
 
