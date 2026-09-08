@@ -677,7 +677,9 @@ function mostrarAvisoAtualizacao(reg) {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register('sw.js');
+      const isMobileSubdir = location.pathname.includes('/mobile/');
+      const swUrl = isMobileSubdir ? '../sw.js' : 'sw.js';
+      const reg = await navigator.serviceWorker.register(swUrl, isMobileSubdir ? { scope: '../' } : undefined);
 
       // Já existe versão nova aguardando (aba ficou aberta entre deploys)
       if (reg.waiting && navigator.serviceWorker.controller) mostrarAvisoAtualizacao(reg);

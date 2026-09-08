@@ -7,7 +7,7 @@
 
 // ⚠️ AO FAZER DEPLOY com mudanças: incremente a versão abaixo (v2 → v3 → ...).
 // É isso que dispara o aviso "Nova versão disponível" nas abas abertas.
-const CACHE = 'ikatu-v64';
+const CACHE = 'ikatu-v65';
 
 // Arquivos básicos do app shell (pré-cacheados na instalação)
 const SHELL = [
@@ -49,11 +49,10 @@ const SHELL = [
 ];
 
 self.addEventListener('install', e => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then(c => c.addAll(SHELL)).catch(e => console.warn('[SW] pré-cache falhou:', e))
   );
-  // Não chama skipWaiting() automaticamente: o novo SW fica aguardando
-  // até o usuário clicar em "Atualizar" no banner (mensagem abaixo).
 });
 
 self.addEventListener('message', e => {
