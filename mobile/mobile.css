@@ -16,10 +16,18 @@
   --red:     #e74c3c;
   --white:   #fff;
   --bg:      #e2eaf3;
-  --shadow:  0 2px 10px rgba(0,0,0,0.09);
-  --radius:  10px;
-  --nav-h:   64px;   /* altura do bottom nav */
+  --shadow:  0 2px 12px rgba(0,0,0,0.08);
+  --radius:  12px;
+  --nav-h:   62px;   /* altura do bottom nav */
   --header-h:56px;   /* altura do header mobile */
+
+  /* Safe area insets para entalhes/Dynamic Island e Home Bar do iOS/Android */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --header-total-h: calc(var(--header-h) + var(--sat));
+  --nav-total-h: calc(var(--nav-h) + var(--sab));
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -29,27 +37,55 @@ html, body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  min-height: 100dvh;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+}
+
+a, a:visited {
+  color: inherit;
+  text-decoration: none;
 }
 
 /* ─── HEADER ─────────────────────────────────────── */
 .m-header {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: var(--header-h);
+  height: var(--header-total-h);
+  padding-top: var(--sat);
+  padding-left: calc(16px + var(--sal));
+  padding-right: calc(16px + var(--sar));
   background: var(--dark);
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  gap: 12px;
+  gap: 10px;
   z-index: 200;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}
+
+.m-header-back-btn {
+  margin-left: auto;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.m-header-back-btn:active {
+  background: rgba(255,255,255,0.22);
+  transform: scale(0.95);
 }
 
 .m-header-logo {
   height: 28px;
-  max-width: 160px;
+  max-width: 150px;
   object-fit: contain;
   flex-shrink: 0;
 }
@@ -72,28 +108,77 @@ html, body {
   margin-left: auto !important;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.m-header-user {
+/* Botão de Perfil Moderno com Avatar */
+.m-header-user,
+.m-header-user-btn,
+.m-header-user:visited,
+.m-header-user-btn:visited,
+.m-header-user:hover,
+.m-header-user-btn:hover,
+.m-header-user:active,
+.m-header-user-btn:active {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 10px 3px 4px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  text-decoration: none !important;
+  color: #fff !important;
   font-size: 12px;
   font-weight: 600;
-  color: #7a90a3;
-  max-width: 120px;
+  height: 34px;
+  box-sizing: border-box;
+  transition: background 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+.m-header-user:active,
+.m-header-user-btn:active {
+  background: rgba(255,255,255,0.2);
+  transform: scale(0.96);
+}
+
+.m-header-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue) 0%, #0088cc 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.m-header-user-name {
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 600;
+  max-width: 90px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-decoration: none;
-  transition: color 0.15s;
+  line-height: 1;
 }
-.m-header-user:hover { color: var(--blue); }
+
+
 
 /* ─── CONTEÚDO PRINCIPAL ─────────────────────────── */
 .m-content {
-  padding-top: var(--header-h);
-  padding-bottom: calc(var(--nav-h) + 8px);
+  padding-top: var(--header-total-h);
+  padding-bottom: calc(var(--nav-total-h) + 12px);
   min-height: 100vh;
+  min-height: 100dvh;
   animation: m-page-in 0.18s ease both;
 }
 @keyframes m-page-in {
@@ -105,11 +190,24 @@ html, body {
 .m-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: var(--nav-h);
+  height: var(--nav-total-h);
+  padding-bottom: var(--sab);
   background: var(--dark);
   display: flex;
   z-index: 200;
-  box-shadow: 0 -2px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 -2px 14px rgba(0,0,0,0.22);
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+/* Ocultação suave do menu quando teclado virtual abrir */
+.keyboard-open .m-nav {
+  transform: translateY(100%) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.keyboard-open .main-content {
+  margin-bottom: 0 !important;
+  height: calc(100dvh - var(--header-total-h)) !important;
 }
 
 .m-nav-item {
@@ -310,11 +408,13 @@ html, body {
 }
 
 .m-input {
+  box-sizing: border-box;
+  height: 44px;
   border: 1.5px solid var(--border);
   border-radius: 8px;
-  padding: 11px 14px;
+  padding: 8px 12px;
   font-family: 'Inter', sans-serif;
-  font-size: 16px; /* >=16px evita zoom automático do iOS Safari ao focar */
+  font-size: 15px; /* >=16px evita zoom automático do iOS Safari ao focar */
   color: var(--text);
   background: #fafcff;
   outline: none;
@@ -407,35 +507,39 @@ select.m-input { cursor: pointer; }
 /* ─── TOAST ──────────────────────────────────────── */
 .m-toast {
   position: fixed;
-  bottom: calc(var(--nav-h) + 14px);
+  bottom: calc(var(--nav-total-h) + 14px);
   left: 14px; right: 14px;
+  max-width: 480px;
+  margin: 0 auto;
   background: var(--dark);
   color: #fff;
   padding: 13px 18px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 13px;
   font-weight: 500;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   transform: translateY(20px);
   opacity: 0;
-  transition: all 0.25s;
-  z-index: 500;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 600;
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
   pointer-events: none;
 }
-.m-toast.show { transform: translateY(0); opacity: 1; }
-.m-toast.success { background: #1a6b3a; }
-.m-toast.error   { background: #8b1a1a; }
+.m-toast.show { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.m-toast.success { background: #166534; border: 1px solid #22c55e; }
+.m-toast.error   { background: #991b1b; border: 1px solid #ef4444; }
 
 /* ─── MODAL ──────────────────────────────────────── */
 .m-modal-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.45);
-  z-index: 400;
+  background: rgba(10,20,30,0.65);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 500;
   align-items: flex-end;
   justify-content: center;
 }
@@ -443,23 +547,26 @@ select.m-input { cursor: pointer; }
 
 .m-modal {
   background: #fff;
-  border-radius: 16px 16px 0 0;
-  padding: 20px 20px 36px;
+  border-radius: 20px 20px 0 0;
+  padding: 18px 20px calc(24px + var(--sab));
   width: 100%;
-  max-height: 85vh;
+  max-width: 600px;
+  max-height: 88vh;
+  max-height: 88dvh;
   overflow-y: auto;
-  animation: m-modal-in 0.22s ease;
+  animation: m-modal-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 -4px 30px rgba(0,0,0,0.25);
 }
 @keyframes m-modal-in {
-  from { transform: translateY(40px); opacity: 0.5; }
+  from { transform: translateY(100%); opacity: 0.6; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 
 .m-modal-handle {
-  width: 36px; height: 4px;
-  background: var(--border);
+  width: 40px; height: 4px;
+  background: #cbd5e1;
   border-radius: 2px;
-  margin: 0 auto 18px;
+  margin: 0 auto 16px;
 }
 
 .m-modal-title {
@@ -505,3 +612,207 @@ select.m-input { cursor: pointer; }
   margin-top: 20px;
 }
 .m-section-title:first-child { margin-top: 0; }
+
+/* ─── RESUMO FINANCEIRO / KPIS (PAGAMENTOS) ──────── */
+.pag-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 12px 14px 4px;
+}
+.pag-kpi-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.pag-kpi-card.highlight {
+  background: linear-gradient(135deg, #0d233a 0%, #1a2a3a 100%);
+  border-color: #243b50;
+  color: #fff;
+}
+.pag-kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.pag-kpi-card.highlight .pag-kpi-label { color: #8faec8; }
+.pag-kpi-val {
+  font-family: 'Inter Tight', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+.pag-kpi-card.highlight .pag-kpi-val {
+  color: #38bdf8;
+  font-size: 22px;
+}
+.pag-kpi-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.pag-kpi-card.highlight .pag-kpi-sub { color: #94a3b8; }
+
+/* ─── BOTÃO EXPORTAR PDF (PAGAMENTOS & GERAL) ─────── */
+.m-btn-export-pdf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+  transition: all 0.15s;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.m-btn-export-pdf:active {
+  background: #0369a1;
+  transform: scale(0.97);
+}
+
+/* ─── CARDS DE ADMIN MOBILE ──────────────────────── */
+.m-admin-card {
+  background: #fff;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.m-admin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.m-admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.m-admin-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #334155;
+  font-weight: 800;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.m-admin-avatar.admin {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+.m-admin-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-admin-email {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.m-admin-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+.m-admin-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+.m-admin-btn:active { background: #e2e8f0; }
+.m-admin-btn.danger { color: #dc2626; border-color: #fecaca; background: #fef2f2; }
+.m-admin-btn.danger:active { background: #fee2e2; }
+.m-admin-btn.success { color: #16a34a; border-color: #bbf7d0; background: #f0fdf4; }
+.m-admin-btn.success:active { background: #dcfce7; }
+.m-admin-btn.primary { color: #0284c7; border-color: #bae6fd; background: #f0f9ff; }
+.m-admin-btn.primary:active { background: #e0f2fe; }
+
+/* ─── LINKS RÁPIDOS MOBILE ────────────────────────── */
+.m-link-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.m-link-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.m-link-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  background: #f0f4f8;
+}
+.m-link-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.m-link-desc {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 1px;
+}
+

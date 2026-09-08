@@ -2,10 +2,16 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Admin — iGUi Space</title>
-  <link rel="stylesheet" href="../styles.css?v=202608281130">
-  <link rel="stylesheet" href="mobile.css?v=202608281130">
+  <meta name="theme-color" content="#1a2a3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="iGUi Space">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="../styles.css?v=202609081804">
+  <link rel="stylesheet" href="mobile.css?v=202609081804">
   <style>
   /* ══ CSS do admin (não está em styles.css) ══ */
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
@@ -94,7 +100,7 @@
     .m-header-right { margin-left: auto !important; }
     .sidebar { display: none !important; }
     .layout { padding-left: 0 !important; display: block !important; min-height: 0 !important; }
-    .main-content { padding-top: var(--header-h) !important; padding-bottom: calc(var(--nav-h) + 8px) !important; }
+    .main-content { padding-top: calc(var(--header-total-h) + 12px) !important; padding-bottom: calc(var(--nav-total-h) + 20px) !important; }
     /* Tabs scroll horizontal no mobile */
     .tabs { overflow-x: visible !important; flex-wrap: nowrap !important; }
     .tab { flex: 1 !important; justify-content: center !important; font-size: 11px !important; padding: 8px 4px !important; }
@@ -129,7 +135,7 @@
     <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
     
     <div class="m-header-right">
-      <a class="m-header-user" id="mHeaderUser" href="perfil.html"></a>
+      <a class="m-header-user-btn" id="mHeaderUser" href="perfil.html" title="Meu Perfil"></a>
     </div>
   </header>
 
@@ -193,25 +199,15 @@
 
         <div class="section-hd">
           <h3>Usuários cadastrados</h3>
-          <span id="userCount" style="font-size:12px;color:var(--muted)">—</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-sm" onclick="toggleSortAss()" style="font-size:11px;padding:5px 9px;" id="btnSortAss">
+              📅 Expiração <span id="sortAssIcon"></span>
+            </button>
+            <span id="userCount" style="font-size:12px;color:var(--muted);font-weight:600;">—</span>
+          </div>
         </div>
-        <div style="overflow-x:auto;">
-          <table class="users-table">
-            <thead>
-              <tr>
-                <th style="width: 140px; padding-left: 8px;">Nome</th>
-                <th>E-mail</th>
-                <th style="width: 70px; text-align: center;">Função</th>
-                <th style="width: 80px; text-align: center;">Status</th>
-                <th style="width: 90px; text-align: center;">Desde</th>
-                <th id="thAssinatura" style="width: 110px; text-align: center; cursor:pointer; user-select:none;" onclick="toggleSortAss()" title="Ordenar por expiração">Assinatura <span id="sortAssIcon" style="font-size:10px;color:var(--muted)"></span></th>
-                <th style="width: 290px; text-align: right; padding-right: 8px;">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="usersBody">
-              <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Carregando...</td></tr>
-            </tbody>
-          </table>
+        <div id="usersCardsWrap">
+          <div style="text-align:center;color:var(--muted);padding:30px">Carregando...</div>
         </div>
       </div>
 
@@ -526,8 +522,8 @@
 <div class="m-toast" id="mToastGlobal"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="../supabase-client.js?v=202608281130"></script>
-<script src="mobile-nav.js?v=202608281130"></script>
+<script src="../supabase-client.js?v=202609081804"></script>
+<script src="mobile-nav.js?v=202609081804"></script>
 <script>
 let usuarios = [];
 let todosLinks = [];
@@ -682,9 +678,9 @@ async function carregarUsuarios() {
     renderUsuarios();
   } catch(e) {
     showToast('Erro: '+e.message,'err');
-    const tbody = document.getElementById('usersBody');
-    if (tbody) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#e74c3c;padding:30px;font-weight:600;">⚠️ Erro ao carregar usuários: ${escHtml(e.message)}</td></tr>`;
+    const wrap = document.getElementById('usersCardsWrap');
+    if (wrap) {
+      wrap.innerHTML = `<div style="text-align:center;color:#e74c3c;padding:30px;font-weight:600;">⚠️ Erro ao carregar usuários: ${escHtml(e.message)}</div>`;
     }
   }
 }
@@ -697,13 +693,16 @@ function toggleSortAss() {
 }
 
 function renderUsuarios() {
-  const tbody = document.getElementById('usersBody');
-  document.getElementById('userCount').textContent = `${usuarios.length} usuário(s)`;
+  const container = document.getElementById('usersCardsWrap');
+  const countEl = document.getElementById('userCount');
+  if (countEl) countEl.textContent = `${usuarios.length} usuário(s)`;
+  if (!container) return;
+
   if (!usuarios.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">Nenhum usuário</td></tr>';
+    container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;background:#fff;border-radius:10px;border:1px solid var(--border);">Nenhum usuário cadastrado.</div>';
     return;
   }
-  tbody.innerHTML = '';
+  container.innerHTML = '';
 
   const admins = usuarios.filter(u => u.role === 'admin');
   let comuns = usuarios.filter(u => u.role !== 'admin');
@@ -719,51 +718,63 @@ function renderUsuarios() {
 
   const addGrupo = (titulo, lista) => {
     if (!lista.length) return;
-    const trH = document.createElement('tr');
-    trH.className = 'users-group-row';
-    trH.innerHTML = `<td colspan="7">${titulo}<span class="grp-count">(${lista.length})</span></td>`;
-    tbody.appendChild(trH);
-    lista.forEach(u => tbody.appendChild(linhaUsuario(u)));
+    const grpHd = document.createElement('div');
+    grpHd.style.cssText = 'font-size:11px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;color:#5a6a78;margin:14px 0 8px;display:flex;align-items:center;gap:6px;';
+    grpHd.innerHTML = `<span>${titulo}</span> <span style="color:#9aa8b6;font-size:11px;">(${lista.length})</span>`;
+    container.appendChild(grpHd);
+    lista.forEach(u => container.appendChild(cardUsuario(u)));
   };
 
   addGrupo('Administradores', admins);
   addGrupo('Usuários', comuns);
 }
 
-function linhaUsuario(u) {
-    const isMe = u.id === meId;
-    const data = new Date(u.created_at).toLocaleDateString('pt-BR');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="padding-left: 8px;"><strong onclick="abrirDadosUsuario('${u.id}')" style="cursor:pointer;color:var(--blue);text-decoration:underline;text-underline-offset:3px;">${escHtml(u.name||'—')}</strong>${isMe ? ' <span style="font-size:10px;color:var(--muted)">(você)</span>' : ''}</td>
-      <td style="color:var(--muted);font-size:12px">${escHtml(u.email)}</td>
-      <td style="text-align: center;"><span class="role-badge ${u.role}">${u.role}</span></td>
-      <td style="white-space:nowrap; text-align: center;"><span class="status-dot ${u.active!==false?'on':'off'}"></span>${u.active!==false?'Ativo':'Inativo'}</td>
-      <td style="color:var(--muted);font-size:12px; text-align: center;">${data}</td>
-      <td style="text-align: center; white-space:nowrap;">${renderAssinatura(u)}</td>
-      <td style="text-align:right; padding-right: 8px;">
-        ${!isMe ? `
-          <div style="display:inline-flex;gap:5px;justify-content:flex-end;">
-            <button class="btn-icon ${u.role==='admin'?'btn-role-to-user':'btn-role-to-admin'}" title="${u.role==='admin'?'Tornar User':'Tornar Admin'}" onclick="trocarRole('${u.id}','${u.role}')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
-            </button>
-            <button class="btn-icon btn-reset" title="Resetar senha" onclick="resetarSenhaUsuario('${u.id}', '${escHtml(u.name || '')}', '${escHtml(u.email || '')}')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            </button>
-            <button class="btn-icon ${u.active!==false ? 'btn-deactivate' : 'btn-activate'}" title="${u.active!==false?'Desativar':'Ativar'}" onclick="toggleAtivo('${u.id}',${u.active!==false})">
-              ${u.active!==false
-                ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M4.93 4.93l14.14 14.14"/></svg>`
-                : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`
-              }
-            </button>
-            <button class="btn-icon btn-reset" title="Assinatura" onclick="abrirModalAssinatura('${u.id}','${escHtml(u.name||u.email||'')}')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            </button>
+function cardUsuario(u) {
+  const isMe = u.id === meId;
+  const data = new Date(u.created_at).toLocaleDateString('pt-BR');
+  const ini = (u.name || u.email || '?')[0].toUpperCase();
+  const el = document.createElement('div');
+  el.className = 'm-admin-card';
+  el.innerHTML = `
+    <div class="m-admin-card-header">
+      <div class="m-admin-user-info" onclick="abrirDadosUsuario('${u.id}')" style="cursor:pointer;">
+        <div class="m-admin-avatar ${u.role}">${ini}</div>
+        <div style="min-width:0;">
+          <div class="m-admin-name">
+            <strong>${escHtml(u.name || '—')}</strong>${isMe ? ' <span style="font-size:10px;color:var(--muted);font-weight:normal;">(você)</span>' : ''}
           </div>
-        ` : '<span style="font-size:11px;color:var(--muted)">—</span>'}
-      </td>
-    `;
-    return tr;
+          <div class="m-admin-email">${escHtml(u.email)}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <span class="role-badge ${u.role}">${u.role}</span>
+        <span class="status-dot ${u.active !== false ? 'on' : 'off'}" title="${u.active !== false ? 'Ativo' : 'Inativo'}"></span>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);padding:6px 0;border-top:1px solid #f8fafc;">
+      <span>Cadastrado: <strong>${data}</strong></span>
+      <div style="text-align:right;">${renderAssinatura(u)}</div>
+    </div>
+    ${!isMe ? `
+      <div class="m-admin-actions">
+        <button class="m-admin-btn ${u.role === 'admin' ? 'primary' : ''}" onclick="trocarRole('${u.id}','${u.role}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M17 11l2 2 4-4"/></svg>
+          ${u.role === 'admin' ? 'Tornar User' : 'Tornar Admin'}
+        </button>
+        <button class="m-admin-btn" onclick="resetarSenhaUsuario('${u.id}', '${escHtml(u.name || '')}', '${escHtml(u.email || '')}')">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          Senha
+        </button>
+        <button class="m-admin-btn ${u.active !== false ? 'danger' : 'success'}" onclick="toggleAtivo('${u.id}',${u.active !== false})">
+          ${u.active !== false ? 'Desativar' : 'Ativar'}
+        </button>
+        <button class="m-admin-btn primary" onclick="abrirModalAssinatura('${u.id}','${escHtml(u.name || u.email || '')}')">
+          📅 Assinatura
+        </button>
+      </div>
+    ` : ''}
+  `;
+  return el;
 }
 
 function renderAssinatura(u) {

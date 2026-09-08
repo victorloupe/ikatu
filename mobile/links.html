@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Links & Documentos — iGUi Space</title>
+  <meta name="theme-color" content="#1a2a3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="iGUi Space">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="mobile.css?v=202609081804">
+  <style>
+    .links-top-bar {
+      position: sticky;
+      top: var(--header-total-h);
+      z-index: 100;
+      background: var(--bg);
+      padding: 10px 14px 12px;
+      margin: 0 -14px 12px;
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .m-search-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .m-search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0 12px;
+      height: 42px;
+      box-shadow: var(--shadow);
+    }
+    .m-search-box input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+      width: 100%;
+      color: var(--text);
+      padding-left: 8px;
+    }
+    .btn-admin-add {
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 10px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .folder-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+    .folder-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      cursor: pointer;
+      user-select: none;
+      background: #fff;
+      transition: background 0.15s;
+    }
+    .folder-head:active { background: #f8fafc; }
+    .folder-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #eef5fc;
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .folder-icon svg { width: 18px; height: 18px; }
+    .folder-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .folder-count-badge {
+      font-size: 11px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 2px 8px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .folder-chevron {
+      color: var(--muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .folder-chevron.open { transform: rotate(90deg); }
+    .folder-content {
+      display: none;
+      padding: 0 14px 14px;
+      border-top: 1px solid #f1f5f9;
+      background: #fafcff;
+    }
+    .folder-content.open { display: block; }
+    .link-item-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-top: 8px;
+      text-decoration: none;
+      color: inherit;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      transition: transform 0.1s, border-color 0.15s;
+    }
+    .link-item-row:active {
+      transform: scale(0.98);
+      border-color: var(--blue);
+    }
+    .link-type-ico {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: #f0f7ff;
+      color: var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .link-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .link-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .link-desc {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .link-url-sub {
+      font-size: 10px;
+      color: var(--blue);
+      margin-top: 2px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .link-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .btn-icon-link {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .btn-icon-link:active { background: #e2e8f0; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="m-header">
+    <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
+    <div class="m-header-right">
+      <a class="m-header-user-btn" id="mHeaderUser" href="perfil.html" title="Meu Perfil"></a>
+    </div>
+  </header>
+
+  <!-- Conteudo -->
+  <div class="m-content">
+    <div class="m-wrap">
+
+      <!-- Barra Sticky de Pesquisa e Acao -->
+      <div class="links-top-bar">
+        <div class="m-search-wrap">
+          <div class="m-search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7f8c9a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Pesquisar links, manuais..." oninput="filtrar()">
+          </div>
+          <button id="btnNovoLink" class="btn-admin-add" style="display:none;" onclick="abrirModalNovoLink()">
+            <span>+ Link</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Container de Pastas / Links -->
+      <div id="linksContainer">
+        <div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">
+          Carregando links...
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal Adicionar / Editar Link (Admin) -->
+  <div class="m-modal-overlay" id="linkModalOverlay">
+    <div class="m-modal">
+      <div class="m-modal-handle"></div>
+      <div class="m-modal-title" id="modalLinkTitle">Novo Link</div>
+      
+      <div class="m-field">
+        <label class="m-label">Título</label>
+        <input type="text" id="linkTitle" class="m-input" placeholder="Ex: Tabela de Preços">
+      </div>
+      
+      <div class="m-field">
+        <label class="m-label">URL (Link)</label>
+        <input type="url" id="linkUrl" class="m-input" placeholder="https://...">
+      </div>
+      
+      <div class="m-field">
+        <label class="m-label">Pasta / Categoria</label>
+        <select id="linkCategory" class="m-input"></select>
+      </div>
+      
+      <div class="m-field">
+        <label class="m-label">Descrição (opcional)</label>
+        <input type="text" id="linkDesc" class="m-input" placeholder="Breve resumo">
+      </div>
+      
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button class="m-btn m-btn-secondary" style="flex:1;" onclick="fecharModais()">Cancelar</button>
+        <button class="m-btn m-btn-primary" style="flex:1;" onclick="salvarLink()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="m-toast" id="mToastGlobal"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../supabase-client.js?v=202609081804"></script>
+  <script src="mobile-nav.js?v=202609081804"></script>
+  <script>
+    let todosLinks = [];
+    let todasCategorias = [];
+    let isAdminUser = false;
+    let editandoLinkId = null;
+    let openFolders = new Set();
+
+    const FOLDER_ICONS = {
+      folder:   `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4a1 1 0 011-1h3l2 2h5a1 1 0 011 1v6a1 1 0 01-1 1H3a1 1 0 01-1-1V4z"/></svg>`,
+      document: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6z"/><path d="M9 2v4h4"/><path d="M5 9h6M5 12h4"/></svg>`,
+      table:    `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2 7h12M6 3v10"/></svg>`,
+      tools:    `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 2.5L11 5l1 1-2.5 2.5-1-1-1.5 1.5 4 4 1.5-1.5-1-1L14 9l1 1 .5-.5-2-7z"/><path d="M2 13l4-4"/></svg>`,
+      link:     `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 9a3 3 0 004.24.1l2-2a3 3 0 00-4.24-4.24l-1.1 1.1"/><path d="M9 7a3 3 0 00-4.24-.1l-2 2a3 3 0 004.24 4.24l1.1-1.1"/></svg>`,
+    };
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function getLinkIconEmoji(url) {
+      const u = (url || '').toLowerCase();
+      if (u.includes('.pdf')) return '📄';
+      if (u.includes('docs.google.com/spreadsheets') || u.includes('.xlsx') || u.includes('.xls') || u.includes('.csv')) return '📊';
+      if (u.includes('docs.google.com/document') || u.includes('.docx') || u.includes('.doc')) return '📝';
+      if (u.includes('drive.google.com')) return '📁';
+      if (u.includes('youtube.com') || u.includes('youtu.be') || u.includes('.mp4')) return '🎬';
+      if (u.includes('figma.com') || u.includes('.png') || u.includes('.jpg')) return '🎨';
+      return '🔗';
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const session = await sbRequireAuth();
+      if (!session) return;
+
+      const profile = await sbGetProfile();
+      isAdminUser = profile?.role === 'admin';
+      if (isAdminUser) {
+        document.getElementById('btnNovoLink').style.display = 'inline-flex';
+      }
+
+      await carregarDados();
+    });
+
+    async function carregarDados() {
+      try {
+        const [cats, links] = await Promise.all([
+          typeof sbListarCategorias === 'function' ? sbListarCategorias() : [],
+          typeof sbListarLinks === 'function' ? sbListarLinks() : []
+        ]);
+        todasCategorias = cats || [];
+        todosLinks = (links || []).filter(l => l.category !== 'SystemConfig');
+        
+        // Abre primeira pasta por padrao
+        if (todasCategorias.length > 0) {
+          openFolders.add(todasCategorias[0].name);
+        }
+
+        renderTudo();
+      } catch (e) {
+        document.getElementById('linksContainer').innerHTML = `
+          <div style="text-align:center;padding:40px;color:#dc2626;">
+            Erro ao carregar links: ${esc(e.message)}
+          </div>
+        `;
+      }
+    }
+
+    function filtrar() {
+      renderTudo();
+    }
+
+    function renderTudo() {
+      const q = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+      const container = document.getElementById('linksContainer');
+
+      if (q) {
+        // Modo Busca
+        const filtrados = todosLinks.filter(l =>
+          (l.title || '').toLowerCase().includes(q) ||
+          (l.description || '').toLowerCase().includes(q) ||
+          (l.url || '').toLowerCase().includes(q) ||
+          (l.category || '').toLowerCase().includes(q)
+        );
+
+        if (!filtrados.length) {
+          container.innerHTML = `
+            <div style="text-align:center;padding:40px 20px;color:var(--muted);background:#fff;border-radius:12px;border:1px solid var(--border);">
+              <div style="font-size:32px;margin-bottom:8px;">🔍</div>
+              <div style="font-weight:600;font-size:14px;">Nenhum link encontrado</div>
+              <div style="font-size:12px;margin-top:4px;">Tente outro termo de pesquisa.</div>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+            Resultados (${filtrados.length})
+          </div>
+          <div>
+            ${filtrados.map(l => renderLinkItem(l)).join('')}
+          </div>
+        `;
+        return;
+      }
+
+      // Modo Pastas
+      const linksPorCat = {};
+      todosLinks.forEach(l => {
+        const cat = l.category || 'Geral';
+        if (!linksPorCat[cat]) linksPorCat[cat] = [];
+        linksPorCat[cat].push(l);
+      });
+
+      const catNomes = new Set(todasCategorias.map(c => c.name));
+      Object.keys(linksPorCat).forEach(c => catNomes.add(c));
+
+      const catOrdenadas = [
+        ...todasCategorias.map(c => c.name),
+        ...[...catNomes].filter(n => !todasCategorias.find(c => c.name === n)).sort()
+      ];
+
+      const seen = new Set();
+      const catFinal = catOrdenadas.filter(n => { if (seen.has(n)) return false; seen.add(n); return true; });
+
+      if (!catFinal.length) {
+        container.innerHTML = `
+          <div style="text-align:center;padding:40px 20px;color:var(--muted);background:#fff;border-radius:12px;border:1px solid var(--border);">
+            <div style="font-size:32px;margin-bottom:8px;">📁</div>
+            <div style="font-weight:600;font-size:14px;">Nenhuma pasta cadastrada</div>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      catFinal.forEach(catName => {
+        const links = linksPorCat[catName] || [];
+        const isOpen = openFolders.has(catName);
+        const catObj = todasCategorias.find(c => c.name === catName);
+        const iconSvg = FOLDER_ICONS[catObj?.icon] || FOLDER_ICONS.folder;
+
+        html += `
+          <div class="folder-card">
+            <div class="folder-head" onclick="toggleFolder('${esc(catName)}')">
+              <div class="folder-icon">${iconSvg}</div>
+              <div class="folder-title">${esc(catName)}</div>
+              <div class="folder-count-badge">${links.length}</div>
+              <div class="folder-chevron ${isOpen ? 'open' : ''}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+              </div>
+            </div>
+            <div class="folder-content ${isOpen ? 'open' : ''}" id="folder-body-${esc(catName).replace(/\s+/g, '_')}">
+              ${links.length ? links.map(l => renderLinkItem(l)).join('') : '<div style="padding:16px 0;text-align:center;font-size:12px;color:var(--muted);">Nenhum link nesta pasta</div>'}
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function renderLinkItem(l) {
+      let dominio = l.url;
+      try { dominio = new URL(l.url).hostname; } catch(e) {}
+      const emoji = getLinkIconEmoji(l.url);
+
+      return `
+        <div class="link-item-row" onclick="window.open('${esc(l.url)}', '_blank', 'noopener,noreferrer')" style="cursor:pointer;">
+          <div class="link-type-ico">${emoji}</div>
+          <div class="link-info">
+            <div class="link-title">${esc(l.title)}</div>
+            ${l.description ? `<div class="link-desc">${esc(l.description)}</div>` : ''}
+            <div class="link-url-sub">${esc(dominio)} ↗</div>
+          </div>
+          <div class="link-actions" onclick="event.stopPropagation()">
+            <button class="btn-icon-link" title="Compartilhar" onclick="compartilharLink('${esc(l.title)}', '${esc(l.url)}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
+            ${isAdminUser ? `
+              <button class="btn-icon-link" title="Editar" onclick="abrirModalEditarLink('${l.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </button>
+            ` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleFolder(catName) {
+      if (openFolders.has(catName)) {
+        openFolders.delete(catName);
+      } else {
+        openFolders.add(catName);
+      }
+      renderTudo();
+    }
+
+    function compartilharLink(title, url) {
+      if (navigator.share) {
+        navigator.share({ title, url }).catch(() => {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          mToast('Link copiado para a área de transferência!', 'success');
+        });
+      }
+    }
+
+    function abrirModalNovoLink() {
+      editandoLinkId = null;
+      document.getElementById('modalLinkTitle').textContent = 'Novo Link';
+      document.getElementById('linkTitle').value = '';
+      document.getElementById('linkUrl').value = '';
+      document.getElementById('linkDesc').value = '';
+
+      popularSelectCategorias();
+      document.getElementById('linkModalOverlay').classList.add('open');
+    }
+
+    function abrirModalEditarLink(id) {
+      const l = todosLinks.find(x => x.id === id);
+      if (!l) return;
+      editandoLinkId = id;
+      document.getElementById('modalLinkTitle').textContent = 'Editar Link';
+      document.getElementById('linkTitle').value = l.title || '';
+      document.getElementById('linkUrl').value = l.url || '';
+      document.getElementById('linkDesc').value = l.description || '';
+
+      popularSelectCategorias(l.category);
+      document.getElementById('linkModalOverlay').classList.add('open');
+    }
+
+    function fecharModais() {
+      document.getElementById('linkModalOverlay').classList.remove('open');
+    }
+
+    function popularSelectCategorias(selecionada = '') {
+      const sel = document.getElementById('linkCategory');
+      sel.innerHTML = '';
+      const cats = todasCategorias.length ? todasCategorias.map(c => c.name) : ['Geral'];
+      cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        if (c === selecionada) opt.selected = true;
+        sel.appendChild(opt);
+      });
+    }
+
+    async function salvarLink() {
+      const title = document.getElementById('linkTitle').value.trim();
+      const url = document.getElementById('linkUrl').value.trim();
+      const category = document.getElementById('linkCategory').value;
+      const description = document.getElementById('linkDesc').value.trim();
+
+      if (!title || !url) {
+        mToast('Título e URL são obrigatórios', 'error');
+        return;
+      }
+
+      try {
+        if (typeof sbSalvarLink === 'function') {
+          await sbSalvarLink({ title, url, description, category }, editandoLinkId);
+        } else {
+          if (editandoLinkId) {
+            await sb.from('links').update({ title, url, description, category }).eq('id', editandoLinkId);
+          } else {
+            await sb.from('links').insert([{ title, url, description, category }]);
+          }
+        }
+        fecharModais();
+        mToast('Link salvo com sucesso!', 'success');
+        await carregarDados();
+      } catch (e) {
+        mToast('Erro: ' + e.message, 'error');
+      }
+    }
+
+    window.ptrRecarregar = async () => {
+      await carregarDados();
+      mToast('Links atualizados!', 'success');
+    };
+  </script>
+</body>
+</html>

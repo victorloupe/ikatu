@@ -2,9 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>iGUi Space</title>
-  <link rel="stylesheet" href="mobile.css?v=202608281130">
+  <meta name="theme-color" content="#1a2a3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="iGUi Space">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="mobile.css?v=202609081804">
   <style>
     body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
     .splash { text-align: center; }
@@ -19,7 +25,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202608281130"></script>
+  <script src="../supabase-client.js?v=202609081804"></script>
   <script>
     (async () => {
       // Aguarda sessão
@@ -28,8 +34,8 @@
         location.href = 'login.html';
         return;
       }
-      // Redireciona direto para pagamentos (página principal mobile)
-      location.replace('pagamentos.html');
+      // Redireciona direto para prancha (primeira aba mobile)
+      location.replace('prancha.html');
     })();
   </script>
 </body>

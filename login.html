@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202608281130"></script>
+<script src="supabase-client.js?v=202609081804"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/sirxemic/jquery.ripples/dist/jquery.ripples-min.js"></script>
 <style>
@@ -451,7 +451,7 @@
   (async () => {
     const s = await sbGetSession();
     if (s) {
-      window.location.href = window.innerWidth <= 768 ? 'mobile/pagamentos.html' : 'index.html';
+      window.location.href = window.innerWidth <= 768 ? 'mobile/prancha.html' : 'index.html';
     }
   })();
 
@@ -535,7 +535,7 @@
     // Tela de abertura: checklist carregando o sistema e então redireciona
     const nome = profile?.name || email.split('@')[0];
     iniciarSplash(nome, profile?.role === 'admin', profile?.assinatura_expira_em, () => {
-      window.location.href = window.innerWidth <= 768 ? 'mobile/pagamentos.html' : 'index.html';
+      window.location.href = window.innerWidth <= 768 ? 'mobile/prancha.html' : 'index.html';
     });
   }
 

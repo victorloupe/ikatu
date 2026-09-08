@@ -38,6 +38,7 @@ const HTML_FILES = [
   'mobile/pagamentos.html',
   'mobile/perfil.html',
   'mobile/prancha.html',
+  'mobile/links.html',
 ];
 
 const SW_FILE = 'sw.js';

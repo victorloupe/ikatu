@@ -4,21 +4,23 @@
 // ═══════════════════════════════════════════════════
 
 (function () {
-  // ─── SVGs minimalistas ────────────────────────────
+  // ─── SVGs consistentes (viewBox 0 0 24 24) ────────
   const ICONS = {
-    prancha: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>`,
-    avisos:  `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1a4.5 4.5 0 0 0-4.5 4.5V9L2 11h12l-1.5-2V5.5A4.5 4.5 0 0 0 8 1z"/><path d="M6 13a2 2 0 0 0 4 0"/></svg>`,
-    chat:    `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h9A1.5 1.5 0 0 1 14 4.5v5A1.5 1.5 0 0 1 12.5 11H6l-3 2.5V11H3.5A1.5 1.5 0 0 1 2 9.5z"/></svg>`,
-    pagamentos: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="14" height="9" rx="1.5"/><path d="M1 7h14"/><path d="M4 10.5h2"/><path d="M8 10.5h4"/></svg>`,
+    prancha: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>`,
+    avisos:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+    chat:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>`,
+    pagamentos: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="9" y2="15"/><line x1="12" y1="15" x2="17" y2="15"/></svg>`,
     admin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+    links: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`,
   };
 
   // ─── Itens do nav ──────────────────────────────────
   const NAV_ITEMS_BASE = [
     { id: 'nav-prancha',    href: 'prancha.html',    icon: ICONS.prancha,    label: 'Pranchas',   badge: null },
+    { id: 'nav-pagamentos', href: 'pagamentos.html', icon: ICONS.pagamentos, label: 'Pagamentos', badge: null },
     { id: 'nav-avisos',     href: 'avisos.html',     icon: ICONS.avisos,     label: 'Avisos',     badge: 'avisos' },
     { id: 'nav-chat',       href: 'chat.html',       icon: ICONS.chat,       label: 'Chat',       badge: 'chat' },
-    { id: 'nav-pagamentos', href: 'pagamentos.html', icon: ICONS.pagamentos, label: 'Pagamentos', badge: null },
+    { id: 'nav-links',      href: 'links.html',      icon: ICONS.links,      label: 'Links',      badge: null },
   ];
   const NAV_ITEM_ADMIN = { id: 'nav-admin', href: 'admin.html', icon: ICONS.admin, label: 'Admin', badge: null };
 
@@ -167,7 +169,7 @@
         ind.id = 'mPtrIndicator';
         Object.assign(ind.style, {
           position: 'fixed',
-          top: 'var(--header-h)',
+          top: 'var(--header-total-h)',
           left: '0', right: '0',
           height: '0px',
           overflow: 'hidden',
@@ -220,14 +222,82 @@
     }, { passive: true });
   }
 
-  // ─── Nome no header ────────────────────────────────
+  // ─── Nome e Avatar no header ──────────────────────
   function preencherNomeHeader(nome) {
     const el = document.getElementById('mHeaderUser');
-    if (el) el.textContent = nome || '';
+    if (!el) return;
+
+    const cleanNome = (nome || '').trim();
+    let inicial = '?';
+    if (cleanNome) {
+      const pts = cleanNome.split(/\s+/);
+      inicial = ((pts[0]?.[0] || '') + (pts[1]?.[0] || '')).toUpperCase() || cleanNome[0].toUpperCase();
+    }
+
+    el.className = 'm-header-user-btn';
+    el.href = 'perfil.html';
+    el.title = 'Meu Perfil';
+
+    const av = el.querySelector('.m-header-avatar');
+    const nm = el.querySelector('.m-header-user-name');
+    const displayName = cleanNome ? cleanNome.split(' ')[0] : 'Perfil';
+
+    if (av && nm) {
+      if (av.textContent !== inicial) av.textContent = inicial;
+      if (nm.textContent !== displayName) nm.textContent = displayName;
+    } else {
+      el.innerHTML = `
+        <span class="m-header-avatar">${inicial}</span>
+        <span class="m-header-user-name">${displayName}</span>
+      `;
+    }
+  }
+
+  // ─── Ajuste dinâmico de teclado virtual (iOS & Android) ─
+  function initKeyboardViewportAdjust() {
+    if (!window.visualViewport) return;
+
+    const nav = document.getElementById('mBottomNav');
+    const initialH = window.innerHeight;
+
+    window.visualViewport.addEventListener('resize', () => {
+      const curH = window.visualViewport.height;
+      const isOpen = curH < initialH - 120;
+      if (isOpen) {
+        document.body.classList.add('keyboard-open');
+        if (nav) nav.style.transform = 'translateY(100%)';
+      } else {
+        document.body.classList.remove('keyboard-open');
+        if (nav) nav.style.transform = '';
+      }
+    });
+  }
+
+  // ─── Botão Voltar (apenas em perfil.html) ──────────
+  function ajustarHeaderPerfil() {
+    const pg = paginaAtual();
+    if (pg !== 'perfil.html') return;
+    const header = document.querySelector('.m-header');
+    if (!header || header.querySelector('.m-header-back-btn')) return;
+
+    const btnVoltar = document.createElement('button');
+    btnVoltar.className = 'm-header-back-btn';
+    btnVoltar.title = 'Voltar';
+    btnVoltar.innerHTML = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>`;
+    btnVoltar.onclick = () => {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        location.href = 'prancha.html';
+      }
+    };
+    header.appendChild(btnVoltar);
   }
 
   // ─── Init ──────────────────────────────────────────
   async function init() {
+    ajustarHeaderPerfil();
+
     if (typeof sbGetProfile !== 'function') {
       setTimeout(init, 100);
       return;
@@ -248,6 +318,7 @@
     initChatBadgeBridge();
     initAvisosBadge();
     initPullToRefresh();
+    initKeyboardViewportAdjust();
 
     // Atualiza perfil em background
     try {

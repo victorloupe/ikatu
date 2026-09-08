@@ -8,9 +8,9 @@
   if (window.innerWidth <= 768) {
     var mrEl = document.createElement('div');
     mrEl.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;align-items:center;justify-content:center;background:#1a2a3a;color:#fff;font-family:Inter,Arial,sans-serif;text-align:center;padding:24px;';
-    mrEl.innerHTML = '<div><div style="font-size:15px;font-weight:600;margin-bottom:6px;">Esta página não está disponível no celular</div><div style="font-size:13px;color:#9ab0c0;">Redirecionando para Pagamentos…</div></div>';
+    mrEl.innerHTML = '<div><div style="font-size:15px;font-weight:600;margin-bottom:6px;">Esta página não está disponível no celular</div><div style="font-size:13px;color:#9ab0c0;">Redirecionando para Pranchas…</div></div>';
     document.documentElement.appendChild(mrEl);
-    setTimeout(function () { window.location.href = 'mobile/pagamentos.html'; }, 1300);
+    setTimeout(function () { window.location.href = 'mobile/prancha.html'; }, 1300);
   }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>

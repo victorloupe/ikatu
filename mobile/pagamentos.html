@@ -2,120 +2,253 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Pagamentos — iGUi Space</title>
-  <link rel="stylesheet" href="mobile.css?v=202608281130">
+  <meta name="theme-color" content="#1a2a3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="iGUi Space">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="mobile.css?v=202609081804">
   <style>
-    /* ── Filtros ─────────────────────────────────── */
-    .pag-filters {
-      display: flex;
-      gap: 8px;
-      padding: 12px 14px;
-      background: #fff;
-      border-bottom: 1px solid var(--border);
+    /* ── Barra Sticky de Filtros e Busca ─────────── */
+    .pag-sticky-bar {
       position: sticky;
-      top: var(--header-h);
+      top: var(--header-total-h);
       z-index: 100;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      background: var(--bg);
+      padding: 10px 14px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
     }
-    .pag-filters select {
+
+    .pag-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pag-select {
       border: 1.5px solid var(--border);
       border-radius: 8px;
       padding: 8px 10px;
       font-family: 'Inter', sans-serif;
-      font-size: 16px; /* >=16px evita zoom automático do iOS Safari ao focar */
+      font-size: 14px;
       color: var(--text);
-      background: #fafcff;
+      background: #fff;
       outline: none;
-      flex-shrink: 0;
       -webkit-appearance: none;
       cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='none' stroke='%237f8c9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 24px;
     }
-    .pag-filters select:focus { border-color: var(--blue); }
+    .pag-select:focus { border-color: var(--blue); }
 
-    /* ── Resumo ──────────────────────────────────── */
-    .pag-resumo {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 12px 14px;
+    .pag-row-proj {
+      display: flex;
+      width: 100%;
     }
-    .pag-resumo-card {
+    .pag-select-proj {
+      width: 100%;
+      font-weight: 600;
+    }
+
+    /* ── Card de Status de Pagamento do Mês ────── */
+    .pag-card-status {
+      padding: 9px 12px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
       background: #fff;
-      border-radius: 10px;
-      padding: 12px 14px;
-      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
-    .pag-resumo-label {
-      font-size: 10px;
-      font-weight: 700;
+    .pag-card-status.pago {
+      background: #f0fdf4 !important;
+      border-color: #86efac !important;
+    }
+    .pag-status-ico {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
       color: var(--muted);
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      margin-bottom: 4px;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
     }
-    .pag-resumo-valor {
-      font-family: 'Inter Tight', sans-serif;
-      font-size: 20px;
+    .pag-card-status.pago .pag-status-ico {
+      background: #dcfce7 !important;
+      color: #15803d !important;
       font-weight: 800;
-      color: var(--text);
     }
-    .pag-resumo-valor.green { color: var(--green); }
-    .pag-resumo-sub {
+    .m-btn-toggle-status {
+      padding: 7px 12px;
       font-size: 11px;
-      color: var(--muted);
-      margin-top: 2px;
+      font-weight: 700;
+      border-radius: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      border: none;
+      outline: none;
+      flex-shrink: 0;
+    }
+    .m-btn-toggle-status.success {
+      background: #10b981;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(16,185,129,0.25);
+    }
+    .m-btn-toggle-status.danger {
+      background: #fff;
+      color: #dc2626;
+      border: 1.5px solid #fca5a5;
     }
 
-    /* ── Seção por projetista ─────────────────────── */
-    .pag-projetista-section {
-      margin: 0 14px 16px;
+    /* Barra de Busca e Ação de PDF */
+    .pag-search-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
+
+    .pag-search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 0 10px;
+      height: 38px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .pag-search-box:focus-within { border-color: var(--blue); }
+    .pag-search-box input {
+      border: none;
+      outline: none;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: transparent;
+      padding: 0 6px;
+    }
+    .pag-search-box input::placeholder { color: #94a3b8; font-size: 13px; }
+    .pag-search-ico { color: #94a3b8; flex-shrink: 0; }
+
+    /* ── Cards de Projetistas ─────────────────────── */
+    .pag-projetista-section {
+      margin: 0 14px 12px;
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+
     .pag-projetista-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
-      background: var(--dark);
-      border-radius: 10px 10px 0 0;
-      cursor: pointer;
-    }
-    .pag-projetista-name {
-      font-family: 'Inter Tight', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: 0.3px;
-    }
-    .pag-projetista-total {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--blue);
-    }
-    .pag-projetista-body {
+      padding: 12px 14px;
       background: #fff;
-      border-radius: 0 0 10px 10px;
-      overflow: hidden;
-      box-shadow: var(--shadow);
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      border-bottom: 1px solid transparent;
+      transition: background 0.15s;
+    }
+    .pag-projetista-header:active { background: #f8fafc; }
+    .pag-projetista-section.open .pag-projetista-header {
+      background: #f8fafc;
+      border-bottom-color: #f1f5f9;
     }
 
-    /* ── Linha de projeto ────────────────────────── */
+    .pag-proj-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .pag-projetista-name {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pag-proj-count {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .pag-proj-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .pag-projetista-total {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: #0284c7;
+    }
+
+    .pag-chevron {
+      color: #94a3b8;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .pag-projetista-section.open .pag-chevron {
+      transform: rotate(180deg);
+    }
+
+    .pag-projetista-body {
+      display: none;
+      background: #fff;
+    }
+    .pag-projetista-section.open .pag-projetista-body {
+      display: block;
+    }
+
+    /* ── Linha de Projeto ────────────────────────── */
     .pag-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 11px 14px;
-      border-bottom: 1px solid #f0f4f8;
+      padding: 10px 14px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
     }
     .pag-row:last-child { border-bottom: none; }
 
     .pag-row-num {
       font-family: 'Inter Tight', sans-serif;
       font-size: 13px;
-      font-weight: 700;
-      color: var(--blue);
-      min-width: 56px;
+      font-weight: 800;
+      color: #0284c7;
+      min-width: 54px;
       flex-shrink: 0;
     }
 
@@ -132,13 +265,16 @@
       font-size: 11px;
       color: var(--muted);
       margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .pag-row-right {
       display: flex;
       flex-direction: column;
       align-items: flex-end;
-      gap: 4px;
+      gap: 3px;
       flex-shrink: 0;
     }
 
@@ -155,66 +291,100 @@
     }
 
     .pag-row-valor {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 700;
-      color: var(--green);
+      color: #16a34a;
     }
 
-    .pag-row-data {
+    .pag-row-dates {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 1px;
+    }
+
+    .pag-date-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
       font-size: 10px;
-      color: var(--muted);
+      font-weight: 600;
+      color: #64748b;
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
     }
 
-    /* Status sem projetos no mês */
-    .pag-projetista-empty {
-      padding: 16px 14px;
+    .pag-date-ico {
+      width: 11px;
+      height: 11px;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+
+    .pag-date-item.entrada .pag-date-ico {
+      color: #0284c7;
+    }
+
+    .pag-date-item.saida .pag-date-ico {
+      color: #10b981;
+    }
+
+    .pag-alt-badge {
+      background: #fef3c7;
+      color: #b45309;
+      border: 1px solid #fde68a;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    /* ── Modal PDF ───────────────────────────────── */
+    .pag-pdf-opt {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      background: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .pag-pdf-opt:active {
+      border-color: var(--blue);
+      background: #f0f9ff;
+    }
+    .pag-pdf-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: #e0f2fe;
+      color: #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .pag-pdf-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .pag-pdf-sub {
       font-size: 12px;
       color: var(--muted);
-      text-align: center;
+      margin-top: 2px;
     }
-
-    /* Busca */
-    .pag-search-bar {
-      padding: 8px 14px 0;
-      background: #fff;
-      position: sticky;
-      top: calc(var(--header-h) + 48px);
-      z-index: 99;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 8px;
-    }
-    .pag-search-bar input {
-      width: 100%;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      padding: 9px 14px 9px 36px;
-      font-family: 'Inter', sans-serif;
-      font-size: 16px; /* >=16px evita zoom automático do iOS Safari ao focar */
-      color: var(--text);
-      background: #fafcff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none' stroke='%239aa8b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='M14 14l-3-3'/%3E%3C/svg%3E") no-repeat 12px center;
-      outline: none;
-      -webkit-appearance: none;
-    }
-    .pag-search-bar input:focus { border-color: var(--blue); }
-    .pag-search-bar input::placeholder { color: #b0bec7; }
 
     /* Skeleton */
-    .pag-skel-section { margin: 0 14px 16px; }
-    .pag-skel-hd { height: 42px; border-radius: 10px 10px 0 0; }
-    .pag-skel-body { background:#fff; border-radius:0 0 10px 10px; padding:12px 14px; }
-    .pag-skel-row { display:flex; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #f0f4f8; }
-    .pag-skel-row:last-child { border-bottom:none; }
-
-    /* Alt badge */
-    .pag-alt-dot {
-      display: inline-block;
-      width: 6px; height: 6px;
-      background: #f39c12;
-      border-radius: 50%;
-      margin-left: 4px;
-      vertical-align: middle;
-      title: "Grande Alteração";
-    }
+    .pag-skel-section { margin: 0 14px 12px; }
+    .pag-skel-hd { height: 48px; border-radius: 10px; }
   </style>
 </head>
 <body>
@@ -224,94 +394,265 @@
     <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
     
     <div class="m-header-right">
-      <a class="m-header-user" id="mHeaderUser" href="perfil.html"></a>
+      <a class="m-header-user-btn" id="mHeaderUser" href="perfil.html" title="Meu Perfil"></a>
     </div>
   </header>
 
-  <!-- Filtros -->
-  <div class="pag-filters">
-    <select id="filtroProjetista" onchange="aplicarFiltros()" style="flex:1;min-width:0;">
-      <option value="">Todos</option>
-    </select>
-    <select id="filtroMes" onchange="aplicarFiltros()">
-      <option value="0">Janeiro</option>
-      <option value="1">Fevereiro</option>
-      <option value="2">Março</option>
-      <option value="3">Abril</option>
-      <option value="4">Maio</option>
-      <option value="5">Junho</option>
-      <option value="6">Julho</option>
-      <option value="7">Agosto</option>
-      <option value="8">Setembro</option>
-      <option value="9">Outubro</option>
-      <option value="10">Novembro</option>
-      <option value="11">Dezembro</option>
-    </select>
-    <select id="filtroAno" onchange="aplicarFiltros()"></select>
-  </div>
-
-  <!-- Busca -->
-  <div class="pag-search-bar">
-    <br>
-    <input type="search" id="filtroBusca" placeholder="Buscar OS, modelo, loja…" oninput="aplicarFiltros()">
-  </div>
-  <!-- Conteúdo -->
+  <!-- Conteúdo Principal -->
   <div class="m-content">
-    <div id="pagResumo" class="pag-resumo" style="display:none"></div>
-    <div id="pagLista"></div>
+
+    <!-- Barra de Filtros e Busca Sticky -->
+    <div class="pag-sticky-bar">
+      <!-- Linha 1: Projetista -->
+      <div class="pag-row-proj">
+        <select id="filtroProjetista" class="pag-select pag-select-proj" onchange="onProjetistaChange()">
+          <option value="">Todos os Projetistas</option>
+        </select>
+      </div>
+
+      <!-- Linha 2: Mês e Ano -->
+      <div class="pag-controls-row">
+        <select id="filtroMes" class="pag-select" onchange="onMesChange()" style="flex:1; min-width:0; font-weight:600;"></select>
+        <select id="filtroAno" class="pag-select" onchange="onAnoChange()" style="width:96px; font-weight:600; text-align:center; flex-shrink:0;"></select>
+      </div>
+
+      <!-- Linha 3: Busca e Ação de PDF -->
+      <div class="pag-search-row">
+        <div class="pag-search-box">
+          <svg class="pag-search-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="search" id="filtroBusca" placeholder="Buscar OS, modelo, loja…" oninput="aplicarFiltros()">
+        </div>
+        <button class="m-btn-export-pdf" onclick="abrirModalPDF()" title="Exportar PDF">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>PDF</span>
+        </button>
+      </div>
+
+      <!-- Linha 4: Status de Pagamento do Mês -->
+      <div id="cardStatusPagamentoMes" class="pag-card-status">
+        <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
+          <div id="statusPagamentoIco" class="pag-status-ico">⏳</div>
+          <div style="min-width:0;">
+            <div id="statusPagamentoTitulo" style="font-size:13px; font-weight:700; color:var(--dark); line-height:1.2;">
+              Pagamento Pendente
+            </div>
+            <div id="statusPagamentoDesc" style="font-size:11px; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              Mês de <span id="statusPagamentoMesAno">—</span>
+            </div>
+          </div>
+        </div>
+        <button id="btnTogglePagamentoMes" onclick="toggleStatusPagamentoMes()" class="m-btn-toggle-status success" style="display:none;">
+          ✓ Confirmar Pagamento
+        </button>
+      </div>
+    </div>
+
+    <!-- Resumo em Cards KPI -->
+    <div id="pagResumo" class="pag-kpi-grid" style="display:none;"></div>
+
+    <!-- Lista de Projetistas / Projetos -->
+    <div id="pagLista" style="padding-top:6px;"></div>
+
   </div>
 
-  <!-- Toast -->
+  <!-- Modal Opções de Exportação PDF -->
+  <div class="m-modal-overlay" id="modalPdfOverlay" onclick="if(event.target===this) fecharModalPDF()">
+    <div class="m-modal">
+      <div class="m-modal-handle"></div>
+      <div class="m-modal-title">Exportar Pagamentos em PDF</div>
+
+      <div class="pag-pdf-opt" onclick="gerarRelatorioA4PDF()">
+        <div class="pag-pdf-icon">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div class="pag-pdf-title">Relatório A4 de Pagamento</div>
+          <div class="pag-pdf-sub">Compartilhe no WhatsApp ou baixe o PDF oficial com categorias e valores.</div>
+        </div>
+      </div>
+
+      <div class="pag-pdf-opt" onclick="gerarListaProjetosPDF()">
+        <div class="pag-pdf-icon" style="background:#dcfce7; color:#16a34a;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div class="pag-pdf-title">Lista Completa de Projetos</div>
+          <div class="pag-pdf-sub">Planilha A4 Paisagem com todas as OSs. Compartilhe ou baixe.</div>
+        </div>
+      </div>
+
+      <div class="pag-pdf-opt" onclick="compartilharResumoTexto()">
+        <div class="pag-pdf-icon" style="background:#fef3c7; color:#d97706;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
+        <div style="flex:1;">
+          <div class="pag-pdf-title">Resumo em Texto (WhatsApp)</div>
+          <div class="pag-pdf-sub">Copia ou envia o resumo rápido formatado para a equipe.</div>
+        </div>
+      </div>
+
+      <button class="m-btn m-btn-secondary m-btn-full" style="margin-top:14px;" onclick="fecharModalPDF()">Fechar</button>
+    </div>
+  </div>
+
+  <!-- Toast Global -->
   <div class="m-toast" id="mToastGlobal"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202608281130"></script>
-  <script src="mobile-nav.js?v=202608281130"></script>
+  <script src="../supabase-client.js?v=202609081804"></script>
+  <script src="mobile-nav.js?v=202609081804"></script>
   <script>
   // ═══════════════════════════════════════════════
   // Pagamentos Mobile — leitura de todos os usuários
   // ═══════════════════════════════════════════════
 
-  // ── Helpers do formato raw ──────────────────────
-  function nProjeto(raw) {
-    if (!raw) return '—';
-    const p = raw.toString().replace(/\s*\(\d+\)\s*$/, '').split('_')[0] || '';
-    return /^\d+$/.test(p) ? p : 'Inter.';
+  // ── Helpers do formato raw corrigidos ───────────
+  function nProjeto(texto) {
+    if (!texto) return "";
+    let limpo = texto.toString().trim().replace(/\s*\(\d+\)\s*$/, "");
+    if (/^splash/i.test(limpo)) {
+      let partes = limpo.split("_");
+      if (partes.length >= 2 && /^\d+$/.test(partes[1])) return partes[1].trim();
+      return "Splash";
+    }
+    if (/^sob medida/i.test(limpo)) {
+      let partes = limpo.split("_");
+      if (partes.length >= 2 && /^\d+$/.test(partes[1])) return partes[1].trim();
+      return "SOB MEDIDA";
+    }
+    let partes = limpo.split("_");
+    let projeto = partes[0] || "";
+    if (/^\d+$/.test(projeto)) return projeto.trim();
+    return "Inter.";
   }
-  function piscina(raw) {
-    if (!raw) return '';
-    return raw.toString().replace(/\s*\(\d+\)\s*$/, '').split('_')[1] || '';
+
+  function piscina(texto) {
+    if (!texto) return "";
+    let limpo = texto.toString().replace(/\s*\(\d+\)\s*$/, "");
+    let partes = limpo.split("_");
+    if (/^splash/i.test(partes[0]) && /^\d+$/.test(partes[1])) return partes[2] || "";
+    if (/^sob medida/i.test(partes[0]) && /^\d+$/.test(partes[1])) return partes[2] || "";
+    return partes[1] || "";
   }
+
   function piscinasArr(raw) {
     return (piscina(raw) || '').split(';').map(s => s.trim()).filter(Boolean);
   }
-  function loja(raw) {
-    if (!raw) return '';
-    return raw.toString().replace(/\s*\(\d+\)\s*$/, '').split('_')[2] || '';
+
+  function loja(texto) {
+    if (!texto) return "";
+    let limpo = texto.toString().replace(/\s*\(\d+\)\s*$/, "");
+    let partes = limpo.split("_");
+    if (/^splash/i.test(partes[0]) && /^\d+$/.test(partes[1])) return partes[3] || "";
+    return partes[2] || "";
   }
-  function dataEnvio(raw) {
-    if (!raw) return '';
-    const limpo = raw.toString().trim().replace(/\s*\(\d+\)\s*$/, '');
-    const m1 = limpo.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-    if (m1) return m1[1].padStart(2,'0') + '-' + m1[2].padStart(2,'0');
-    const m2 = limpo.match(/(\d{1,2})[-/](\d{1,2})/);
-    if (m2) return m2[1].padStart(2,'0') + '-' + m2[2].padStart(2,'0');
-    const p = limpo.split('_');
-    if (p.length < 4) return '';
-    const dt = p[3];
-    const ped = dt.split('-');
-    if (ped.length >= 2) return ped[0].padStart(2,'0') + '-' + ped[1].padStart(2,'0');
-    return '';
+
+  function dataEnvio(texto) {
+    if (!texto) return "";
+    let limpo = texto.toString().trim().replace(/\s*\(\d+\)\s*$/, "");
+    let m1 = limpo.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+    if (m1) return m1[1].padStart(2, '0') + "-" + m1[2].padStart(2, '0');
+    let m2 = limpo.match(/(\d{1,2})[-/](\d{1,2})/);
+    if (m2) return m2[1].padStart(2, '0') + "-" + m2[2].padStart(2, '0');
+    let p = limpo.split('_');
+    if (p.length >= 4) {
+      let ped = p[3].split('-');
+      if (ped.length >= 2) return ped[0].padStart(2, '0') + '-' + ped[1].padStart(2, '0');
+    }
+    return "";
   }
-  function extrairMesAnoRow(row) {
-    const dtEnv = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
-    const dtRec = row.data || '';
-    const dtRef = dtEnv || dtRec;
-    if (!dtRef) return null;
-    // tenta DD-MM ou DD-MM-YYYY
-    const m = dtRef.match(/(\d{1,2})[-/](\d{1,2})(?:[-/](\d{4}))?/);
-    if (!m) return null;
-    return { mes: parseInt(m[2], 10) - 1, ano: m[3] ? parseInt(m[3], 10) : new Date().getFullYear() };
+
+  function formatarDataCurta(val) {
+    if (!val) return "";
+    const str = String(val).trim();
+    if (!str) return "";
+
+    // 1. Formato ISO (YYYY-MM-DD)
+    const mIso = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (mIso) {
+      return `${mIso[3].padStart(2, '0')}/${mIso[2].padStart(2, '0')}`;
+    }
+
+    // 2. Formato DD/MM/YYYY ou DD-MM-YYYY
+    const mFull = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
+    if (mFull) {
+      return `${mFull[1].padStart(2, '0')}/${mFull[2].padStart(2, '0')}`;
+    }
+
+    // 3. Formato DD/MM ou DD-MM
+    const mShort = str.match(/^(\d{1,2})[-/](\d{1,2})/);
+    if (mShort) {
+      return `${mShort[1].padStart(2, '0')}/${mShort[2].padStart(2, '0')}`;
+    }
+
+    return str;
+  }
+
+  // ── Pertinência de Linha ao Mês/Ano (Paridade com Desktop) ─
+  const MESES = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  function rowPertenceAoMesAno(row, mesNome, anoStr) {
+    const mesesMap = {
+      "Janeiro": "01", "Fevereiro": "02", "Março": "03", "Abril": "04",
+      "Maio": "05", "Junho": "06", "Julho": "07", "Agosto": "08",
+      "Setembro": "09", "Outubro": "10", "Novembro": "11", "Dezembro": "12"
+    };
+    const mesNum = mesesMap[mesNome];
+    if (!mesNum) return false;
+
+    // Obtém a representação da data de recebimento (row.data)
+    let dtRecebimento = "";
+    if (row.data !== undefined && row.data !== null) {
+      dtRecebimento = row.data.toString().trim();
+    }
+    // Fallback se row.data estiver em branco
+    if (!dtRecebimento) {
+      dtRecebimento = (row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw)) || "";
+    }
+    if (!dtRecebimento) return false;
+
+    let rowMes = "";
+    let rowAno = "";
+
+    // Formato ISO (YYYY-MM-DD)
+    let matchIso = dtRecebimento.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+    if (matchIso) {
+      rowAno = matchIso[1];
+      rowMes = matchIso[2].padStart(2, '0');
+    } else {
+      // Formato DD/MM/YYYY
+      let match = dtRecebimento.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+      if (match) {
+        rowMes = match[2].padStart(2, '0');
+        rowAno = match[3];
+      } else {
+        // Formato DD/MM
+        match = dtRecebimento.match(/(\d{1,2})[-/](\d{1,2})/);
+        if (match) {
+          rowMes = match[2].padStart(2, '0');
+        }
+      }
+    }
+
+    // Se não encontrou ano em dtRecebimento, busca 4 dígitos no raw
+    if (!rowAno && row.raw) {
+      let yearMatch = row.raw.toString().match(/[-/](\d{4})/);
+      if (yearMatch) {
+        rowAno = yearMatch[1];
+      }
+    }
+
+    // Se ainda assim não encontrou o ano, assume o ano selecionado
+    if (!rowAno) {
+      rowAno = String(anoStr);
+    }
+
+    const mesBate = rowMes === mesNum;
+    const anoBate = rowAno === String(anoStr);
+    return mesBate && anoBate;
   }
 
   function obterEstiloTipo(tipo) {
@@ -327,7 +668,7 @@
     return map[tipo] || { bg:'#f1f5f9', color:'#64748b', border:'#cbd5e1' };
   }
 
-  // ── Preços globais (para calcular valores) ──────
+  // ── Preços globais ──────────────────────────────
   const VALORES_PADRAO = { val_ate2:70, val_3a4:80, val_mais5:95, val_360:90, val_360_3mod:105, val_conceito:150, val_alt_grandes:60 };
   let precos = { ...VALORES_PADRAO };
 
@@ -347,32 +688,254 @@
   }
 
   // ── Estado ──────────────────────────────────────
-  let todosRegistros = [];  // [{ user_id, nome, rows_data }]
-  let filtroMes  = new Date().getMonth();
-  let filtroAno  = new Date().getFullYear();
-  let filtroProj = '';
-  let filtroTexto = '';
+  let todosRegistros   = [];
+  let filtroMes        = new Date().getMonth();
+  let filtroAno        = new Date().getFullYear();
+  let filtroProj       = '';
+  let filtroTexto      = '';
+  let usuarioLogadoId   = '';
+  let usuarioLogadoNome = '';
+  let usuarioLogadoRole = '';
+
+  // ── Períodos com dados (meses/anos) ──────────────
+  function periodosDisponiveis() {
+    const anosCandidatos = ['2024', '2025', '2026', '2027', '2028', '2029', '2030'];
+    const hoje = new Date();
+    const mesAtual = MESES[hoje.getMonth()];
+    const anoAtual = hoje.getFullYear().toString();
+    const dispo = {};
+
+    let rowsParaChecar = [];
+    if (filtroProj) {
+      const r = todosRegistros.find(x => x.user_id === filtroProj);
+      rowsParaChecar = r ? (r.rows_data || []) : [];
+    } else {
+      todosRegistros.forEach(r => {
+        rowsParaChecar = rowsParaChecar.concat(r.rows_data || []);
+      });
+    }
+
+    anosCandidatos.forEach(ano => {
+      const ms = MESES.filter(m =>
+        (ano === anoAtual && m === mesAtual) || // Mês corrente sempre disponível
+        isMesPago(m, ano) ||                   // Mês marcado como pago
+        rowsParaChecar.some(r => rowPertenceAoMesAno(r, m, ano)) // Mês com projetos!
+      );
+      if (ms.length) dispo[ano] = ms;
+    });
+
+    if (!Object.keys(dispo).length) dispo[anoAtual] = [mesAtual];
+    return dispo;
+  }
+
+  function atualizarOpcoesPeriodo() {
+    const dispo = periodosDisponiveis();
+    const hoje = new Date();
+    const anoAtualStr = hoje.getFullYear().toString();
+    const mesAtualNome = MESES[hoje.getMonth()];
+
+    const anoSel = document.getElementById('filtroAno');
+    const mesSel = document.getElementById('filtroMes');
+    if (!anoSel || !mesSel) return;
+
+    const anosDisponiveis = Object.keys(dispo).sort().reverse();
+    let anoEscolhido = String(filtroAno);
+    if (!anosDisponiveis.includes(anoEscolhido)) {
+      anoEscolhido = anosDisponiveis.includes(anoAtualStr) ? anoAtualStr : anosDisponiveis[0];
+      filtroAno = parseInt(anoEscolhido, 10);
+    }
+
+    anoSel.innerHTML = anosDisponiveis.map(a => `<option value="${a}" ${a === anoEscolhido ? 'selected' : ''}>${a}</option>`).join('');
+
+    const mesesDisponiveis = (dispo[anoEscolhido] || [mesAtualNome]).slice();
+    mesesDisponiveis.sort((a, b) => MESES.indexOf(a) - MESES.indexOf(b));
+
+    let mesEscolhidoNome = MESES[filtroMes];
+    if (!mesesDisponiveis.includes(mesEscolhidoNome)) {
+      if (mesesDisponiveis.includes(mesAtualNome) && anoEscolhido === anoAtualStr) {
+        mesEscolhidoNome = mesAtualNome;
+      } else {
+        mesEscolhidoNome = mesesDisponiveis[mesesDisponiveis.length - 1] || mesAtualNome;
+      }
+      filtroMes = MESES.indexOf(mesEscolhidoNome);
+    }
+
+    mesSel.innerHTML = mesesDisponiveis.map(m => {
+      const idx = MESES.indexOf(m);
+      const pago = isMesPago(m, anoEscolhido);
+      const label = pago ? `${m} (Pago)` : m;
+      return `<option value="${idx}" ${idx === filtroMes ? 'selected' : ''}>${label}</option>`;
+    }).join('');
+  }
+
+  // ── Status de Pagamento do Mês ──────────────────
+  function getInfoMesPago(mesNome, anoStr) {
+    if (!mesNome || !anoStr) return null;
+    const chave = `${mesNome}/${anoStr}`;
+    if (filtroProj) {
+      const r = todosRegistros.find(x => x.user_id === filtroProj);
+      return r?.meses_pagos?.[chave] || null;
+    }
+    // No modo "Todos", se algum tiver a chave ou se todos tiverem
+    for (const r of todosRegistros) {
+      if (r.meses_pagos?.[chave]?.pago) return r.meses_pagos[chave];
+    }
+    return null;
+  }
+
+  function isMesPago(mesNome, anoStr) {
+    const info = getInfoMesPago(mesNome, anoStr);
+    return Boolean(info && info.pago);
+  }
+
+  function atualizarUIStatusPagamento() {
+    const mesNome = MESES[filtroMes];
+    const anoStr = String(filtroAno);
+    const chave = `${mesNome}/${anoStr}`;
+    const info = getInfoMesPago(mesNome, anoStr);
+    const pago = Boolean(info && info.pago);
+
+    const card = document.getElementById('cardStatusPagamentoMes');
+    const ico = document.getElementById('statusPagamentoIco');
+    const titulo = document.getElementById('statusPagamentoTitulo');
+    const desc = document.getElementById('statusPagamentoDesc');
+    const mesAnoSpan = document.getElementById('statusPagamentoMesAno');
+    const btn = document.getElementById('btnTogglePagamentoMes');
+
+    if (!card) return;
+
+    if (mesAnoSpan) {
+      mesAnoSpan.textContent = `${mesNome}/${anoStr}`;
+    }
+
+    if (btn) {
+      if (usuarioLogadoRole === 'admin') {
+        btn.style.display = 'inline-flex';
+      } else {
+        btn.style.display = 'none';
+      }
+    }
+
+    if (pago) {
+      card.classList.add('pago');
+      if (ico) ico.textContent = '✓';
+      if (titulo) {
+        titulo.textContent = 'Pagamento Confirmado';
+        titulo.style.color = '#15803d';
+      }
+      if (desc) {
+        let extra = '';
+        if (info?.data_confirmacao) {
+          try {
+            const dt = new Date(info.data_confirmacao);
+            const pad = n => String(n).padStart(2, '0');
+            extra = ` em ${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+          } catch(e){}
+        }
+        desc.textContent = `Mês de ${mesNome}/${anoStr} pago${extra}${info?.confirmado_por ? ' por ' + esc(info.confirmado_por) : ''}`;
+        desc.style.color = '#166534';
+      }
+      if (btn) {
+        btn.textContent = 'Desmarcar Pagamento';
+        btn.className = 'm-btn-toggle-status danger';
+      }
+    } else {
+      card.classList.remove('pago');
+      if (ico) ico.textContent = '⏳';
+      if (titulo) {
+        titulo.textContent = 'Pagamento Pendente';
+        titulo.style.color = 'var(--dark)';
+      }
+      if (desc) {
+        desc.textContent = `Mês de ${mesNome}/${anoStr} não marcado como pago`;
+        desc.style.color = 'var(--muted)';
+      }
+      if (btn) {
+        btn.textContent = '✓ Confirmar Pagamento';
+        btn.className = 'm-btn-toggle-status success';
+      }
+    }
+  }
+
+  async function toggleStatusPagamentoMes() {
+    if (usuarioLogadoRole !== 'admin') {
+      mToast('Apenas administradores podem alterar o status de pagamento.', 'error');
+      return;
+    }
+
+    const mesNome = MESES[filtroMes];
+    const anoStr = String(filtroAno);
+    const chave = `${mesNome}/${anoStr}`;
+    const infoAtual = getInfoMesPago(mesNome, anoStr);
+    const estaPago = Boolean(infoAtual && infoAtual.pago);
+
+    const alvos = filtroProj
+      ? todosRegistros.filter(r => r.user_id === filtroProj)
+      : todosRegistros;
+
+    if (!alvos.length) {
+      mToast('Nenhum registro selecionado.', 'error');
+      return;
+    }
+
+    if (!estaPago) {
+      const novoRegistro = {
+        pago: true,
+        data_confirmacao: new Date().toISOString(),
+        confirmado_por: (usuarioLogadoNome || 'Admin').trim()
+      };
+
+      try {
+        mToast('Salvando confirmação…');
+        for (const reg of alvos) {
+          reg.meses_pagos[chave] = novoRegistro;
+          const newHeader = { ...(reg.header_data || {}), meses_pagos: reg.meses_pagos };
+          await sb.from('payments').update({ header_data: newHeader }).eq('id', reg.id);
+        }
+        atualizarUIStatusPagamento();
+        atualizarOpcoesPeriodo();
+        mToast(`✅ Mês de ${mesNome}/${anoStr} confirmado como pago!`, 'success');
+      } catch (err) {
+        console.error('Erro ao confirmar pagamento:', err);
+        mToast('Erro ao salvar: ' + err.message, 'error');
+      }
+    } else {
+      const confirmou = confirm(`Tem certeza que deseja desmarcar o status de pagamento do mês de ${mesNome}/${anoStr}?`);
+      if (!confirmou) return;
+
+      try {
+        mToast('Removendo confirmação…');
+        for (const reg of alvos) {
+          delete reg.meses_pagos[chave];
+          const newHeader = { ...(reg.header_data || {}), meses_pagos: reg.meses_pagos };
+          await sb.from('payments').update({ header_data: newHeader }).eq('id', reg.id);
+        }
+        atualizarUIStatusPagamento();
+        atualizarOpcoesPeriodo();
+        mToast(`ℹ️ Confirmação de pagamento de ${mesNome}/${anoStr} removida.`, 'info');
+      } catch (err) {
+        console.error('Erro ao remover pagamento:', err);
+        mToast('Erro ao salvar: ' + err.message, 'error');
+      }
+    }
+  }
 
   // ── Inicialização ───────────────────────────────
   async function init() {
-    // Preencher anos no select
-    const anoSel = document.getElementById('filtroAno');
-    const anoAtual = new Date().getFullYear();
-    for (let a = anoAtual; a >= 2024; a--) {
-      const opt = document.createElement('option');
-      opt.value = a; opt.textContent = a;
-      if (a === anoAtual) opt.selected = true;
-      anoSel.appendChild(opt);
-    }
-    document.getElementById('filtroMes').value = filtroMes;
-
-    // Carrega preços globais
     try {
       const p = await sbGetPrecosProjeto();
       if (p) precos = { ...VALORES_PADRAO, ...p };
     } catch (_) {}
 
-    // Carrega todos os pagamentos
+    try {
+      const profile = await sbGetProfile();
+      if (profile) {
+        usuarioLogadoId   = profile.id;
+        usuarioLogadoNome = profile.name || profile.email || 'Usuário';
+        usuarioLogadoRole = profile.role || '';
+      }
+    } catch (_) {}
+
     await carregarTodos();
   }
 
@@ -383,26 +946,11 @@
       html += `
         <div class="pag-skel-section">
           <div class="pag-skel-hd m-skel"></div>
-          <div class="pag-skel-body">
-            ${[1,2,3].map(() => `
-              <div class="pag-skel-row">
-                <div class="m-skel" style="width:50px;height:14px;border-radius:4px;flex-shrink:0"></div>
-                <div style="flex:1">
-                  <div class="m-skel" style="width:70%;height:13px;border-radius:4px;margin-bottom:6px"></div>
-                  <div class="m-skel" style="width:40%;height:10px;border-radius:4px"></div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
-                  <div class="m-skel" style="width:60px;height:14px;border-radius:8px"></div>
-                  <div class="m-skel" style="width:50px;height:12px;border-radius:4px"></div>
-                </div>
-              </div>`).join('')}
-          </div>
         </div>`;
     }
     lista.innerHTML = html;
   }
 
-  // Pull-to-refresh hook
   window.ptrRecarregar = () => carregarTodos();
 
   async function carregarTodos() {
@@ -413,45 +961,112 @@
       const { data, error } = await sb.from('payments').select('*').order('updated_at', { ascending: false });
       if (error) throw error;
 
-      // Busca nomes dos usuários
       let nomes = {};
       const roles = {};
       try {
         const usuarios = await sbListarUsuarios();
-        (usuarios || []).forEach(u => { nomes[u.id] = u.name || u.email || u.id; roles[u.id] = u.role || ''; });
+        (usuarios || []).forEach(u => {
+          nomes[u.id] = u.name || u.email || u.id;
+          roles[u.id] = u.role || '';
+        });
       } catch (_) {}
 
       todosRegistros = (data || []).map(rec => ({
+        id: rec.id,
         user_id: rec.user_id,
         nome: nomes[rec.user_id] || rec.header_data?.projetista || rec.user_id,
+        header_data: rec.header_data || {},
+        meses_pagos: (rec.header_data?.meses_pagos && typeof rec.header_data.meses_pagos === 'object') ? rec.header_data.meses_pagos : {},
         rows_data: Array.isArray(rec.rows_data) ? rec.rows_data : [],
       }));
 
-      // Popular select de projetistas — únicos, nome completo
       const selProj = document.getElementById('filtroProjetista');
-      selProj.innerHTML = '<option value="">Todos</option>';
-      const vistos = new Set();
-      todosRegistros.forEach(r => {
-        if (vistos.has(r.user_id)) return;
-        if (roles[r.user_id] === 'admin') return; // oculta admins
-        vistos.add(r.user_id);
-        const opt = document.createElement('option');
-        opt.value = r.user_id;
-        opt.textContent = r.nome;
-        selProj.appendChild(opt);
-      });
+      const isAdmin = usuarioLogadoRole === 'admin';
 
-      aplicarFiltros();
+      selProj.innerHTML = '';
+      if (isAdmin) {
+        selProj.innerHTML += '<option value="">Todos os Projetistas</option>';
+      }
+
+      const vistos = new Set();
+
+      // O usuário logado SEMPRE ganha destaque primeiro
+      if (usuarioLogadoId) {
+        const regUser = todosRegistros.find(r => r.user_id === usuarioLogadoId);
+        const nomeExibir = (regUser ? regUser.nome : usuarioLogadoNome) + ' (você)';
+        const opt = document.createElement('option');
+        opt.value = usuarioLogadoId;
+        opt.textContent = nomeExibir;
+        selProj.appendChild(opt);
+        vistos.add(usuarioLogadoId);
+      }
+
+      // Adiciona os demais projetistas (visão admin)
+      if (isAdmin) {
+        todosRegistros.forEach(r => {
+          if (vistos.has(r.user_id)) return;
+          vistos.add(r.user_id);
+          const opt = document.createElement('option');
+          opt.value = r.user_id;
+          opt.textContent = r.nome + (roles[r.user_id] === 'admin' ? ' (Admin)' : '');
+          selProj.appendChild(opt);
+        });
+      } else {
+        selProj.disabled = true;
+      }
+
+      // SEMPRE que abrir a página: seleciona o projetista logado (ex: Victor)
+      if (usuarioLogadoId && vistos.has(usuarioLogadoId)) {
+        filtroProj = usuarioLogadoId;
+        selProj.value = usuarioLogadoId;
+      } else if (!isAdmin && todosRegistros.length) {
+        filtroProj = todosRegistros[0].user_id;
+        selProj.value = filtroProj;
+      } else if (!filtroProj) {
+        filtroProj = '';
+        selProj.value = '';
+      }
+
+      // Período padrão: Mês atual e Ano atual
+      filtroMes = new Date().getMonth();
+      filtroAno = new Date().getFullYear();
+
+      // Monta os selects de Mês e Ano exibindo somente períodos disponíveis
+      atualizarOpcoesPeriodo();
+
+      // Atualiza card de status de pagamento
+      atualizarUIStatusPagamento();
+
+      // Renderiza a lista de projetos
+      renderLista();
     } catch (e) {
       console.error(e);
       document.getElementById('pagLista').innerHTML = '<div class="m-empty"><div class="m-empty-icon">⚠️</div><div class="m-empty-title">Erro ao carregar</div><div class="m-empty-sub">' + (e.message || '') + '</div></div>';
     }
   }
 
+  // ── Mudança de Filtros ──────────────────────────
+  function onProjetistaChange() {
+    filtroProj = document.getElementById('filtroProjetista').value;
+    atualizarOpcoesPeriodo();
+    atualizarUIStatusPagamento();
+    renderLista();
+  }
+
+  function onAnoChange() {
+    filtroAno = parseInt(document.getElementById('filtroAno').value, 10);
+    atualizarOpcoesPeriodo();
+    atualizarUIStatusPagamento();
+    renderLista();
+  }
+
+  function onMesChange() {
+    filtroMes = parseInt(document.getElementById('filtroMes').value, 10);
+    atualizarUIStatusPagamento();
+    renderLista();
+  }
+
   function aplicarFiltros() {
-    filtroMes   = parseInt(document.getElementById('filtroMes').value, 10);
-    filtroAno   = parseInt(document.getElementById('filtroAno').value, 10);
-    filtroProj  = document.getElementById('filtroProjetista').value;
     filtroTexto = (document.getElementById('filtroBusca')?.value || '').trim().toLowerCase();
     renderLista();
   }
@@ -470,12 +1085,9 @@
     let totalGeral = 0;
     let totalProjetos = 0;
 
-    registrosFiltrados.forEach(reg => {
-      // Filtra linhas pelo mês/ano selecionado
+    registrosFiltrados.forEach((reg, regIdx) => {
       const rowsFiltradas = reg.rows_data.filter(row => {
-        const ma = extrairMesAnoRow(row);
-        if (!ma) return false;
-        if (ma.mes !== filtroMes || ma.ano !== filtroAno) return false;
+        if (!rowPertenceAoMesAno(row, MESES[filtroMes], String(filtroAno))) return false;
         if (filtroTexto) {
           const haystack = [
             nProjeto(row.raw),
@@ -492,42 +1104,49 @@
       totalGeral += totalProjUsr;
       totalProjetos += rowsFiltradas.length;
 
-      const section = document.createElement('div');
-      section.className = 'pag-projetista-section';
+      if (!rowsFiltradas.length && !filtroProj) return;
 
-      // Header da seção
+      const section = document.createElement('div');
+      section.className = 'pag-projetista-section' + (filtroProj || regIdx === 0 ? ' open' : '');
+
       const hd = document.createElement('div');
       hd.className = 'pag-projetista-header';
       hd.innerHTML = `
-        <span class="pag-projetista-name">${esc(reg.nome)}</span>
-        <span class="pag-projetista-total">R$ ${totalProjUsr.toFixed(2).replace('.', ',')}</span>
+        <div class="pag-proj-info">
+          <span class="pag-projetista-name">${esc(reg.nome)}</span>
+          <span class="pag-proj-count">${rowsFiltradas.length} projeto(s)</span>
+        </div>
+        <div class="pag-proj-right">
+          <span class="pag-projetista-total">R$ ${totalProjUsr.toFixed(2).replace('.', ',')}</span>
+          <svg class="pag-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
       `;
-      // Toggle collapse
       hd.addEventListener('click', () => {
-        const body = section.querySelector('.pag-projetista-body');
-        body.style.display = body.style.display === 'none' ? '' : 'none';
+        section.classList.toggle('open');
       });
       section.appendChild(hd);
 
-      // Body com linhas
       const body = document.createElement('div');
       body.className = 'pag-projetista-body';
 
       if (!rowsFiltradas.length) {
-        body.innerHTML = '<div class="pag-projetista-empty">Nenhum projeto neste período</div>';
+        body.innerHTML = '<div style="padding:16px; font-size:12px; color:var(--muted); text-align:center;">Nenhum projeto registrado neste período</div>';
       } else {
         rowsFiltradas.forEach(row => {
-          const num = nProjeto(row.raw);
+          const num = nProjeto(row.raw) || '—';
           const piscs = piscinasArr(row.raw);
           const piscinaStr = piscs.join(', ') || '—';
           const lojaStr = loja(row.raw) || '—';
-          const dtEnv = row.data_envio !== undefined ? row.data_envio : dataEnvio(row.raw);
+          const dtEnv = (row.data_envio !== undefined && row.data_envio !== null && row.data_envio !== '')
+            ? row.data_envio
+            : dataEnvio(row.raw);
+          const dtEntrada = formatarDataCurta(row.data);
+          const dtSaida = formatarDataCurta(dtEnv);
+          const temData = dtEntrada || dtSaida;
           const tipo = row.tipo || '';
           const est = obterEstiloTipo(tipo);
           const valor = calcularValor(tipo, row.alt || false);
-
           const valorStr = valor > 0 ? `R$ ${valor.toFixed(2).replace('.', ',')}` : '—';
-          const dtStr = dtEnv ? dtEnv : '';
 
           body.innerHTML += `
             <div class="pag-row">
@@ -539,7 +1158,18 @@
               <div class="pag-row-right">
                 <span class="pag-tipo-badge" style="background:${est.bg};color:${est.color};border-color:${est.border}">${esc(tipo || '—')}</span>
                 <span class="pag-row-valor">${valorStr}</span>
-                ${dtStr ? `<span class="pag-row-data">${esc(dtStr)}</span>` : ''}
+                ${temData ? `
+                  <div class="pag-row-dates">
+                    <span class="pag-date-item entrada" title="Entrada: ${esc(dtEntrada || 'Não informada')}">
+                      <svg class="pag-date-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h10M8 2v8M4 7l4 4 4-4"/></svg>
+                      <span>${esc(dtEntrada || '—')}</span>
+                    </span>
+                    <span class="pag-date-item saida" title="Saída: ${esc(dtSaida || 'Não informada')}">
+                      <svg class="pag-date-ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h10M8 14V6M4 9l4-4 4 4"/></svg>
+                      <span>${esc(dtSaida || '—')}</span>
+                    </span>
+                  </div>` : ''}
+                ${row.alt ? `<span class="pag-alt-badge">+ Alt. Grande</span>` : ''}
               </div>
             </div>`;
         });
@@ -551,16 +1181,17 @@
 
     // ── Resumo do período ──────────────────────────
     if (totalProjetos > 0) {
-      resumoEl.style.display = '';
+      resumoEl.style.display = 'grid';
       resumoEl.innerHTML = `
-        <div class="pag-resumo-item">
-          <span class="pag-resumo-label">Projetos</span>
-          <span class="pag-resumo-valor">${totalProjetos}</span>
+        <div class="pag-kpi-card highlight">
+          <span class="pag-kpi-label">${MESES[filtroMes]} ${filtroAno}</span>
+          <span class="pag-kpi-val">R$ ${totalGeral.toFixed(2).replace('.', ',')}</span>
+          <span class="pag-kpi-sub">Total Geral</span>
         </div>
-        <div class="pag-resumo-divider"></div>
-        <div class="pag-resumo-item">
-          <span class="pag-resumo-label">Total</span>
-          <span class="pag-resumo-valor pag-resumo-destaque">R$ ${totalGeral.toFixed(2).replace('.', ',')}</span>
+        <div class="pag-kpi-card">
+          <span class="pag-kpi-label">Volume de Projetos</span>
+          <span class="pag-kpi-val" style="color:var(--dark);">${totalProjetos} <small style="font-size:12px;font-weight:600;color:var(--muted)">projetos</small></span>
+          <span class="pag-kpi-sub">Média: R$ ${(totalGeral / totalProjetos).toFixed(2).replace('.', ',')}</span>
         </div>`;
     } else {
       resumoEl.style.display = 'none';
@@ -571,6 +1202,518 @@
         <div class="m-empty-title">Nenhum registro neste período</div>
         <div class="m-empty-sub">Tente outro mês ou ajuste os filtros</div>
       </div>`;
+    }
+  }
+
+  // ── Modal de PDF ────────────────────────────────
+  function abrirModalPDF() {
+    document.getElementById('modalPdfOverlay').classList.add('open');
+  }
+  function fecharModalPDF() {
+    document.getElementById('modalPdfOverlay').classList.remove('open');
+  }
+
+  // ── Carregadores sob demanda ────────────────────
+  async function carregarJsPDF() {
+    if (window.jspdf?.jsPDF) return;
+    mToast('Preparando motor de PDF…');
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function carregarHtml2Pdf() {
+    if (window.html2pdf) return;
+    mToast('Preparando motor de impressão…');
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  // ── 1. Exportar Relatório A4 em PDF (Nativo jsPDF) ────
+  async function gerarRelatorioA4PDF() {
+    fecharModalPDF();
+    mToast('Gerando Relatório A4 em PDF…');
+
+    try {
+      await carregarJsPDF();
+      const { jsPDF } = window.jspdf;
+
+      const mesNome = MESES[filtroMes];
+      const anoNome = filtroAno;
+
+      let registros = todosRegistros;
+      if (filtroProj) registros = registros.filter(r => r.user_id === filtroProj);
+
+      let linhas = [];
+      let nomeProj = 'Equipe iGUi Space';
+      registros.forEach(r => {
+        if (filtroProj) nomeProj = r.nome;
+        const doMes = r.rows_data.filter(row => {
+          return rowPertenceAoMesAno(row, mesNome, String(anoNome));
+        });
+        linhas.push(...doMes);
+      });
+
+      if (!linhas.length) {
+        mToast('Nenhum projeto encontrado no mês selecionado', 'error');
+        return;
+      }
+
+      const infoPago = getInfoMesPago(mesNome, String(anoNome));
+      const pago = Boolean(infoPago && infoPago.pago);
+
+      const contagem = {
+        'Até 02 Projetos': 0,
+        '03 a 4 Projetos': 0,
+        'Mais que 05 Projetos': 0,
+        'Projeto 360º': 0,
+        'Projeto 360º (3 Modificações)': 0,
+        'Conceito': 0,
+        'Alterações GRANDES': 0,
+      };
+      let totalAltGrandesExtras = 0;
+
+      linhas.forEach(row => {
+        if (contagem[row.tipo] !== undefined) contagem[row.tipo]++;
+        if (row.alt && row.tipo !== 'Alterações GRANDES') totalAltGrandesExtras++;
+      });
+
+      let totalGeral = 0;
+      const rowsTabela = Object.keys(contagem).map(tipo => {
+        const qtd = contagem[tipo];
+        let unit = 0;
+        switch (tipo) {
+          case 'Até 02 Projetos': unit = precos.val_ate2; break;
+          case '03 a 4 Projetos': unit = precos.val_3a4; break;
+          case 'Mais que 05 Projetos': unit = precos.val_mais5; break;
+          case 'Projeto 360º': unit = precos.val_360; break;
+          case 'Projeto 360º (3 Modificações)': unit = precos.val_360_3mod; break;
+          case 'Conceito': unit = precos.val_conceito; break;
+          case 'Alterações GRANDES': unit = precos.val_alt_grandes; break;
+        }
+        const sub = qtd * unit;
+        totalGeral += sub;
+        return { tipo, qtd, unit, sub };
+      });
+
+      const subAltExtras = totalAltGrandesExtras * (precos.val_alt_grandes || 60);
+      totalGeral += subAltExtras;
+
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const margin = 14;
+      const usableW = 210 - margin * 2; // 182mm
+      let y = 16;
+
+      // ── Barra Superior iGUi ───────────────────────
+      doc.setFillColor(0, 174, 239); // #00AEEF
+      doc.rect(margin, y, usableW, 2.5, 'F');
+      y += 8;
+
+      // Título e Período
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(26, 42, 58); // #1a2a3a
+      doc.text('iGUi Space — Relatório de Pagamento', margin, y);
+
+      doc.setFontSize(13);
+      doc.setTextColor(0, 174, 239);
+      doc.text(`${mesNome} / ${anoNome}`, 210 - margin, y, { align: 'right' });
+      y += 5.5;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9.5);
+      doc.setTextColor(100, 116, 139); // #64748b
+      doc.text('Controle Mensal de Projetos', margin, y);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(26, 42, 58);
+      doc.text(String(nomeProj), 210 - margin, y, { align: 'right' });
+      y += 8;
+
+      // ── Status de Pagamento ───────────────────────
+      if (pago) {
+        let extra = '';
+        if (infoPago?.data_confirmacao) {
+          try {
+            const dt = new Date(infoPago.data_confirmacao);
+            const pad = n => String(n).padStart(2, '0');
+            extra = ` em ${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+          } catch(e){}
+        }
+        const confirmadoPor = infoPago?.confirmado_por ? ` por ${infoPago.confirmado_por}` : '';
+        const statusTexto = `STATUS: PAGO (Confirmado${extra}${confirmadoPor})`;
+
+        doc.setFillColor(240, 253, 244); // #f0fdf4
+        doc.setDrawColor(134, 239, 172); // #86efac
+        doc.setLineWidth(0.4);
+        doc.roundedRect(margin, y, usableW, 9, 2, 2, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(21, 128, 61); // #15803d
+        doc.text(statusTexto, margin + 4, y + 6);
+      } else {
+        doc.setFillColor(255, 248, 225); // #fff8e1
+        doc.setDrawColor(245, 216, 122); // #f5d87a
+        doc.setLineWidth(0.4);
+        doc.roundedRect(margin, y, usableW, 9, 2, 2, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(146, 96, 10); // #92600a
+        doc.text('STATUS: PENDENTE DE PAGAMENTO', margin + 4, y + 6);
+      }
+      y += 14;
+
+      // ── KPI Cards (Volume & Total) ────────────────
+      const cardW = (usableW - 6) / 2; // ~88mm
+      const cardH = 20;
+
+      // Card 1: Volume
+      doc.setFillColor(248, 250, 252); // #f8fafc
+      doc.setDrawColor(226, 232, 240); // #e2e8f0
+      doc.setLineWidth(0.3);
+      doc.roundedRect(margin, y, cardW, cardH, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text('TOTAL DE PROJETOS', margin + 5, y + 6);
+
+      doc.setFontSize(16);
+      doc.setTextColor(15, 23, 42); // #0f172a
+      doc.text(`${linhas.length} projetos`, margin + 5, y + 15);
+
+      // Card 2: Total
+      const card2X = margin + cardW + 6;
+      doc.setFillColor(240, 249, 255); // #f0f9ff
+      doc.setDrawColor(186, 230, 253); // #bae6fd
+      doc.roundedRect(card2X, y, cardW, cardH, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(2, 132, 199); // #0284c7
+      doc.text('TOTAL A RECEBER', card2X + 5, y + 6);
+
+      doc.setFontSize(16);
+      doc.setTextColor(2, 132, 199);
+      doc.text(`R$ ${totalGeral.toFixed(2).replace('.', ',')}`, card2X + 5, y + 15);
+
+      y += cardH + 8;
+
+      // ── Tabela Discriminada ───────────────────────
+      const colQtdX = margin + 115;
+      const colUnitX = margin + 148;
+      const colSubX = margin + usableW - 4;
+
+      // Cabeçalho da Tabela
+      doc.setFillColor(26, 42, 58); // #1a2a3a
+      doc.rect(margin, y, usableW, 8.5, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(255, 255, 255);
+      doc.text('Categoria do Projeto', margin + 4, y + 5.5);
+      doc.text('Qtd', colQtdX, y + 5.5, { align: 'center' });
+      doc.text('Valor Unit.', colUnitX, y + 5.5, { align: 'right' });
+      doc.text('Subtotal', colSubX, y + 5.5, { align: 'right' });
+      y += 8.5;
+
+      // Linhas da Tabela
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+
+      rowsTabela.forEach((r, i) => {
+        const rowH = 7.5;
+        if (i % 2 === 1) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(margin, y, usableW, rowH, 'F');
+        }
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y + rowH, margin + usableW, y + rowH);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(26, 42, 58);
+        doc.text(r.tipo, margin + 4, y + 5);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        doc.text(String(r.qtd), colQtdX, y + 5, { align: 'center' });
+        doc.text(`R$ ${r.unit.toFixed(2).replace('.', ',')}`, colUnitX, y + 5, { align: 'right' });
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(15, 23, 42);
+        doc.text(`R$ ${r.sub.toFixed(2).replace('.', ',')}`, colSubX, y + 5, { align: 'right' });
+
+        y += rowH;
+      });
+
+      // Grandes Alterações Extras (se houver)
+      if (totalAltGrandesExtras > 0) {
+        const rowH = 7.5;
+        doc.setFillColor(254, 243, 199); // #fef3c7
+        doc.rect(margin, y, usableW, rowH, 'F');
+
+        doc.setDrawColor(253, 230, 138);
+        doc.setLineWidth(0.2);
+        doc.line(margin, y + rowH, margin + usableW, y + rowH);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(180, 83, 9); // #b45309
+        doc.text('+ Alterações GRANDES (Adicionais)', margin + 4, y + 5);
+        doc.text(String(totalAltGrandesExtras), colQtdX, y + 5, { align: 'center' });
+        doc.text(`R$ ${(precos.val_alt_grandes || 60).toFixed(2).replace('.', ',')}`, colUnitX, y + 5, { align: 'right' });
+        doc.setFont('helvetica', 'bold');
+        doc.text(`R$ ${subAltExtras.toFixed(2).replace('.', ',')}`, colSubX, y + 5, { align: 'right' });
+
+        y += rowH;
+      }
+
+      // Rodapé da Tabela: VALOR TOTAL DO MÊS
+      const totalH = 10;
+      doc.setFillColor(238, 242, 246); // #eef2f6
+      doc.rect(margin, y, usableW, totalH, 'F');
+
+      doc.setDrawColor(0, 174, 239);
+      doc.setLineWidth(0.7);
+      doc.line(margin, y, margin + usableW, y);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(26, 42, 58);
+      doc.text('VALOR TOTAL DO MÊS', margin + 4, y + 6.5);
+
+      doc.setFontSize(12);
+      doc.setTextColor(2, 132, 199); // #0284c7
+      doc.text(`R$ ${totalGeral.toFixed(2).replace('.', ',')}`, colSubX, y + 6.5, { align: 'right' });
+
+      y += totalH + 15;
+
+      // ── Rodapé do Documento ───────────────────────
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.line(margin, y, margin + usableW, y);
+      y += 6;
+
+      const agora = new Date();
+      const dataStr = agora.toLocaleDateString('pt-BR');
+      const horaStr = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(148, 163, 184); // #94a3b8
+      doc.text(`Documento oficial gerado eletronicamente em ${dataStr} às ${horaStr} via iGUi Space.`, 105, y, { align: 'center' });
+
+      const fileName = `Relatorio_Pagamento_${nomeProj.replace(/\s+/g, '_')}_${mesNome}_${anoNome}.pdf`;
+      await salvarOuCompartilharPDF(
+        doc,
+        fileName,
+        'Relatório de Pagamento',
+        `Relatório de Pagamento iGUi Space — ${nomeProj} (${mesNome}/${anoNome})`
+      );
+    } catch(err) {
+      console.error(err);
+      mToast('Erro ao gerar PDF: ' + err.message, 'error');
+    }
+  }
+
+  // ── Helper Compartilhar / Salvar PDF ───────────────
+  async function salvarOuCompartilharPDF(doc, filename, titulo, texto) {
+    try {
+      const blob = doc.output('blob');
+      const file = new File([blob], filename, { type: 'application/pdf' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: titulo,
+            text: texto
+          });
+          mToast('PDF compartilhado com sucesso!', 'success');
+          return;
+        } catch(shareErr) {
+          if (shareErr.name === 'AbortError') return;
+        }
+      }
+    } catch(e) {
+      console.warn('Share API fallback:', e);
+    }
+
+    doc.save(filename);
+    mToast('PDF baixado com sucesso!', 'success');
+  }
+
+  // ── 2. Exportar Lista Completa em PDF ─────────────
+  async function gerarListaProjetosPDF() {
+    fecharModalPDF();
+    mToast('Gerando Lista de Projetos em PDF…');
+
+    try {
+      await carregarJsPDF();
+      const { jsPDF } = window.jspdf;
+
+      const mesNome = MESES[filtroMes];
+      const anoNome = filtroAno;
+
+      let registros = todosRegistros;
+      if (filtroProj) registros = registros.filter(r => r.user_id === filtroProj);
+
+      let linhas = [];
+      registros.forEach(r => {
+        const doMes = r.rows_data.filter(row => {
+          return rowPertenceAoMesAno(row, mesNome, String(anoNome));
+        });
+        doMes.forEach(d => linhas.push({ ...d, projetista_nome: r.nome }));
+      });
+
+      if (!linhas.length) {
+        mToast('Nenhum projeto encontrado no mês selecionado', 'error');
+        return;
+      }
+
+      const infoPago = getInfoMesPago(mesNome, String(anoNome));
+      const pago = Boolean(infoPago && infoPago.pago);
+      let statusExtra = '';
+      if (infoPago?.data_confirmacao) {
+        try {
+          const dt = new Date(infoPago.data_confirmacao);
+          const pad = n => String(n).padStart(2, '0');
+          statusExtra = ` em ${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+        } catch(e){}
+      }
+      const statusLabel = pago ? `[PAGO${statusExtra}]` : `[PENDENTE]`;
+
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 10;
+      const usableW = pageW - margin * 2;
+
+      const title = `iGUi Space — Lista de Projetos (${mesNome} / ${anoNome}) ${statusLabel}`.trim();
+      const headers = ['Nº', 'Projetista', 'OS', 'Modelo Piscina', 'Loja/Franquia', 'Tipo', 'Data', 'Alt.'];
+      const colWeights = [0.4, 1.4, 0.9, 1.8, 1.4, 1.4, 0.8, 0.6];
+      const totalW = colWeights.reduce((a, b) => a + b, 0);
+      const colWidths = colWeights.map(w => (w / totalW) * usableW);
+      const colX = colWidths.reduce((acc, w, i) => { acc.push(i === 0 ? margin : acc[i - 1] + colWidths[i - 1]); return acc; }, []);
+
+      let y = 20;
+
+      const drawHeader = () => {
+        doc.setFillColor(26, 42, 58);
+        doc.rect(0, 0, pageW, 13, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(title, margin, 9);
+
+        doc.setFillColor(237, 247, 253);
+        doc.rect(margin, 15, usableW, 7, 'F');
+        doc.setTextColor(26, 42, 58);
+        doc.setFontSize(8);
+        headers.forEach((h, i) => {
+          doc.text(String(h), colX[i] + 1, 20);
+        });
+        y = 26;
+        doc.setFont('helvetica', 'normal');
+      };
+
+      drawHeader();
+      linhas.forEach((row, i) => {
+        const dtEnv = (row.data_envio !== undefined && row.data_envio !== null && row.data_envio !== '') ? row.data_envio : dataEnvio(row.raw);
+        const dtEnt = formatarDataCurta(row.data);
+        const dtSai = formatarDataCurta(dtEnv);
+        const dtStr = (dtEnt && dtSai && dtEnt !== dtSai) ? `${dtEnt} / ${dtSai}` : (dtSai || dtEnt || '—');
+        const osStr = nProjeto(row.raw) || '—';
+        const piscStr = piscinasArr(row.raw).join(', ') || '—';
+        const lojaStr = loja(row.raw) || '—';
+        const projStr = row.projetista_nome || '—';
+        const tipoStr = row.tipo || '—';
+        const altStr = row.alt ? 'Sim' : 'Não';
+
+        const rowValues = [String(i + 1), projStr, osStr, piscStr, lojaStr, tipoStr, dtStr, altStr];
+
+        if (y + 7 > pageH - 12) {
+          doc.addPage();
+          drawHeader();
+          doc.setFontSize(7.5);
+        }
+
+        if (i % 2 === 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(margin, y - 4.5, usableW, 6.5, 'F');
+        }
+
+        rowValues.forEach((v, colIdx) => {
+          const text = doc.splitTextToSize(String(v), colWidths[colIdx] - 2);
+          doc.text(text[0] || '', colX[colIdx] + 1, y);
+        });
+
+        y += 6.5;
+      });
+
+      const fileName = `Projetos_${mesNome}_${anoNome}.pdf`;
+      await salvarOuCompartilharPDF(
+        doc,
+        fileName,
+        'Lista de Projetos',
+        `Lista de Projetos iGUi Space — (${mesNome}/${anoNome})`
+      );
+    } catch(err) {
+      console.error(err);
+      mToast('Erro ao exportar: ' + err.message, 'error');
+    }
+  }
+
+  // ── 3. Compartilhar Resumo no WhatsApp ────────────
+  function compartilharResumoTexto() {
+    fecharModalPDF();
+    const mesNome = MESES[filtroMes];
+    const anoNome = filtroAno;
+
+    let registros = todosRegistros;
+    if (filtroProj) registros = registros.filter(r => r.user_id === filtroProj);
+
+    let totalGeral = 0;
+    let totalProjetos = 0;
+    let nome = filtroProj ? (registros[0]?.nome || 'Projetista') : 'Equipe iGUi Space';
+
+    registros.forEach(r => {
+      const doMes = r.rows_data.filter(row => {
+        return rowPertenceAoMesAno(row, mesNome, String(anoNome));
+      });
+      totalGeral += doMes.reduce((acc, row) => acc + calcularValor(row.tipo, row.alt), 0);
+      totalProjetos += doMes.length;
+    });
+
+    const infoPago = getInfoMesPago(mesNome, String(anoNome));
+    const statusTxt = (infoPago && infoPago.pago) ? '✅ PAGO' : '⏳ PENDENTE DE PAGAMENTO';
+
+    const texto = `*Resumo de Pagamento — iGUi Space*\n` +
+                  `👤 *Projetista:* ${nome}\n` +
+                  `📅 *Competência:* ${mesNome}/${anoNome}\n` +
+                  `📌 *Status:* ${statusTxt}\n` +
+                  `📁 *Total de Projetos:* ${totalProjetos}\n` +
+                  `💰 *Valor Total:* R$ ${totalGeral.toFixed(2).replace('.', ',')}\n\n` +
+                  `Gerado via iGUi Space Mobile.`;
+
+    if (navigator.share) {
+      navigator.share({ title: 'Resumo de Pagamento', text: texto }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(texto).then(() => {
+        mToast('Resumo copiado para a área de transferência!', 'success');
+      }).catch(() => {
+        mToast('Erro ao copiar texto', 'error');
+      });
     }
   }
 

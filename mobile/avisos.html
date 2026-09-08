@@ -2,23 +2,66 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Avisos — iGUi Space</title>
+  <meta name="theme-color" content="#1a2a3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="iGUi Space">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="manifest" href="../manifest.json">
   <!-- Estilos do chat/avisos (área de conteúdo) -->
-  <link rel="stylesheet" href="../styles.css?v=202608281130">
+  <link rel="stylesheet" href="../styles.css?v=202609081804">
   <!-- Sobrescreve layout com mobile -->
-  <link rel="stylesheet" href="mobile.css?v=202608281130">
+  <link rel="stylesheet" href="mobile.css?v=202609081804">
   <style>
+    /* Trava rolagem global da janela para evitar duplo scroll no mobile */
+    html, body {
+      height: 100dvh;
+      overflow: hidden;
+    }
+
     /* Remove layout desktop */
     header { display: none !important; }
     .sidebar { display: none !important; }
-    .layout { padding-left: 0 !important; display: block !important; }
-    .main-content { padding-top: var(--header-h) !important; padding-bottom: calc(var(--nav-h) + 8px) !important; }
+    .layout {
+      padding-left: 0 !important;
+      display: block !important;
+      margin: 0 !important;
+      height: 100dvh !important;
+      overflow: hidden !important;
+    }
+    .main-content {
+      padding: 0 !important;
+      margin: 0 !important;
+      height: calc(100dvh - var(--header-total-h) - var(--nav-total-h)) !important;
+      margin-top: var(--header-total-h) !important;
+      margin-bottom: var(--nav-total-h) !important;
+      overflow: hidden !important;
+    }
 
-    /* Chat ocupa tudo */
-    .chat-wrap { height: calc(100vh - var(--header-h) - var(--nav-h)); height: calc(100dvh - var(--header-h) - var(--nav-h)); }
+    /* Chat ocupa todo o espaço útil */
+    .chat-wrap {
+      height: 100% !important;
+      min-height: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+    }
     .chat-left { display: none !important; }
-    .chat-right { width: 100% !important; border-left: none !important; }
+    .chat-right {
+      width: 100% !important;
+      border-left: none !important;
+      height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
+      min-height: 0 !important;
+    }
+    .msg-container {
+      flex: 1 !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+      -webkit-overflow-scrolling: touch;
+    }
 
     /* Modal com respiro nas bordas em telas pequenas */
     .modal-overlay { padding: 16px; }
@@ -26,9 +69,10 @@
     /* Campo de mensagem: >=16px evita zoom automático do iOS Safari ao focar */
     .chat-textarea { font-size: 16px !important; }
 
-    /* Input area — sobe acima do nav */
+    /* Input area — respiro acima do nav */
     .chat-input-wrap {
-      padding-bottom: 8px !important;
+      padding-bottom: 6px !important;
+      background: #fff;
     }
 
     /* Toolbar de formatação — scroll horizontal no mobile */
@@ -51,7 +95,7 @@
     <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
     
     <div class="m-header-right">
-      <a class="m-header-user" id="mHeaderUser" href="perfil.html"></a>
+      <a class="m-header-user-btn" id="mHeaderUser" href="perfil.html" title="Meu Perfil"></a>
     </div>
   </header>
 
@@ -187,8 +231,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202608281130"></script>
-  <script src="mobile-nav.js?v=202608281130"></script>
-  <script src="../avisos.js?v=202608281130"></script>
+  <script src="../supabase-client.js?v=202609081804"></script>
+  <script src="mobile-nav.js?v=202609081804"></script>
+  <script src="../avisos.js?v=202609081804"></script>
 </body>
 </html>

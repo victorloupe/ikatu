@@ -2,9 +2,15 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Perfil — iGUi Space</title>
-  <link rel="stylesheet" href="mobile.css?v=202608281130">
+  <meta name="theme-color" content="#1a2a3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="iGUi Space">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <link rel="manifest" href="../manifest.json">
+  <link rel="stylesheet" href="mobile.css?v=202609081804">
   <style>
     select.m-input { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='none' stroke='%239aa8b6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
   </style>
@@ -14,7 +20,9 @@
   <!-- Header -->
   <header class="m-header">
     <img src="../logo_site.png" alt="iGUi Space" class="m-header-logo">
-    
+    <button class="m-header-back-btn" title="Voltar" onclick="if(window.history.length > 1){window.history.back();}else{location.href='prancha.html';}">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
   </header>
 
   <!-- Conteúdo -->
@@ -63,47 +71,66 @@
         <div class="m-card-bd">
           <div class="m-field">
             <label class="m-label">Nome completo</label>
-            <input type="text" id="dadosNomeCompleto" class="m-input" placeholder="Nome e sobrenome">
+            <input type="text" id="dadosNomeCompleto" class="m-input" placeholder="Seu nome completo">
           </div>
-          <div class="m-field">
-            <label class="m-label">Data de nascimento</label>
-            <input type="date" id="dadosDataNasc" class="m-input">
-          </div>
-          <div class="m-field">
-            <label class="m-label">CEP</label>
-            <input type="text" id="dadosCEP" class="m-input" placeholder="00000-000" maxlength="9" oninput="mascaraCEP(this)" onblur="buscarCEP()">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 80px;gap:8px">
+          <div style="display:grid;grid-template-columns:1fr 105px;gap:8px">
             <div class="m-field" style="margin-bottom:0">
-              <label class="m-label">Rua</label>
-              <input type="text" id="dadosRua" class="m-input" placeholder="Rua, Av...">
+              <label class="m-label">Data de nascimento</label>
+              <input type="date" id="dadosDataNasc" class="m-input" oninput="calcularIdadeCampo()">
+            </div>
+            <div class="m-field" style="margin-bottom:0">
+              <label class="m-label">Idade</label>
+              <input type="text" id="dadosIdade" class="m-input" readonly placeholder="—" style="background:#f8fafc;color:#1e293b;font-weight:700;text-align:center;">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 44px;gap:8px;align-items:flex-end;margin-top:8px">
+            <div class="m-field" style="margin-bottom:0">
+              <label class="m-label">CEP</label>
+              <input type="text" id="dadosCEP" class="m-input" placeholder="00000-000" maxlength="9" oninput="mascararCEP(this)">
+            </div>
+            <button type="button" class="m-btn m-btn-secondary" title="Buscar CEP" style="height:44px;width:44px;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:8px;" onclick="buscarCEPMobile()">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 80px;gap:8px;margin-top:8px">
+            <div class="m-field" style="margin-bottom:0">
+              <label class="m-label">Rua / Logradouro</label>
+              <input type="text" id="dadosRua" class="m-input" placeholder="Nome da rua">
             </div>
             <div class="m-field" style="margin-bottom:0">
               <label class="m-label">N°</label>
               <input type="text" id="dadosNumero" class="m-input" placeholder="123">
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 60px;gap:8px;margin-top:8px">
+          <div style="display:grid;grid-template-columns:1fr 85px;gap:8px;margin-top:8px">
             <div class="m-field" style="margin-bottom:0">
               <label class="m-label">Cidade</label>
-              <input type="text" id="dadosCidade" class="m-input" placeholder="Cidade">
+              <input type="text" id="dadosCidade" class="m-input" placeholder="Sua cidade">
             </div>
             <div class="m-field" style="margin-bottom:0">
-              <label class="m-label">UF</label>
-              <input type="text" id="dadosEstado" class="m-input" placeholder="SP" maxlength="2" style="text-transform:uppercase">
+              <label class="m-label">Estado</label>
+              <select id="dadosEstado" class="m-input">
+                <option value="">—</option>
+                <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option>
+                <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+                <option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option>
+                <option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                <option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option>
+                <option>SE</option><option>TO</option>
+              </select>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
             <div class="m-field" style="margin-bottom:0">
-              <label class="m-label">Camisa</label>
+              <label class="m-label">Tamanho Camisa</label>
               <select id="dadosCamisa" class="m-input">
                 <option value="">—</option>
-                <option>P</option><option>M</option><option>G</option><option>GG</option><option>XGG</option>
+                <option>PP</option><option>P</option><option>M</option><option>G</option><option>GG</option><option>XGG</option>
               </select>
             </div>
             <div class="m-field" style="margin-bottom:0">
-              <label class="m-label">Chinelo</label>
-              <input type="number" id="dadosChinelo" class="m-input" placeholder="38" min="33" max="46">
+              <label class="m-label">Nº Chinelo</label>
+              <input type="number" id="dadosChinelo" class="m-input" placeholder="Ex: 40" min="30" max="48">
             </div>
           </div>
           <button class="m-btn m-btn-primary m-btn-full" style="margin-top:14px" onclick="salvarDados()">Salvar Dados</button>
@@ -134,6 +161,24 @@
       </div>
 
 
+      <!-- Links e Arquivos -->
+      <div class="m-card" style="margin-bottom:14px;">
+        <div class="m-card-hd">
+          <div class="m-card-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <div>
+            <div class="m-card-title">Central de Links & Pastas</div>
+          </div>
+        </div>
+        <div class="m-card-bd">
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.4;">Acesse manuais técnicos, tabelas, links úteis e arquivos compartilhados da equipe.</p>
+          <a href="links.html" class="m-btn m-btn-secondary m-btn-full" style="text-decoration:none;">
+            Abrir Links & Pastas →
+          </a>
+        </div>
+      </div>
+
       <!-- Sair -->
       <div class="m-card" style="margin-bottom:24px;">
         <div class="m-card-bd">
@@ -151,8 +196,8 @@
   <div class="m-toast" id="mToastGlobal"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202608281130"></script>
-  <script src="mobile-nav.js?v=202608281130"></script>
+  <script src="../supabase-client.js?v=202609081804"></script>
+  <script src="mobile-nav.js?v=202609081804"></script>
   <script>
   // ── Pranchas paginadas no perfil ─────────────────
   // (sem cache, carrega sempre fresh)
@@ -192,17 +237,37 @@
         ? '<span class="m-badge m-badge-blue">Admin</span>'
         : '<span class="m-badge m-badge-gray">Projetista</span>';
 
-      // Dados pessoais
-      const d = profile.personal_data || {};
-      document.getElementById('dadosNomeCompleto').value = d.nome_completo || '';
-      document.getElementById('dadosDataNasc').value     = d.data_nasc     || '';
-      document.getElementById('dadosCEP').value          = d.cep           || '';
-      document.getElementById('dadosRua').value          = d.rua           || '';
-      document.getElementById('dadosNumero').value       = d.numero        || '';
-      document.getElementById('dadosCidade').value       = d.cidade        || '';
-      document.getElementById('dadosEstado').value       = d.estado        || '';
-      document.getElementById('dadosCamisa').value       = d.camisa        || '';
-      document.getElementById('dadosChinelo').value      = d.chinelo       || '';
+      // Dados pessoais (colunas reais na tabela profiles do Supabase)
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val ?? '';
+      };
+
+      setVal('dadosNomeCompleto', profile.nome_completo || profile.name || '');
+      setVal('dadosDataNasc', profile.data_nascimento || '');
+      setVal('dadosCEP', profile.cep || '');
+      setVal('dadosRua', profile.rua || '');
+      setVal('dadosNumero', profile.numero || '');
+      setVal('dadosCidade', profile.cidade || '');
+      setVal('dadosEstado', profile.estado || '');
+      setVal('dadosCamisa', profile.tamanho_camisa || '');
+      setVal('dadosChinelo', profile.tamanho_chinelo || '');
+
+      // Fallback caso algum dado esteja em personal_data legado
+      if (profile.personal_data && typeof profile.personal_data === 'object') {
+        const pd = profile.personal_data;
+        if (!profile.nome_completo && pd.nome_completo) setVal('dadosNomeCompleto', pd.nome_completo);
+        if (!profile.data_nascimento && pd.data_nasc) setVal('dadosDataNasc', pd.data_nasc);
+        if (!profile.cep && pd.cep) setVal('dadosCEP', pd.cep);
+        if (!profile.rua && pd.rua) setVal('dadosRua', pd.rua);
+        if (!profile.numero && pd.numero) setVal('dadosNumero', pd.numero);
+        if (!profile.cidade && pd.cidade) setVal('dadosCidade', pd.cidade);
+        if (!profile.estado && pd.estado) setVal('dadosEstado', pd.estado);
+        if (!profile.tamanho_camisa && pd.camisa) setVal('dadosCamisa', pd.camisa);
+        if (!profile.tamanho_chinelo && pd.chinelo) setVal('dadosChinelo', pd.chinelo);
+      }
+
+      calcularIdadeCampo();
 
     } catch(e) {
       console.error('Erro ao carregar perfil:', e);
@@ -229,21 +294,30 @@
   async function salvarDados() {
     try {
       const session = await sbGetSession();
-      const dados = {
-        nome_completo: document.getElementById('dadosNomeCompleto').value.trim(),
-        data_nasc:     document.getElementById('dadosDataNasc').value,
-        cep:           document.getElementById('dadosCEP').value.trim(),
-        rua:           document.getElementById('dadosRua').value.trim(),
-        numero:        document.getElementById('dadosNumero').value.trim(),
-        cidade:        document.getElementById('dadosCidade').value.trim(),
-        estado:        document.getElementById('dadosEstado').value.trim().toUpperCase(),
-        camisa:        document.getElementById('dadosCamisa').value,
-        chinelo:       document.getElementById('dadosChinelo').value,
+      if (!session?.user) throw new Error('Sessão expirada. Faça login novamente.');
+
+      const getVal = id => document.getElementById(id)?.value?.trim() || null;
+      const chineloVal = document.getElementById('dadosChinelo')?.value ? parseInt(document.getElementById('dadosChinelo').value, 10) : null;
+
+      const payload = {
+        nome_completo:   getVal('dadosNomeCompleto'),
+        data_nascimento: document.getElementById('dadosDataNasc')?.value || null,
+        cep:             getVal('dadosCEP'),
+        rua:             getVal('dadosRua'),
+        numero:          getVal('dadosNumero'),
+        cidade:          getVal('dadosCidade'),
+        estado:          getVal('dadosEstado') || null,
+        tamanho_camisa:  getVal('dadosCamisa') || null,
+        tamanho_chinelo: chineloVal,
       };
-      const { error } = await sb.from('profiles').update({ personal_data: dados }).eq('id', session.user.id);
+
+      const { error } = await sb.from('profiles').update(payload).eq('id', session.user.id);
       if (error) throw error;
-      mToast('Dados salvos!', 'success');
-    } catch(e) { mToast('Erro ao salvar: ' + e.message, 'error'); }
+      mToast('✅ Dados pessoais salvos!', 'success');
+    } catch(e) {
+      console.error('Erro ao salvar dados:', e);
+      mToast('Erro ao salvar: ' + e.message, 'error');
+    }
   }
 
   // ── Alterar senha ────────────────────────────────
@@ -270,24 +344,51 @@
     } catch(e) { mToast('Erro ao sair', 'error'); }
   }
 
-  // ── CEP ──────────────────────────────────────────
-  function mascaraCEP(el) {
-    let v = el.value.replace(/\D/g,'').slice(0,8);
-    if (v.length > 5) v = v.slice(0,5) + '-' + v.slice(5);
+  // ── Idade & CEP ──────────────────────────────────
+  function calcularIdadeCampo() {
+    const input = document.getElementById('dadosDataNasc');
+    const idadeEl = document.getElementById('dadosIdade');
+    if (!input || !idadeEl || !input.value) {
+      if (idadeEl) idadeEl.value = '—';
+      return;
+    }
+    const nasc = new Date(input.value);
+    const hoje = new Date();
+    let idade = hoje.getFullYear() - nasc.getFullYear();
+    const m = hoje.getMonth() - nasc.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < nasc.getDate())) idade--;
+    idadeEl.value = idade >= 0 ? idade + ' anos' : '—';
+  }
+
+  function mascararCEP(el) {
+    let v = el.value.replace(/\D/g, '').slice(0, 8);
+    if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5);
     el.value = v;
   }
 
-  async function buscarCEP() {
-    const cep = document.getElementById('dadosCEP').value.replace(/\D/g,'');
-    if (cep.length !== 8) return;
+  async function buscarCEPMobile() {
+    const elCep = document.getElementById('dadosCEP');
+    const cep = (elCep?.value || '').replace(/\D/g, '');
+    if (cep.length !== 8) {
+      mToast('CEP inválido. Digite 8 números.', 'error');
+      return;
+    }
     try {
+      mToast('Buscando endereço…');
       const r = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const d = await r.json();
-      if (d.erro) return;
-      document.getElementById('dadosRua').value    = d.logradouro || '';
-      document.getElementById('dadosCidade').value = d.localidade || '';
-      document.getElementById('dadosEstado').value = d.uf         || '';
-    } catch(_) {}
+      if (d.erro) {
+        mToast('CEP não encontrado.', 'error');
+        return;
+      }
+      if (d.logradouro) document.getElementById('dadosRua').value = d.logradouro;
+      if (d.localidade) document.getElementById('dadosCidade').value = d.localidade;
+      if (d.uf) document.getElementById('dadosEstado').value = d.uf.toUpperCase();
+      mToast('Endereço preenchido!', 'success');
+      document.getElementById('dadosNumero')?.focus();
+    } catch (e) {
+      mToast('Erro ao buscar CEP: ' + e.message, 'error');
+    }
   }
 
   // ── Init ─────────────────────────────────────────

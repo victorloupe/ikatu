@@ -169,6 +169,32 @@ function dataEnvio(texto) {
   return pedacos[0] + "-" + pedacos[1]; // só dia-mês
 }
 
+function formatarDataCurta(val) {
+  if (!val) return "";
+  const str = String(val).trim();
+  if (!str) return "";
+
+  // 1. Formato ISO (YYYY-MM-DD)
+  const mIso = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (mIso) {
+    return `${mIso[3].padStart(2, '0')}/${mIso[2].padStart(2, '0')}`;
+  }
+
+  // 2. Formato DD/MM/YYYY ou DD-MM-YYYY
+  const mFull = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})/);
+  if (mFull) {
+    return `${mFull[1].padStart(2, '0')}/${mFull[2].padStart(2, '0')}`;
+  }
+
+  // 3. Formato DD/MM ou DD-MM
+  const mShort = str.match(/^(\d{1,2})[-/](\d{1,2})/);
+  if (mShort) {
+    return `${mShort[1].padStart(2, '0')}/${mShort[2].padStart(2, '0')}`;
+  }
+
+  return str;
+}
+
 // --- Estado Global Local ---
 let rowsData = [];
 const STORAGE_KEY = 'igui_pagamentos_rows';
@@ -1112,13 +1138,13 @@ function renderTabela() {
             <button type="button" onclick="definirDataHoje(${index})" title="Usar data de hoje" style="background: none; border: none; margin: 0; padding: 2px; width: 16px; height: 16px; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; flex-shrink: 0; transition: background 0.2s;" onmouseover="this.style.background='#e2eaf3'" onmouseout="this.style.background='none'">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 13h10M8 2v8M4 7l4 4 4-4"/></svg>
             </button>
-            <input type="text" id="input-data-${index}" value="${esc((row.data || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" title="Data de Recebimento" style="width: 55px; padding: 4px 6px; font-size: 13px; font-weight: 700; text-align: center;" oninput="atualizarCampo(${index}, 'data', this.value)">
+            <input type="text" id="input-data-${index}" value="${esc(formatarDataCurta(row.data))}" placeholder="dd/mm" title="Data de Recebimento" style="width: 55px; padding: 4px 6px; font-size: 13px; font-weight: 700; text-align: center;" oninput="atualizarCampo(${index}, 'data', this.value)">
           </div>
           <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
             <div style="padding: 2px; display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; box-sizing: border-box; flex-shrink: 0;">
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" title="Data de Envio" style="flex-shrink:0;"><path d="M3 3h10M8 14V6M4 9l4-4 4 4"/></svg>
             </div>
-            <input type="text" value="${esc((dtEnvio || '').split('/').slice(0,2).join('/'))}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px; text-align: center;" oninput="atualizarCampo(${index}, 'data_envio', this.value)">
+            <input type="text" value="${esc(formatarDataCurta(dtEnvio))}" placeholder="dd/mm" style="width: 55px; padding: 3px 6px; font-size: 11px; text-align: center;" oninput="atualizarCampo(${index}, 'data_envio', this.value)">
           </div>
         </div>
       </td>
@@ -2125,70 +2151,295 @@ function rowPertenceAoMesAno(row, mesNome, anoStr) {
 }
 
 
+async function carregarJsPDF() {
+  if (window.jspdf?.jsPDF) return window.jspdf.jsPDF;
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+  return window.jspdf.jsPDF;
+}
+
 async function exportarPDF() {
   const btn = document.querySelector('.btn-icon-export[onclick="exportarPDF()"]');
   const originalText = btn ? btn.innerHTML : "";
-  if (btn) btn.innerHTML = "⌛ Gerando PDF...";
-
-  if (!window.html2pdf) {
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
-
-  const element = document.getElementById('painelDireitoResumo');
-  const mes = document.getElementById('pagamentoMes').value;
-  const ano = document.getElementById('pagamentoAno').value;
-  const projetista = document.getElementById('projetistaNome').value.trim().replace(/\s+/g, '_');
-  
-  const opt = {
-    margin:       [10, 10, 10, 10],
-    filename:     `Relatorio_Pagamento_${projetista}_${mes}_${ano}.pdf`,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2.5, useCORS: true, letterRendering: true, scrollX: 0, scrollY: 0 },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
-
-  // display:none (e não visibility:hidden) para não deixar espaço em branco no PDF
-  const printHides = element.querySelectorAll('.btn-print-hide');
-  const printHidesDisplay = [];
-  printHides.forEach(el => {
-    printHidesDisplay.push(el.style.display);
-    el.style.display = 'none';
-  });
-
-  // Salva estilos originais para evitar corte lateral no PDF
-  const originalWidth = element.style.width;
-  const originalMaxWidth = element.style.maxWidth;
-  const originalBoxShadow = element.style.boxShadow;
-  const originalMargin = element.style.margin;
-  const originalPaddingBottom = element.style.paddingBottom;
-
-  element.style.width = '680px';
-  element.style.maxWidth = '680px';
-  element.style.boxShadow = 'none';
-  element.style.margin = '0 auto';
-  element.style.paddingBottom = '20px';
+  if (btn) btn.innerHTML = "⌛";
 
   try {
-    await html2pdf().set(opt).from(element).save();
+    await carregarJsPDF();
+    const { jsPDF } = window.jspdf;
+
+    const mesNome = document.getElementById('pagamentoMes')?.value || 'Maio';
+    const anoNome = document.getElementById('pagamentoAno')?.value || '2026';
+    const nomeProj = (document.getElementById('projetistaNome')?.value || 'Projetista').trim();
+
+    // Filtra projetos do mês selecionado
+    const linhas = rowsData.filter(r => rowPertenceAoMesAno(r, mesNome, String(anoNome)));
+
+    if (!linhas.length) {
+      showToast('Nenhum projeto encontrado no mês selecionado', 'err');
+      return;
+    }
+
+    const precos = (typeof lerPrecosDaTela === 'function') ? lerPrecosDaTela() : precosGlobais;
+
+    const contagem = {
+      'Até 02 Projetos': 0,
+      '03 a 4 Projetos': 0,
+      'Mais que 05 Projetos': 0,
+      'Projeto 360º': 0,
+      'Projeto 360º (3 Modificações)': 0,
+      'Conceito': 0,
+      'Alterações GRANDES': 0,
+    };
+    let totalAltGrandesExtras = 0;
+
+    linhas.forEach(row => {
+      if (contagem[row.tipo] !== undefined) contagem[row.tipo]++;
+      if (row.alt && row.tipo !== 'Alterações GRANDES') totalAltGrandesExtras++;
+    });
+
+    let totalGeral = 0;
+    const rowsTabela = Object.keys(contagem).map(tipo => {
+      const qtd = contagem[tipo];
+      let unit = 0;
+      switch (tipo) {
+        case 'Até 02 Projetos': unit = precos.val_ate2; break;
+        case '03 a 4 Projetos': unit = precos.val_3a4; break;
+        case 'Mais que 05 Projetos': unit = precos.val_mais5; break;
+        case 'Projeto 360º': unit = precos.val_360; break;
+        case 'Projeto 360º (3 Modificações)': unit = precos.val_360_3mod; break;
+        case 'Conceito': unit = precos.val_conceito; break;
+        case 'Alterações GRANDES': unit = precos.val_alt_grandes; break;
+      }
+      const sub = qtd * unit;
+      totalGeral += sub;
+      return { tipo, qtd, unit, sub };
+    });
+
+    const subAltExtras = totalAltGrandesExtras * (precos.val_alt_grandes || 60);
+    totalGeral += subAltExtras;
+
+    const chave = `${mesNome}/${anoNome}`;
+    const infoPago = mesesPagos ? mesesPagos[chave] : null;
+    const pago = Boolean(infoPago && infoPago.pago);
+
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const margin = 14;
+    const usableW = 210 - margin * 2; // 182mm
+    let y = 16;
+
+    // ── Barra Superior iGUi ───────────────────────
+    doc.setFillColor(0, 174, 239); // #00AEEF
+    doc.rect(margin, y, usableW, 2.5, 'F');
+    y += 8;
+
+    // Título e Período
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
+    doc.setTextColor(26, 42, 58); // #1a2a3a
+    doc.text('iGUi Space — Relatório de Pagamento', margin, y);
+
+    doc.setFontSize(13);
+    doc.setTextColor(0, 174, 239);
+    doc.text(`${mesNome} / ${anoNome}`, 210 - margin, y, { align: 'right' });
+    y += 5.5;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.setTextColor(100, 116, 139); // #64748b
+    doc.text('Controle Mensal de Projetos', margin, y);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(26, 42, 58);
+    doc.text(String(nomeProj), 210 - margin, y, { align: 'right' });
+    y += 8;
+
+    // ── Status de Pagamento ───────────────────────
+    if (pago) {
+      let extra = '';
+      if (infoPago?.data_confirmacao) {
+        try {
+          const dt = new Date(infoPago.data_confirmacao);
+          const pad = n => String(n).padStart(2, '0');
+          extra = ` em ${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`;
+        } catch(e){}
+      }
+      const confirmadoPor = infoPago?.confirmado_por ? ` por ${infoPago.confirmado_por}` : '';
+      const statusTexto = `STATUS: PAGO (Confirmado${extra}${confirmadoPor})`;
+
+      doc.setFillColor(240, 253, 244); // #f0fdf4
+      doc.setDrawColor(134, 239, 172); // #86efac
+      doc.setLineWidth(0.4);
+      doc.roundedRect(margin, y, usableW, 9, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(21, 128, 61); // #15803d
+      doc.text(statusTexto, margin + 4, y + 6);
+    } else {
+      doc.setFillColor(255, 248, 225); // #fff8e1
+      doc.setDrawColor(245, 216, 122); // #f5d87a
+      doc.setLineWidth(0.4);
+      doc.roundedRect(margin, y, usableW, 9, 2, 2, 'FD');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.5);
+      doc.setTextColor(146, 96, 10); // #92600a
+      doc.text('STATUS: PENDENTE DE PAGAMENTO', margin + 4, y + 6);
+    }
+    y += 14;
+
+    // ── KPI Cards (Volume & Total) ────────────────
+    const cardW = (usableW - 6) / 2; // ~88mm
+    const cardH = 20;
+
+    // Card 1: Volume
+    doc.setFillColor(248, 250, 252); // #f8fafc
+    doc.setDrawColor(226, 232, 240); // #e2e8f0
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, y, cardW, cardH, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 116, 139);
+    doc.text('TOTAL DE PROJETOS', margin + 5, y + 6);
+
+    doc.setFontSize(16);
+    doc.setTextColor(15, 23, 42); // #0f172a
+    doc.text(`${linhas.length} projetos`, margin + 5, y + 15);
+
+    // Card 2: Total
+    const card2X = margin + cardW + 6;
+    doc.setFillColor(240, 249, 255); // #f0f9ff
+    doc.setDrawColor(186, 230, 253); // #bae6fd
+    doc.roundedRect(card2X, y, cardW, cardH, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(2, 132, 199); // #0284c7
+    doc.text('TOTAL A RECEBER', card2X + 5, y + 6);
+
+    doc.setFontSize(16);
+    doc.setTextColor(2, 132, 199);
+    doc.text(`R$ ${totalGeral.toFixed(2).replace('.', ',')}`, card2X + 5, y + 15);
+
+    y += cardH + 8;
+
+    // ── Tabela Discriminada ───────────────────────
+    const colQtdX = margin + 115;
+    const colUnitX = margin + 148;
+    const colSubX = margin + usableW - 4;
+
+    // Cabeçalho da Tabela
+    doc.setFillColor(26, 42, 58); // #1a2a3a
+    doc.rect(margin, y, usableW, 8.5, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Categoria do Projeto', margin + 4, y + 5.5);
+    doc.text('Qtd', colQtdX, y + 5.5, { align: 'center' });
+    doc.text('Valor Unit.', colUnitX, y + 5.5, { align: 'right' });
+    doc.text('Subtotal', colSubX, y + 5.5, { align: 'right' });
+    y += 8.5;
+
+    // Linhas da Tabela
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+
+    rowsTabela.forEach((r, i) => {
+      const rowH = 7.5;
+      if (i % 2 === 1) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, y, usableW, rowH, 'F');
+      }
+
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y + rowH, margin + usableW, y + rowH);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(26, 42, 58);
+      doc.text(r.tipo, margin + 4, y + 5);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(String(r.qtd), colQtdX, y + 5, { align: 'center' });
+      doc.text(`R$ ${r.unit.toFixed(2).replace('.', ',')}`, colUnitX, y + 5, { align: 'right' });
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text(`R$ ${r.sub.toFixed(2).replace('.', ',')}`, colSubX, y + 5, { align: 'right' });
+
+      y += rowH;
+    });
+
+    // Grandes Alterações Extras (se houver)
+    if (totalAltGrandesExtras > 0) {
+      const rowH = 7.5;
+      doc.setFillColor(254, 243, 199); // #fef3c7
+      doc.rect(margin, y, usableW, rowH, 'F');
+
+      doc.setDrawColor(253, 230, 138);
+      doc.setLineWidth(0.2);
+      doc.line(margin, y + rowH, margin + usableW, y + rowH);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(180, 83, 9); // #b45309
+      doc.text('+ Alterações GRANDES (Adicionais)', margin + 4, y + 5);
+      doc.text(String(totalAltGrandesExtras), colQtdX, y + 5, { align: 'center' });
+      doc.text(`R$ ${(precos.val_alt_grandes || 60).toFixed(2).replace('.', ',')}`, colUnitX, y + 5, { align: 'right' });
+      doc.setFont('helvetica', 'bold');
+      doc.text(`R$ ${subAltExtras.toFixed(2).replace('.', ',')}`, colSubX, y + 5, { align: 'right' });
+
+      y += rowH;
+    }
+
+    // Rodapé da Tabela: VALOR TOTAL DO MÊS
+    const totalH = 10;
+    doc.setFillColor(238, 242, 246); // #eef2f6
+    doc.rect(margin, y, usableW, totalH, 'F');
+
+    doc.setDrawColor(0, 174, 239);
+    doc.setLineWidth(0.7);
+    doc.line(margin, y, margin + usableW, y);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(26, 42, 58);
+    doc.text('VALOR TOTAL DO MÊS', margin + 4, y + 6.5);
+
+    doc.setFontSize(12);
+    doc.setTextColor(2, 132, 199); // #0284c7
+    doc.text(`R$ ${totalGeral.toFixed(2).replace('.', ',')}`, colSubX, y + 6.5, { align: 'right' });
+
+    y += totalH + 15;
+
+    // ── Rodapé do Documento ───────────────────────
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(margin, y, margin + usableW, y);
+    y += 6;
+
+    const agora = new Date();
+    const dataStr = agora.toLocaleDateString('pt-BR');
+    const horaStr = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184); // #94a3b8
+    doc.text(`Documento oficial gerado eletronicamente em ${dataStr} às ${horaStr} via iGUi Space.`, 105, y, { align: 'center' });
+
+    doc.save(`Relatorio_Pagamento_${nomeProj.replace(/\s+/g, '_')}_${mesNome}_${anoNome}.pdf`);
     showToast("📦 PDF gerado com sucesso!", "ok");
   } catch (err) {
     console.error("Erro ao gerar PDF: ", err);
     showToast("Erro ao gerar PDF: " + err.message, "err");
   } finally {
-    // Restaura estilos originais
-    element.style.width = originalWidth;
-    element.style.maxWidth = originalMaxWidth;
-    element.style.boxShadow = originalBoxShadow;
-    element.style.margin = originalMargin;
-    element.style.paddingBottom = originalPaddingBottom;
-
-    printHides.forEach((el, i) => el.style.display = printHidesDisplay[i] || '');
     if (btn) btn.innerHTML = originalText;
   }
 }

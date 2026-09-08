@@ -2,11 +2,11 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Login — Ikatu</title>
   <meta name="theme-color" content="#1a2a3a">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-  <script src="../supabase-client.js?v=202606261041"></script>
+  <script src="../supabase-client.js?v=202609081300"></script>
   <script>
     // Corrige o caminho do áudio para a pasta mobile/
     document.addEventListener('DOMContentLoaded', () => {
@@ -46,7 +46,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 20px;
+      padding: calc(24px + env(safe-area-inset-top, 0px)) 20px calc(24px + env(safe-area-inset-bottom, 0px));
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior: none;
     }
@@ -496,7 +496,7 @@
   // Se já estiver logado, redireciona
   (async () => {
     const s = await sbGetSession();
-    if (s) window.location.href = 'pagamentos.html';
+    if (s) window.location.href = 'prancha.html';
   })();
 
   // Mensagem de assinatura expirada via query string
@@ -571,7 +571,7 @@
 
     const nome = profile?.name || email.split('@')[0];
     iniciarSplash(nome, profile?.role === 'admin', profile?.assinatura_expira_em, () => {
-      window.location.href = 'pagamentos.html';
+      window.location.href = 'prancha.html';
     });
   }
 
