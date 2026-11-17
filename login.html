@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202609081838"></script>
+<script src="supabase-client.js?v=202611172306"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/sirxemic/jquery.ripples/dist/jquery.ripples-min.js"></script>
 <style>
@@ -458,6 +458,13 @@
   // Mensagem de assinatura expirada
   (function() {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('msg') === 'sessao') {
+      const el = document.getElementById('loginError');
+      if (el) {
+        el.textContent = 'Sua sessão foi encerrada. Faça login novamente.';
+        el.classList.add('show');
+      }
+    }
     if (params.get('msg') === 'expirado') {
       const el = document.getElementById('loginError');
       if (el) {
@@ -512,8 +519,11 @@
     // Verificar se conta está ativa
     const profile = await sbGetProfile();
     if (profile && profile.active === false) {
-      await sbSignOut();
-      errEl.textContent = 'Conta desativada. Entre em contato com o administrador.';
+      // Não usar sbSignOut() aqui: ele redireciona e a mensagem some
+      localStorage.removeItem('igui_user_name');
+      localStorage.removeItem('igui_is_admin');
+      await sb.auth.signOut();
+      errEl.textContent = 'E-mail ou senha incorretos.';
       errEl.classList.add('show');
       btn.disabled = false;
       btn.textContent = 'Entrar';

@@ -6,10 +6,10 @@
 <title>Admin — Ikatu</title>
 <script>if (window.innerWidth <= 768) { window.location.href = 'mobile/admin.html'; }</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-client.js?v=202609081838"></script>
+<script src="supabase-client.js?v=202611172306"></script>
 <meta name="theme-color" content="#1a2a3a">
 <link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="styles.css?v=202609081838">
+<link rel="stylesheet" href="styles.css?v=202611172306">
 <style>
   .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0;}
   .tab{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
@@ -347,9 +347,13 @@
           </div>
           <div class="field">
             <label>E-mail / Usuário</label>
-            <input type="text" id="inviteEmail" placeholder="usuario@email.com ou nome_usuario">
+            <input type="text" id="inviteEmail" placeholder="usuario@email.com ou nome_usuario" autocomplete="off">
           </div>
-          <button class="btn-sm primary" onclick="convidar()" style="flex-shrink:0;padding:9px 18px;font-size:12px;">+ Convidar usuário</button>
+          <div class="field">
+            <label>Senha</label>
+            <input type="text" id="invitePassword" placeholder="nome123" autocomplete="new-password">
+          </div>
+          <button class="btn-sm primary" id="btnCriarUsuario" onclick="convidar()" style="flex-shrink:0;padding:9px 18px;font-size:12px;">+ Criar usuário</button>
         </div>
 
         <div class="section-hd">
@@ -843,6 +847,9 @@ function linhaUsuario(u) {
             <button class="btn-icon btn-reset" title="Assinatura" onclick="abrirModalAssinatura('${u.id}','${escHtml(u.name||u.email||'')}')">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             </button>
+            <button class="btn-icon btn-deactivate" title="Excluir usuário" onclick="excluirUsuario('${u.id}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
           </div>
         ` : '<span style="font-size:11px;color:var(--muted)">—</span>'}
       </td>
@@ -1008,25 +1015,68 @@ async function zerarAssinatura(userId) {
   }
 }
 
+// Senha padrão (nome123) preenchida automaticamente enquanto o admin não editar
+(function() {
+  const n = document.getElementById('inviteName');
+  const p = document.getElementById('invitePassword');
+  if (!n || !p) return;
+  p.addEventListener('input', () => { p.dataset.manual = p.value ? '1' : ''; });
+  n.addEventListener('input', () => { if (!p.dataset.manual) p.value = sbSenhaPadrao(n.value); });
+})();
+
 async function convidar() {
   let email = document.getElementById('inviteEmail').value.trim();
-  const name  = document.getElementById('inviteName').value.trim();
+  const name     = document.getElementById('inviteName').value.trim();
+  const passEl   = document.getElementById('invitePassword');
+  const password = passEl.value || sbSenhaPadrao(name);
+  if (!name)  { showToast('Informe o nome', 'err'); return; }
   if (!email) { showToast('Informe o e-mail ou usuário', 'err'); return; }
-  
-  const isUsernameOnly = !email.includes('@');
-  if (isUsernameOnly) {
-    email = email + '@igui.com';
-  }
+  if (!email.includes('@')) email = email + '@igui.com';
+  if (password.length < 6) { showToast('A senha precisa ter pelo menos 6 caracteres', 'err'); return; }
 
+  const btn = document.getElementById('btnCriarUsuario');
+  const txt = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Criando...'; }
   try {
-    await sbConvidarUsuario(email, name);
+    await sbConvidarUsuario(email, name, password);
     document.getElementById('inviteEmail').value = '';
     document.getElementById('inviteName').value  = '';
-    showToast(isUsernameOnly ? '✅ Usuário criado: ' + email.split('@')[0] : '✅ Convite enviado para ' + email, 'ok');
-    setTimeout(carregarUsuarios, 1500);
+    passEl.value = ''; passEl.dataset.manual = '';
+    const login = email.toLowerCase().endsWith('@igui.com') ? email.split('@')[0] : email;
+    showToast(`Usuário criado: ${login} · senha: ${password}`, 'ok');
+    setTimeout(carregarUsuarios, 800);
   } catch(e) {
-    showToast('Erro ao convidar/criar: ' + e.message, 'err');
+    showToast('Erro ao criar usuário: ' + e.message, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = txt; }
   }
+}
+
+async function excluirUsuario(id) {
+  const u = usuarios.find(x => x.id === id);
+  const nome = u?.name || u?.email || 'usuário';
+  let qtd = 0;
+  try {
+    const { count } = await sb.from('projects').select('id', { count: 'exact', head: true }).eq('user_id', id);
+    qtd = count || 0;
+  } catch (e) { /* segue sem a contagem */ }
+
+  confirmar(
+    'Excluir usuário',
+    `Excluir ${nome} permanentemente? Serão apagados a conta, ${qtd} prancha${qtd === 1 ? '' : 's'} e todas as imagens. Esta ação não pode ser desfeita.`,
+    async () => {
+      const btn = document.getElementById('btnConfirmAcao');
+      const txt = btn.textContent;
+      btn.disabled = true; btn.textContent = 'Excluindo...';
+      try {
+        const r = await sbExcluirUsuario(id);
+        showToast(`${nome} excluído (${r?.projetos ?? qtd} pranchas removidas)`, 'ok');
+        carregarUsuarios();
+      } finally {
+        btn.disabled = false; btn.textContent = txt;
+      }
+    }
+  );
 }
 
 function trocarRole(id, roleAtual) {
@@ -1447,24 +1497,33 @@ async function iniciarBackupELimpeza() {
     URL.revokeObjectURL(url);
 
     showToast('📦 Backup baixado com sucesso!', 'ok');
+    // Libera o botão: se o admin cancelar a confirmação ele não fica travado
+    btn.disabled = false;
+    btn.textContent = originalTxt;
 
     setTimeout(() => {
       confirmar(
         'Liberar Espaço no Supabase',
         `Deseja excluir permanentemente estas ${antigas.length} pranchas antigas (e todas as suas imagens do Storage) do servidor para liberar espaço?`,
         async () => {
+          fecharModal();
+          btn.disabled = true;
           btn.textContent = 'Excluindo pranchas do servidor...';
-          for (let i = 0; i < antigas.length; i++) {
-            const p = antigas[i];
-            await sbDeletarProjetoAdmin(p.id, p.user_id);
+          try {
+            const { ok, falhas } = await sbExcluirProjetosComProgresso(antigas);
+            if (falhas === 0) {
+              showToast(`🗑️ ${ok} pranchas antigas removidas com sucesso!`, 'ok');
+              const badge = document.getElementById('adminNavBadge');
+              if (badge) badge.style.display = 'none';
+              const tabBadge = document.getElementById('tabBackupBadge');
+              if (tabBadge) tabBadge.style.display = 'none';
+            } else {
+              showToast(`${ok} removidas, ${falhas} com erro. Tente novamente para as restantes.`, 'err');
+            }
+          } finally {
+            btn.disabled = false;
+            btn.textContent = originalTxt;
           }
-          showToast(`🗑️ ${antigas.length} pranchas antigas removidas com sucesso!`, 'ok');
-          btn.disabled = false;
-          btn.textContent = originalTxt;
-          const badge = document.getElementById('adminNavBadge');
-          if (badge) badge.style.display = 'none';
-          const tabBadge = document.getElementById('tabBackupBadge');
-          if (tabBadge) tabBadge.style.display = 'none';
         }
       );
     }, 1000);

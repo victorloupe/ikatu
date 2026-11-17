@@ -502,6 +502,13 @@
   // Mensagem de assinatura expirada via query string
   (function() {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('msg') === 'sessao') {
+      const el = document.getElementById('loginError');
+      if (el) {
+        el.textContent = 'Sua sessão foi encerrada. Faça login novamente.';
+        el.classList.add('show');
+      }
+    }
     if (params.get('msg') === 'expirado') {
       const el = document.getElementById('loginError');
       if (el) {
@@ -552,8 +559,11 @@
     const profile = await sbGetProfile();
 
     if (profile && profile.active === false) {
-      await sbSignOut();
-      errEl.textContent = 'Conta desativada. Entre em contato com o administrador.';
+      // Não usar sbSignOut() aqui: ele redireciona e a mensagem some
+      localStorage.removeItem('igui_user_name');
+      localStorage.removeItem('igui_is_admin');
+      await sb.auth.signOut();
+      errEl.textContent = 'E-mail ou senha incorretos.';
       errEl.classList.add('show');
       btn.disabled = false;
       btn.textContent = 'Entrar';
